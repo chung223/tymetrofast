@@ -53,15 +53,17 @@ function dayTypeOf(dateStr) {
 }
 
 /* ---------- 狀態 ---------- */
-const state = { view: "plan", from: "A1", to: "A16", boardStation: "A1", mode: "now", custom: null, flightCtx: null };
+const state = { view: "plan", from: "A1", to: "A16", boardStation: "A1", mode: "now", custom: null, flightCtx: null, flightDir: "dep" };
+let hashHadFrom = false, pendingFlightSearch = null;
 (function initFromHash() {
   const p = new URLSearchParams(location.hash.slice(1));
-  if (stationById.has(p.get("from"))) state.from = p.get("from");
+  if (stationById.has(p.get("from"))) { state.from = p.get("from"); hashHadFrom = true; }
   if (stationById.has(p.get("to"))) state.to = p.get("to");
   const m = p.get("m");
   if (m === "arrive" || m === "depart") state.mode = m;
   if (p.get("t") && p.get("t") !== "now") state.custom = p.get("t");
   if (state.mode !== "now" && !state.custom) state.mode = "now";
+  if (p.get("flight")) pendingFlightSearch = p.get("flight").toUpperCase();
 })();
 function syncHash() {
   const parts = [`from=${state.from}`, `to=${state.to}`, `m=${state.mode}`];
@@ -221,6 +223,7 @@ function journeyCard(j, { badge, badgeAlt, saveMin, nextDay, fare } = {}) {
   <article class="panel journey-card ${badgeAlt ? "" : "best"}">
     <div class="jc-head">
       <span class="jc-badge ${badgeAlt ? "alt" : ""}">${badge}</span>
+      ${badgeAlt ? "" : `<button class="cal-btn" id="btn-cal" title="${t("addCal")}">⏰</button>`}
       ${nextDay ? `<span class="nextday-chip">${t("tomorrow")} ${nextDay.slice(5).replace("-", "/")}</span>` : ""}
       <span class="jc-times">${fmtTime(j.dep)}<span class="jc-arrow">▶</span><span class="arr">${fmtTime(j.arr)}</span></span>
       <span class="jc-meta"><b>${total} ${t("min")}</b> · ${j.transfers ? t("transfersN", j.transfers) : t("noTransfer")}
@@ -263,13 +266,25 @@ function renderResults({ options = [], direct, nextDay, error, arriveMode, cantM
   let html = "";
   const fc = state.flightCtx;
   if (fc && (state.to === "A12" || state.to === "A13")) {
+    const isDep = fc.kind !== "arr";
+    // 行李託運截止倒數（起飛前 60 分）
+    let bagHtml = "";
+    if (isDep && ctx) {
+      const now = taipeiNow();
+      const closeMin = Number(fc.st.slice(0, 2)) * 60 + Number(fc.st.slice(3)) - 60;
+      const left = fc.date === now.date ? Math.round(closeMin - now.min) : null;
+      if (left !== null && left <= 0) bagHtml = `<span class="fl-tag bag warn">${t("bagClosed")}</span>`;
+      else if (left !== null) bagHtml = `<span class="fl-tag bag ${left < 30 ? "warn" : ""}">${t("bagDeadline", fmtTime(closeMin), left)}</span>`;
+    }
     html += `
     <aside class="panel flight-banner">
-      <span class="fl-no">✈ ${fc.f}</span><span class="b-time">${fc.st}</span><span class="fl-dest">→ ${fc.o}</span>
+      <span class="fl-no">✈ ${fc.f}</span><span class="b-time">${fc.st}</span><span class="fl-dest">${isDep ? "→" : "←"} ${fc.o}</span>
       <span class="fl-tag term">${t("terminalL")} ${fc.term} · ${t("alightAt", stnLabel(state.to))}</span>
-      ${fc.ck ? `<span class="fl-tag ck">${t("counterL")} ${fc.ck}</span>` : ""}
-      ${fc.gate ? `<span class="fl-tag">${t("gateL")} ${fc.gate}</span>` : ""}
-      <span class="fl-note">${t("flightPlanNote")}</span>
+      ${isDep && fc.ck ? `<span class="fl-tag ck">${t("counterL")} ${fc.ck}</span>` : ""}
+      ${!isDep && fc.belt ? `<span class="fl-tag ck">${t("beltL")} ${fc.belt}</span>` : ""}
+      ${isDep && fc.gate ? `<span class="fl-tag">${t("gateL")} ${fc.gate}</span>` : ""}
+      ${bagHtml}
+      <span class="fl-note">${t(isDep ? "flightPlanNote" : "pickupNote")}</span>
     </aside>`;
   }
   if (nextDay) html += `<div class="panel empty-card">${t("noServiceToday")}</div>`;
@@ -298,6 +313,51 @@ function renderResults({ options = [], direct, nextDay, error, arriveMode, cantM
 
   box.innerHTML = html;
   renderLineMap(best);
+  const calBtn = $("btn-cal");
+  if (calBtn) calBtn.onclick = () => addReminder(best, ctx, calBtn);
+}
+
+/* ---------- ⏰ 提醒：行事曆 .ics ＋ 頁面開啟時的通知 ---------- */
+function addReminder(j, ctx, btn) {
+  const date = (ctx?.date ?? taipeiNow().date).replaceAll("-", "");
+  const dt = (m) => `${date}T${fmtTime(m).replace(":", "")}00`;
+  const fc = state.flightCtx;
+  const desc = [
+    ...(fc ? [`✈ ${fc.f} ${fc.st} ${fc.kind === "arr" ? "←" : "→"} ${fc.o}` +
+      (fc.term ? ` / ${t("terminalL")} ${fc.term}` : "") +
+      (fc.ck ? ` / ${t("counterL")} ${fc.ck}` : "") +
+      (fc.belt ? ` / ${t("beltL")} ${fc.belt}` : "")] : []),
+    `${stnLabel(state.from)} → ${stnLabel(state.to)}`,
+  ];
+  const ics = [
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//tymetrofast//TW", "BEGIN:VEVENT",
+    `UID:tymf-${date}-${Math.round(j.dep)}@tymetrofast`,
+    `DTSTART;TZID=Asia/Taipei:${dt(j.dep)}`, `DTEND;TZID=Asia/Taipei:${dt(j.arr)}`,
+    `SUMMARY:🚇 ${fmtTime(j.dep)} ${stnName(state.from)} → ${stnName(state.to)}`,
+    `DESCRIPTION:${desc.join("\\n")}`,
+    "BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:🚇 ${fmtTime(j.dep)}`, "TRIGGER:-PT15M", "END:VALARM",
+    "END:VEVENT", "END:VCALENDAR",
+  ].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+  a.download = `mrt-${fmtTime(j.dep).replace(":", "")}.ics`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  // 頁面保持開啟時的補充通知（發車前 15 分鐘）
+  const now = taipeiNow();
+  const fireInMs = (j.dep - 15 - now.min) * 60000;
+  if ((ctx?.date ?? now.date) === now.date && fireInMs > 0 && fireInMs < 12 * 3600000 && "Notification" in window) {
+    Notification.requestPermission().then((p) => {
+      if (p !== "granted") return;
+      setTimeout(() => new Notification(`🚇 ${fmtTime(j.dep)} ${stnName(state.from)} → ${stnName(state.to)}`, {
+        body: fc ? `✈ ${fc.f}${fc.ck ? ` · ${t("counterL")} ${fc.ck}` : ""}` : t("addCal"),
+        icon: "icons/icon-192.png",
+      }), fireInMs);
+    });
+  }
+  btn.textContent = "✓";
+  btn.title = t("notifSet");
+  setTimeout(() => { btn.textContent = "⏰"; btn.title = t("addCal"); }, 3000);
 }
 
 /* ---------- 路線圖（示意 / 地理） ---------- */
@@ -484,45 +544,52 @@ const termToStation = (term) => (/2/.test(term) ? "A13" : /1/.test(term) ? "A12"
 
 async function renderFlight() {
   const list = $("flight-list");
+  $("fl-dir-dep").textContent = t("flightDep");
+  $("fl-dir-arr").textContent = t("flightArr");
+  $("fl-dir-dep").classList.toggle("on", state.flightDir === "dep");
+  $("fl-dir-arr").classList.toggle("on", state.flightDir === "arr");
   $("fids-note").textContent = t("fidsNote");
   let data;
   try { data = await loadFids(); } catch {
     list.innerHTML = `<li class="board-row empty">${t("fidsFail")}</li>`;
     return;
   }
+  const isDep = state.flightDir === "dep";
   const q = ($("flight-search").value ?? "").trim().toUpperCase();
-  const deps = (data.airports?.TPE?.dep ?? []).filter((r) =>
+  const rows = (data.airports?.TPE?.[state.flightDir] ?? []).filter((r) =>
     !q || r.f.includes(q) || (r.cs ?? []).some((c) => c.includes(q)) || r.o.includes(q)
   ).slice(0, 30);
   $("fids-note").textContent = `${t("fidsNote")} · ${t("fidsUpdated")} ${data.updated_at ?? ""}`;
-  list.innerHTML = deps.length
-    ? deps.map((r, i) => `
+  list.innerHTML = rows.length
+    ? rows.map((r, i) => `
       <li class="flight-row">
         <div class="fl-main">
-          <span class="b-time">${r.et || r.st}</span>
+          <span class="b-time">${r.at || r.et || r.st}</span>
           <span class="fl-no">${r.f}${(r.cs ?? []).length ? `<span class="fl-cs">+${r.cs.length}</span>` : ""}</span>
-          <span class="fl-dest">→ ${r.o}</span>
+          <span class="fl-dest">${isDep ? "→" : "←"} ${r.o}</span>
           ${r.rm ? `<span class="fl-rm">${r.rm}</span>` : ""}
         </div>
         <div class="fl-sub">
           ${r.term ? `<span class="fl-tag term">${t("terminalL")} ${r.term} · ${t("alightAt", termToStation(r.term))}</span>` : ""}
-          ${r.ck ? `<span class="fl-tag ck">${t("counterL")} ${r.ck}</span>` : ""}
-          ${r.gate ? `<span class="fl-tag">${t("gateL")} ${r.gate}</span>` : ""}
+          ${isDep && r.ck ? `<span class="fl-tag ck">${t("counterL")} ${r.ck}</span>` : ""}
+          ${!isDep && r.belt ? `<span class="fl-tag ck">${t("beltL")} ${r.belt}</span>` : ""}
+          ${isDep && r.gate ? `<span class="fl-tag">${t("gateL")} ${r.gate}</span>` : ""}
           <button class="fl-go" data-fi="${i}">${t("planGo")}</button>
         </div>
       </li>`).join("")
     : `<li class="board-row empty">${t("noneFound")}</li>`;
 
   list.querySelectorAll(".fl-go").forEach((btn) => (btn.onclick = () => {
-    const r = deps[Number(btn.dataset.fi)];
+    const r = rows[Number(btn.dataset.fi)];
     const now = taipeiNow();
-    const dep = Number(r.st.slice(0, 2)) * 60 + Number(r.st.slice(3));
-    const target = Math.max(dep - 150, now.min + 1); // 起飛前 2.5 小時抵達
-    const date = dep < now.min - 120 ? shiftDate(now.date, 1) : now.date; // 已起飛視為明日同班
+    const st = Number(r.st.slice(0, 2)) * 60 + Number(r.st.slice(3));
+    // 出發：起飛前 2.5 小時抵達；接機：班機抵達時刻抵達
+    const target = isDep ? Math.max(st - 150, now.min + 1) : Math.max(st, now.min + 1);
+    const date = st < now.min - 120 ? shiftDate(now.date, 1) : now.date;
     state.to = termToStation(r.term);
     state.mode = "arrive";
     state.custom = `${date}T${fmtTime(target)}`;
-    state.flightCtx = { f: r.f, o: r.o, st: r.st, term: r.term, ck: r.ck, gate: r.gate };
+    state.flightCtx = { kind: state.flightDir, f: r.f, o: r.o, st: r.st, term: r.term, ck: r.ck ?? "", gate: r.gate ?? "", belt: r.belt ?? "", date };
     $("custom-time").value = state.custom;
     refreshOD(); renderFavs(); syncHash();
     setView("plan");
@@ -530,6 +597,8 @@ async function renderFlight() {
   }));
 }
 $("flight-search").addEventListener("input", () => renderFlight());
+$("fl-dir-dep").addEventListener("click", () => { state.flightDir = "dep"; renderFlight(); });
+$("fl-dir-arr").addEventListener("click", () => { state.flightDir = "arr"; renderFlight(); });
 
 /* ---------- 選站面板 ---------- */
 let picking = null;
@@ -672,4 +741,25 @@ applyStatic();
 refreshOD();
 renderFavs();
 if (state.mode !== "now") { $("custom-time").value = state.custom; setMode(state.mode); }
+if (pendingFlightSearch) { $("flight-search").value = pendingFlightSearch; setView("flight"); }
 tick();
+
+// 已授權過定位時，靜默預選最近車站（不彈權限視窗）
+if (!hashHadFrom && !pendingFlightSearch && geo && navigator.permissions?.query) {
+  navigator.permissions.query({ name: "geolocation" }).then((p) => {
+    if (p.state !== "granted") return;
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const here = [pos.coords.longitude, pos.coords.latitude];
+      let best = null, bestKm = Infinity;
+      for (const s of stations) {
+        const km = haversineKm(here, geo[s.id]);
+        if (km < bestKm) { bestKm = km; best = s.id; }
+      }
+      if (best && best !== state.from && best !== state.to) {
+        state.from = best;
+        refreshOD(); renderFavs(); syncHash();
+        if (state.view === "plan") runQuery();
+      }
+    }, () => {}, { timeout: 6000, maximumAge: 300000 });
+  }).catch(() => {});
+}

@@ -2,7 +2,7 @@
  * - data/*.json：網路優先（保持班表最新），離線退回快取
  * - 其他資產：快取優先＋背景更新（stale-while-revalidate）
  */
-const CACHE = "tymf-v1";
+const CACHE = "tymf-v2";
 const PRECACHE = [
   ".", "index.html", "manifest.webmanifest",
   "assets/style.css", "assets/app.js", "assets/planner.js", "assets/i18n.js",
@@ -25,7 +25,21 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
-  if (e.request.method !== "GET" || url.origin !== location.origin) return;
+  if (e.request.method !== "GET") return;
+
+  // 跨站航班看板（as-jx tdx.json）：網路優先，離線退回上次快取
+  if (url.hostname.endsWith("github.io") && url.pathname.endsWith("/tdx.json")) {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          if (res.ok) caches.open(CACHE).then((c) => c.put(e.request, res.clone()));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+  if (url.origin !== location.origin) return;
 
   if (url.pathname.includes("/data/")) {
     // 班表資料：網路優先

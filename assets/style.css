@@ -338,6 +338,14 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .flight-banner { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; border-left: 3px solid var(--purple); }
 .flight-banner .b-time { font: 400 17px var(--font-led); color: var(--amber); }
 .flight-banner .fl-note { flex-basis: 100%; font-size: 11.5px; color: var(--text-dim); }
+.fl-dir { margin-bottom: 8px; }
+.fl-tag.bag { color: var(--green); border-color: #3a6b4a; font-weight: 700; }
+.fl-tag.bag.warn { color: var(--red); border-color: #7a3a33; }
+.cal-btn {
+  font-size: 16px; border: 1px solid var(--line); border-radius: 8px;
+  padding: 2px 9px; background: var(--ink); line-height: 1.3;
+}
+.cal-btn:hover { border-color: var(--amber); }
 .locate-li::before { display: none !important; }
 .locate-btn { color: var(--amber); font-weight: 700; padding-left: 12px !important; }
 .locate-btn::before { display: none !important; }
