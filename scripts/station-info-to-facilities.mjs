@@ -61,7 +61,10 @@ function parseExits(html) {
   while ((m = rowRe.exec(seg))) {
     const cells = [...m[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)].map((x) => cellText(x[1]).replace(/\n/g, " "));
     if (cells.length < 2 || /Exit No|出口編號/i.test(cells[0])) continue;
+    // A1 頁面出口表後緊接公車路線表（3–4 位數路線號），排除；實體出口編號不會超過 2 位數
+    if (/^\d{3,}/.test(cells[0])) continue;
     exits.push([cells[0], cells.slice(1).filter(Boolean).join("・")]);
+    if (exits.length >= 15) break;
   }
   return exits;
 }
