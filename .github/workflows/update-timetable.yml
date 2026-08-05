@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: update-timetable
@@ -59,3 +60,10 @@ jobs:
           git add data/timetable.json
           git diff --cached --quiet || git commit -m "chore: 依官方資料更新時刻表"
           git push
+
+      # GITHUB_TOKEN 的 push 不會觸發其他 workflow，須主動觸發部署
+      - name: 觸發網站重新部署
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main
