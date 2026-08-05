@@ -34,7 +34,7 @@
 
 其他資料檔：
 
-- [`data/network.json`](data/network.json)：車站、直達車停靠站、**同站轉乘秒數**（影響轉乘銜接判定）
+- [`data/network.json`](data/network.json)：車站、直達車停靠站、**轉乘緩衝秒數**（同方向轉乘＝原月台候車，預設 45 秒；折返轉乘預設 150 秒，A12 疊式月台、A21 島式月台等同月台可折返的車站有個別覆寫）
 - [`data/holidays.json`](data/holidays.json)：套用假日班表的國定假日清單（每年更新一次）
 
 ## 一次性設定：啟用 GitHub Pages

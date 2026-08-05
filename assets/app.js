@@ -114,7 +114,12 @@ function runQuery() {
 
 /* ---------- 呈現 ---------- */
 const stnLabel = (id) => `${id} ${stationById.get(id).name}`;
-const isSamePlatform = (id) => (stationById.get(id).transferSec ?? network.defaultTransferSec) <= 90;
+function transferHint(stationId, fromDir, toDir) {
+  const s = stationById.get(stationId);
+  if (fromDir === toDir) return "原月台候車即可";
+  const sec = s.transferReverseSec ?? network.defaultTransferReverseSec ?? 150;
+  return sec <= 90 ? "同月台即可折返" : "";
+}
 
 function legHtml(leg, journey, i) {
   const train = leg.type === "express" ? "直達車" : "普通車";
@@ -135,11 +140,11 @@ function legHtml(leg, journey, i) {
   const next = journey.legs[i + 1];
   if (next) {
     const wait = Math.round(next.dep - leg.arr);
-    const same = isSamePlatform(leg.to);
+    const hint = transferHint(leg.to, leg.dir, next.dir);
     html += `
       <div class="transfer-row">
         <span><b>${stnLabel(leg.to)}</b>（${fmtTime(leg.arr)} 到）轉乘 · 等 ${wait} 分</span>
-        ${same ? '<span class="same-platform">同月台對面即可轉乘</span>' : ""}
+        ${hint ? `<span class="same-platform">${hint}</span>` : ""}
       </div>`;
   } else {
     html += `
@@ -217,6 +222,7 @@ function renderMap(journey) {
       const y = Y + (li > 0 && leg.dir !== journey.legs[0].dir ? 9 : 0);
       const color = leg.type === "express" ? "var(--purple)" : "var(--blue)";
       g += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${color}" stroke-width="7" stroke-linecap="round" opacity="0.95"/>`;
+      g += `<line class="flow" x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#fff" stroke-width="2" stroke-linecap="round"/>`;
       const mid = (x1 + x2) / 2;
       g += `<polygon points="${mid - 5},${y - 4} ${mid - 5},${y + 4} ${mid + 4},${y}" fill="#0c111c" transform="${x2 < x1 ? `rotate(180 ${mid} ${y})` : ""}"/>`;
     });
