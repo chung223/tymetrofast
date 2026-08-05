@@ -1,0 +1,61 @@
+name: 更新官方時刻表（TDX）
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 每週六 05:00（台灣時間）自動檢查官方班表是否異動
+    - cron: "0 21 * * 5"
+  push:
+    branches: ["claude/**"]
+    paths: ["data/raw/.fetch-request"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-timetable
+  cancel-in-progress: false
+
+jobs:
+  fetch-convert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 抓取桃捷官網時刻表頁面（主要資料源，平日＋假日）
+        continue-on-error: true
+        run: bash scripts/fetch-official-site.sh
+
+      - name: 抓取 TDX 原始資料（備援；無金鑰時僅警告）
+        continue-on-error: true
+        env:
+          TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
+          TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
+        run: node scripts/fetch-tdx.mjs
+
+      - name: 提交原始資料
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data/raw
+          git diff --cached --quiet || git commit -m "chore: 更新官方時刻表原始資料"
+          git push
+
+      - name: 串連成逐班車時刻並驗證
+        run: |
+          if [ -d data/raw/official/weekday ] && [ -d data/raw/official/holiday ]; then
+            node scripts/official-to-timetable.mjs
+          elif [ -f data/raw/tdx/StationTimeTable.json ]; then
+            node scripts/tdx-to-timetable.mjs
+          else
+            echo "::warning::官網與 TDX 皆無資料，未更新時刻表"
+            exit 0
+          fi
+          node scripts/test-planner.mjs
+          git add data/timetable.json
+          git diff --cached --quiet || git commit -m "chore: 依官方資料更新時刻表"
+          git push
