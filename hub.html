@@ -2,99 +2,11 @@
 <html lang="zh-Hant-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#120f0a">
-<meta name="description" content="旅人工具導覽：機捷快轉（機場交通）× 哩程玩家工具箱（票務哩程）">
-<title>旅人工具箱｜機捷快轉 × 哩程玩家</title>
-<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#16120c; --surface:#1f1913; --raised:#2a2216;
-    --line:rgba(212,175,110,.16); --line-strong:rgba(212,175,110,.32);
-    --ink:#f0e8d8; --muted:#a29377; --gold:#d4af6e; --gold-deep:#8a6d3b;
-    --purple:#b995d8; --purple-deep:#8e4e9e;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    background:
-      radial-gradient(1100px 500px at 75% -10%, rgba(212,175,110,.10), transparent 60%),
-      radial-gradient(800px 400px at -5% 30%, rgba(142,78,158,.09), transparent 55%),
-      var(--bg);
-    color:var(--ink); font-family:"Noto Sans TC",sans-serif; line-height:1.6;
-    min-height:100dvh; display:flex; flex-direction:column; align-items:center;
-    padding:min(9vh,72px) 18px 40px;
-  }
-  h1{font:900 clamp(30px,6vw,44px)/1.25 "Noto Serif TC",serif; letter-spacing:.12em; text-align:center}
-  .sub{color:var(--muted); font-size:14px; letter-spacing:.28em; text-align:center; margin:8px 0 40px}
-  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px; width:min(860px,100%)}
-  .card{
-    display:block; text-decoration:none; color:inherit;
-    background:linear-gradient(180deg,var(--raised),var(--surface));
-    border:1px solid var(--line); border-radius:18px; padding:26px 24px;
-    box-shadow:0 18px 40px -18px rgba(0,0,0,.55);
-    transition:transform .15s, border-color .15s;
-  }
-  .card:hover{transform:translateY(-3px); border-color:var(--line-strong)}
-  .card .tag{display:inline-block; font-size:11px; letter-spacing:.22em; color:var(--muted); margin-bottom:10px}
-  .card h2{font:900 24px/1.3 "Noto Serif TC",serif; letter-spacing:.06em}
-  .card.mrt h2{color:var(--purple)}
-  .card.miles h2{color:var(--gold)}
-  .card p{color:var(--muted); font-size:13.5px; margin:10px 0 16px}
-  .feats{display:flex; flex-wrap:wrap; gap:6px}
-  .feats span{
-    font-size:11.5px; color:var(--muted);
-    border:1px solid var(--line); border-radius:999px; padding:3px 10px;
-  }
-  .go{
-    display:inline-block; margin-top:18px; font-weight:700; font-size:14px;
-    color:#1c150b; background:var(--gold); border-radius:999px; padding:8px 22px;
-  }
-  .card.mrt .go{background:var(--purple)}
-  .flow{
-    width:min(860px,100%); margin-top:26px; text-align:center;
-    color:var(--muted); font-size:12px; border:1px dashed var(--line);
-    border-radius:12px; padding:10px 14px;
-  }
-  .flow b{color:var(--gold)}
-  footer{margin-top:auto; padding-top:36px; color:var(--muted); font-size:11.5px; text-align:center}
-  footer a{color:var(--muted)}
-</style>
+<meta http-equiv="refresh" content="0;url=https://chung223.github.io/">
+<link rel="canonical" href="https://chung223.github.io/">
+<title>旅人工具箱</title>
 </head>
 <body>
-  <h1>旅人工具箱</h1>
-  <p class="sub">TRAVELER'S TOOLKIT · 移動 × 票務</p>
-
-  <div class="cards">
-    <a class="card mrt" href="https://chung223.github.io/tymetrofast/">
-      <span class="tag">GETTING THERE · 移動的事</span>
-      <h2>🚇 機捷快轉</h2>
-      <p>桃園機場捷運的最快搭法：直達車＋轉乘逐班計算、查航班看報到櫃台、接送機規劃、趕飛機反推最晚出發。</p>
-      <div class="feats">
-        <span>官方逐班時刻</span><span>報到櫃台</span><span>接送機</span><span>高鐵接駁</span>
-        <span>機場天氣・METAR</span><span>票價</span><span>離線 PWA</span><span>中英日韓</span>
-      </div>
-      <span class="go">出發 ▶</span>
-    </a>
-
-    <a class="card miles" href="https://chung223.github.io/as-jx/">
-      <span class="tag">PAYING SMART · 票務的事</span>
-      <h2>✈ 哩程玩家工具箱</h2>
-      <p>星宇 × 阿拉斯加中停計算、四段票排程與甜度掃描、哩程兌換比價、CPM 價值判定、即時雷達與班機追蹤。</p>
-      <div class="feats">
-        <span>中停計算機</span><span>四段票</span><span>兌換比價</span><span>CPM</span>
-        <span>機場看板</span><span>即時雷達</span><span>班機追蹤</span><span>匯率</span>
-      </div>
-      <span class="go">起飛 ▶</span>
-    </a>
-  </div>
-
-  <p class="flow">兩站共用資料流：<b>TDX 官方航班看板</b>每 30 分鐘更新、互為深連結——看板查到票一鍵排交通，交通頁查航班直看櫃台。</p>
-
-  <footer>
-    非官方工具，僅供參考 · <a href="https://github.com/chung223" target="_blank" rel="noopener">GitHub @chung223</a>
-  </footer>
+  <p>導覽頁已搬家 → <a href="https://chung223.github.io/">https://chung223.github.io/</a></p>
 </body>
 </html>
