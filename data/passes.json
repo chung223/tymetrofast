@@ -1,0 +1,17 @@
+{
+  "updated": "2026-08-05",
+  "comment": "定期票／通勤月票資料。價格或方案異動時直接改這個檔即可，前端會自動以單程票價試算回本趟數。",
+  "passes": [
+    {
+      "id": "tpass-1200",
+      "price": 1200,
+      "days": 30,
+      "name": {
+        "zh": "TPASS 基北北桃都會通",
+        "en": "TPASS Monthly Pass (Keelung–Taipei–Taoyuan)",
+        "ja": "TPASS 定期券（基北北桃）",
+        "ko": "TPASS 정기권 (지룽·타이베이·타오위안)"
+      }
+    }
+  ]
+}

@@ -45,6 +45,13 @@ jobs:
           cp -r assets icons _site/
           cp data/*.json _site/data/
 
+      # 只在部署流程跑（FIDS 每 30 分排程不跑，節省額度）
+      - name: 煙霧測試（Playwright 實際渲染主要功能）
+        run: |
+          npm i --no-save playwright > /dev/null
+          npx playwright install --with-deps chromium
+          node scripts/smoke.mjs _site
+
       - uses: actions/configure-pages@v5
         with:
           enablement: true
