@@ -1,0 +1,52 @@
+name: 更新車站設施資料
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 每月 1 日 06:00（台灣時間）；設施異動很慢，月更足矣
+    - cron: "0 22 1 * *"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: update-facilities
+  cancel-in-progress: false
+
+jobs:
+  fetch-convert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 抓取官網車站資訊頁（中／英 22 站）
+        run: bash scripts/fetch-station-info.sh
+
+      - name: 解析為 facilities.json（驗證不足即失敗、不寫檔）
+        run: node scripts/station-info-to-facilities.mjs
+
+      - name: 提交
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/facilities.json
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "chore: 更新車站設施資料"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # GITHUB_TOKEN 的 push 不會觸發其他 workflow，須主動觸發部署
+      - name: 觸發網站重新部署
+        if: steps.commit.outputs.changed == 'true' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main

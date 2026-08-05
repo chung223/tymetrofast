@@ -6,7 +6,7 @@ const $ = (id) => document.getElementById(id);
 const loadJson = (u) => fetch(u).then((r) => (r.ok ? r.json() : Promise.reject(u)));
 const tryJson = (u) => loadJson(u).catch(() => null);
 
-const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile, passesFile, itciFile] = await Promise.all([
+const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile, passesFile, itciFile, facFile] = await Promise.all([
   loadJson("data/network.json"),
   loadJson("data/timetable.json"),
   loadJson("data/holidays.json"),
@@ -16,6 +16,7 @@ const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile, pa
   tryJson("data/hsr-a18.json"),
   tryJson("data/passes.json"),
   tryJson("data/itci.json"),
+  tryJson("data/facilities.json"),
 ]);
 const holidays = new Set(holidaysFile.holidays);
 const stations = network.stations;
@@ -24,6 +25,7 @@ const fares = faresFile?.pairs ?? null;
 const hsr = hsrFile?.trains?.length ? hsrFile.trains : null;
 const passes = passesFile?.passes?.length ? passesFile.passes : null;
 const itci = itciFile?.airlines?.length ? itciFile : null;
+const facilities = facFile?.stations ?? null;
 const hm2min = (s) => Number(s.slice(0, 2)) * 60 + Number(s.slice(3));
 const indexCache = new Map();
 const getIndex = (dayType) => {
@@ -318,6 +320,7 @@ function renderResults({ options = [], direct, nextDay, error, arriveMode, cantM
       ${!isDep && fc.belt ? `<span class="fl-tag ck">${t("beltL")} ${fc.belt}</span>` : ""}
       ${isDep && fc.gate ? `<span class="fl-tag">${t("gateL")} ${fc.gate}</span>` : ""}
       ${bagHtml}${delayHtml}${itciHtml}
+      <a class="fl-tag mile-link" href="https://chung223.github.io/as-jx/#flight=${encodeURIComponent(fc.f)}" target="_blank" rel="noopener">${t("mileTools")}</a>
       <span class="fl-note">${t(isDep ? "flightPlanNote" : "pickupNote")}</span>
     </aside>`;
   }
@@ -792,6 +795,7 @@ function renderBoard() {
       <span class="flc">${t("firstChip")} <span class="b-time sm">${fmtTime(fl[d][0])}</span></span>
       <span class="flc">${t("lastChip")} <span class="b-time sm">${fmtTime(fl[d][1])}</span></span>
     </span>`).join("");
+  renderFacilities(sid);
   rows.sort((a, b) => a.dep - b.dep);
   const seen = new Set();
   const list = rows.filter((r) => {
@@ -810,6 +814,29 @@ function renderBoard() {
         ${r.isLast ? `<span class="last-chip">${t("lastChip")}</span>` : ""}
       </li>`).join("")
     : `<li class="board-row empty">${t("noneFound")}</li>`;
+}
+
+/* ---------- 🛗 車站設施與出口（官網月更資料） ---------- */
+const FAC_ICONS = [
+  [/詢問|Information/i, "ℹ️"], [/飲用|Drinking/i, "🚰"], [/洗手|廁|Restroom|Toilet/i, "🚻"],
+  [/電梯|Elevator/i, "🛗"], [/置物|Locker/i, "🧳"], [/YouBike|自行車|Bike/i, "🚲"],
+  [/哺乳|Nursing|Breastfeed/i, "🍼"], [/AED/i, "⛑"], [/充電|Charging/i, "🔌"],
+];
+function renderFacilities(sid) {
+  const card = $("fac-card");
+  const fac = facilities?.[sid];
+  const L = fac?.[lang === "zh" ? "zh" : "en"] ?? fac?.zh ?? fac?.en;
+  if (!L?.info?.length) { card.hidden = true; return; }
+  $("fac-title").textContent = `🛗 ${t("facTitle")}`;
+  const icon = (k) => FAC_ICONS.find(([re]) => re.test(k))?.[1] ?? "•";
+  const rows = L.info
+    .filter(([, v]) => !/^(none|無|沒有)[。.]?$/i.test(v.trim()))
+    .map(([k, v]) => `<div class="fac-row"><span class="fac-k">${icon(k)} ${k}</span><span class="fac-v">${v.replace(/\n/g, "<br>")}</span></div>`);
+  if (L.exits?.length) {
+    rows.push(`<div class="fac-row"><span class="fac-k">🚪 ${t("exitsL")}</span><span class="fac-v">${L.exits.map(([n, loc]) => `<b>${n}</b>　${loc}`).join("<br>")}</span></div>`);
+  }
+  $("fac-body").innerHTML = rows.join("");
+  card.hidden = false;
 }
 
 /* ---------- 定位最近車站 ---------- */
@@ -861,6 +888,9 @@ async function loadFids() {
   throw new Error("fids");
 }
 const termToStation = (term) => (/2/.test(term) ? "A13" : /1/.test(term) ? "A12" : "A13");
+// 收藏航班：與 as-jx 共用（同網域 localStorage，鍵 trav-fav-flights）
+const favFlights = () => { try { return JSON.parse(localStorage.getItem("trav-fav-flights")) ?? []; } catch { return []; } };
+const favFlightsSave = (a) => { try { localStorage.setItem("trav-fav-flights", JSON.stringify(a.slice(0, 12))); } catch { /* 私隱模式 */ } };
 
 // 桃園機場天氣＋METAR（open-meteo / metar.vatsim.net，皆免金鑰）
 let wxCache = null, wxAt = 0, metarLoaded = false;
@@ -958,14 +988,17 @@ async function renderFlight() {
     if (d > 720) d -= 1440;
     return d < (isDep ? -5 : -30);
   };
+  const favsF = favFlights();
   const rows = (data.airports?.TPE?.[state.flightDir] ?? []).filter((r) =>
     !passed(r) && (!q || r.f.includes(q) || (r.cs ?? []).some((c) => c.includes(q)) || r.o.includes(q))
-  ).slice(0, 30);
+  ).sort((a, b) => favsF.includes(b.f) - favsF.includes(a.f)) // 收藏置頂（穩定排序保留時間序）
+   .slice(0, 30);
   $("fids-note").textContent = `${t("fidsNote")} · ${t("fidsUpdated")} ${data.updated_at ?? ""}`;
   list.innerHTML = rows.length
     ? rows.map((r, i) => `
       <li class="flight-row">
         <div class="fl-main">
+          <button class="fav-star-fl" data-ffav="${r.f}" title="${t("favFlight")}">${favsF.includes(r.f) ? "★" : "☆"}</button>
           <span class="b-time">${r.at || r.et || r.st}</span>
           <span class="fl-no">${r.f}${(r.cs ?? []).length ? `<span class="fl-cs">+${r.cs.length}</span>` : ""}</span>
           <span class="fl-dest">${isDep ? "→" : "←"} ${r.o}</span>
@@ -981,6 +1014,16 @@ async function renderFlight() {
         </div>
       </li>`).join("")
     : `<li class="board-row empty">${t("noneFound")}</li>`;
+
+  // 收藏航班（與 as-jx 互通）
+  list.querySelectorAll("[data-ffav]").forEach((btn) => (btn.onclick = (e) => {
+    e.stopPropagation();
+    const a = favFlights();
+    const i = a.indexOf(btn.dataset.ffav);
+    if (i >= 0) a.splice(i, 1); else a.unshift(btn.dataset.ffav);
+    favFlightsSave(a);
+    renderFlight();
+  }));
 
   // 分享航班深連結（接送機協調用：對方打開直接看到這班）
   list.querySelectorAll("[data-share]").forEach((btn) => (btn.onclick = async () => {
@@ -1200,7 +1243,8 @@ $("lang-sel").addEventListener("change", (e) => {
 
 /* ---------- 深淺模式（◐自動 → ●深 → ○淺） ---------- */
 const THEME_ICON = { auto: "◐", dark: "●", light: "○" };
-let theme = localStorage.getItem("tymf-theme") ?? "auto";
+// trav-theme 為與姊妹站（as-jx）互通的共用鍵：dark/light，缺值＝自動
+let theme = localStorage.getItem("trav-theme") ?? localStorage.getItem("tymf-theme") ?? "auto";
 if (!THEME_ICON[theme]) theme = "auto";
 function applyTheme() {
   if (theme === "auto") delete document.documentElement.dataset.theme;
@@ -1212,6 +1256,7 @@ function applyTheme() {
 $("theme-btn").addEventListener("click", () => {
   theme = theme === "auto" ? "dark" : theme === "dark" ? "light" : "auto";
   localStorage.setItem("tymf-theme", theme);
+  try { theme === "auto" ? localStorage.removeItem("trav-theme") : localStorage.setItem("trav-theme", theme); } catch { /* 私隱模式 */ }
   applyTheme();
 });
 matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", applyTheme);
