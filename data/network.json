@@ -1,0 +1,36 @@
+{
+  "$comment": "桃園機場捷運路網基本資料。車站順序即路線順序（南下 A1→A22）。express=直達車是否停靠。transferSec=同站轉乘所需秒數（同月台約45-90秒、需換月台約150秒），可依實際狀況修改。",
+  "line": {
+    "id": "A",
+    "name": "機場線",
+    "nameEn": "Airport MRT",
+    "color": "#8E4E9E",
+    "expressColor": "#7B1FA2",
+    "localColor": "#1565C0"
+  },
+  "defaultTransferSec": 150,
+  "stations": [
+    { "id": "A1",   "name": "台北車站",     "nameEn": "Taipei Main Station",            "express": true,  "transferSec": 150, "connections": ["台鐵", "高鐵", "北捷"] },
+    { "id": "A2",   "name": "三重",         "nameEn": "Sanchong",                        "express": false, "transferSec": 150, "connections": ["北捷"] },
+    { "id": "A3",   "name": "新北產業園區", "nameEn": "New Taipei Industrial Park",      "express": true,  "transferSec": 120, "connections": ["環狀線"] },
+    { "id": "A4",   "name": "新莊副都心",   "nameEn": "Xinzhuang Fuduxin",               "express": false, "transferSec": 150, "connections": [] },
+    { "id": "A5",   "name": "泰山",         "nameEn": "Taishan",                         "express": false, "transferSec": 150, "connections": [] },
+    { "id": "A6",   "name": "泰山貴和",     "nameEn": "Taishan Guihe",                   "express": false, "transferSec": 150, "connections": [] },
+    { "id": "A7",   "name": "體育大學",     "nameEn": "National Taiwan Sport University","express": false, "transferSec": 150, "connections": [] },
+    { "id": "A8",   "name": "長庚醫院",     "nameEn": "Chang Gung Memorial Hospital",    "express": true,  "transferSec": 60,  "connections": [] },
+    { "id": "A9",   "name": "林口",         "nameEn": "Linkou",                          "express": false, "transferSec": 150, "connections": [] },
+    { "id": "A10",  "name": "山鼻",         "nameEn": "Shanbi",                          "express": false, "transferSec": 150, "connections": [] },
+    { "id": "A11",  "name": "坑口",         "nameEn": "Kengkou",                         "express": false, "transferSec": 150, "connections": [] },
+    { "id": "A12",  "name": "機場第一航廈", "nameEn": "Airport Terminal 1",              "express": true,  "transferSec": 45,  "connections": ["✈ T1"] },
+    { "id": "A13",  "name": "機場第二航廈", "nameEn": "Airport Terminal 2",              "express": true,  "transferSec": 60,  "connections": ["✈ T2"] },
+    { "id": "A14a", "name": "機場旅館",     "nameEn": "Airport Hotel",                   "express": false, "transferSec": 150, "connections": [] },
+    { "id": "A15",  "name": "大園",         "nameEn": "Dayuan",                          "express": false, "transferSec": 90,  "connections": [] },
+    { "id": "A16",  "name": "橫山",         "nameEn": "Hengshan",                        "express": false, "transferSec": 150, "connections": [] },
+    { "id": "A17",  "name": "領航",         "nameEn": "Linghang",                        "express": false, "transferSec": 150, "connections": [] },
+    { "id": "A18",  "name": "高鐵桃園站",   "nameEn": "Taoyuan HSR Station",             "express": true,  "transferSec": 120, "connections": ["高鐵"] },
+    { "id": "A19",  "name": "桃園體育園區", "nameEn": "Taoyuan Sports Park",             "express": false, "transferSec": 150, "connections": [] },
+    { "id": "A20",  "name": "興南",         "nameEn": "Xingnan",                         "express": false, "transferSec": 150, "connections": [] },
+    { "id": "A21",  "name": "環北",         "nameEn": "Huanbei",                         "express": true,  "transferSec": 120, "connections": [] },
+    { "id": "A22",  "name": "老街溪",       "nameEn": "Laojie River",                    "express": true,  "transferSec": 120, "connections": [] }
+  ]
+}
