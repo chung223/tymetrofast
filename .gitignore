@@ -1,3 +1,4 @@
 .tdx-extras/
 node_modules/
 _site/
+data/raw/station-info/

@@ -371,6 +371,19 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .firstlast b { color: var(--text); font-weight: 700; }
 .firstlast .flc { white-space: nowrap; }
 .b-time.sm { font-size: 15px; min-width: 0; }
+.fac-card { border: 1px dashed var(--line); border-radius: 10px; margin-bottom: 10px; }
+.fac-card summary {
+  font-size: 13px; font-weight: 700; color: var(--text-dim);
+  padding: 7px 12px; cursor: pointer; list-style: none;
+}
+.fac-card summary::-webkit-details-marker { display: none; }
+.fac-card summary::after { content: "▾"; float: right; color: var(--amber); }
+.fac-card[open] summary::after { content: "▴"; }
+.fac-card[open] summary { color: var(--amber); }
+.fac-body { padding: 2px 12px 10px; display: grid; gap: 8px; }
+.fac-row { display: grid; grid-template-columns: 112px 1fr; gap: 8px; font-size: 12.5px; }
+.fac-row .fac-k { color: var(--text); font-weight: 700; }
+.fac-row .fac-v { color: var(--text-dim); line-height: 1.6; }
 .board-list { list-style: none; }
 .board-row {
   display: flex; align-items: center; gap: 12px;
@@ -410,6 +423,8 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .fl-go:hover { filter: brightness(1.08); }
 .fl-go.alt { background: none; border: 1px solid var(--line-strong); color: var(--text-dim); }
 .fl-go.alt:hover { color: var(--amber); border-color: var(--amber); }
+.fav-star-fl { flex: none; font-size: 15px; color: var(--amber); padding: 0 2px; line-height: 1; }
+.fl-tag.mile-link { color: var(--blue); border-color: var(--blue-deep); font-weight: 700; text-decoration: none; }
 .flight-banner { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; border-left: 3px solid var(--purple); }
 .flight-banner .b-time { font: 400 17px var(--font-led); color: var(--amber); }
 .flight-banner .fl-note { flex-basis: 100%; font-size: 11.5px; color: var(--text-dim); }
