@@ -530,15 +530,27 @@ function locateNearest(btn, apply) {
 }
 
 /* ---------- ✈ 航班（吃 as-jx 每30分更新的 TDX FIDS 看板） ---------- */
-const FIDS_URL = new URLSearchParams(location.search).get("fids") ?? "https://chung223.github.io/as-jx/tdx.json";
+// 來源優先序：?fids= 覆寫 → 本站 data/fids.json（每30分排程更新）→ as-jx tdx.json（備援）
+const FIDS_SOURCES = [
+  new URLSearchParams(location.search).get("fids"),
+  "data/fids.json",
+  "https://chung223.github.io/as-jx/tdx.json",
+].filter(Boolean);
 let fidsCache = null, fidsAt = 0;
 async function loadFids() {
   if (fidsCache && Date.now() - fidsAt < 5 * 60 * 1000) return fidsCache;
-  const r = await fetch(FIDS_URL, { cache: "no-cache" });
-  if (!r.ok) throw new Error("fids");
-  fidsCache = await r.json();
-  fidsAt = Date.now();
-  return fidsCache;
+  for (const url of FIDS_SOURCES) {
+    try {
+      const r = await fetch(url, { cache: "no-cache" });
+      if (!r.ok) continue;
+      const data = await r.json();
+      if (!data?.airports?.TPE) continue;
+      fidsCache = data;
+      fidsAt = Date.now();
+      return fidsCache;
+    } catch { /* 試下一個來源 */ }
+  }
+  throw new Error("fids");
 }
 const termToStation = (term) => (/2/.test(term) ? "A13" : /1/.test(term) ? "A12" : "A13");
 
