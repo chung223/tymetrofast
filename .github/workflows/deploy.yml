@@ -37,7 +37,7 @@ jobs:
       - name: 組裝網站
         run: |
           mkdir -p _site/data
-          cp index.html manifest.webmanifest sw.js _site/
+          cp index.html hub.html manifest.webmanifest sw.js _site/
           cp -r assets icons _site/
           cp data/*.json _site/data/
 
