@@ -12,6 +12,7 @@ on:
 permissions:
   contents: write
   actions: write
+  issues: write
 
 concurrency:
   group: update-timetable
@@ -48,6 +49,7 @@ jobs:
 
       - name: 串連成逐班車時刻並驗證
         run: |
+          cp data/timetable.json /tmp/timetable-old.json
           if [ -d data/raw/official/weekday ] && [ -d data/raw/official/holiday ]; then
             node scripts/official-to-timetable.mjs
           elif [ -f data/raw/tdx/StationTimeTable.json ]; then
@@ -72,6 +74,23 @@ jobs:
           git add data/fares.json data/hsr-a18.json 2>/dev/null || true
           git diff --cached --quiet || git commit -m "chore: 更新票價與高鐵接駁資料"
           git push
+
+      # 改點時自動開 Issue 摘要差異，方便追蹤與抽查
+      - name: 改點偵測開 Issue
+        if: github.ref == 'refs/heads/main'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ -f /tmp/timetable-old.json ] || exit 0
+          node scripts/diff-timetable.mjs /tmp/timetable-old.json data/timetable.json > /tmp/tt-diff.md
+          if [ -s /tmp/tt-diff.md ]; then
+            title="🚇 時刻表改點：$(node -p "require('./data/timetable.json').version")"
+            existing=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number' || true)
+            if [ -z "$existing" ]; then
+              gh issue create --title "$title" --body-file /tmp/tt-diff.md
+            fi
+          fi
 
       # GITHUB_TOKEN 的 push 不會觸發其他 workflow，須主動觸發部署
       - name: 觸發網站重新部署

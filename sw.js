@@ -2,12 +2,12 @@
  * - data/*.json：網路優先（保持班表最新），離線退回快取
  * - 其他資產：快取優先＋背景更新（stale-while-revalidate）
  */
-const CACHE = "tymf-v3";
+const CACHE = "tymf-v4";
 const PRECACHE = [
   ".", "index.html", "manifest.webmanifest",
   "assets/style.css", "assets/app.js", "assets/planner.js", "assets/i18n.js",
   "data/network.json", "data/timetable.json", "data/holidays.json",
-  "data/station-names.json", "data/geo.json",
+  "data/station-names.json", "data/geo.json", "data/passes.json",
   "icons/icon.svg",
 ];
 

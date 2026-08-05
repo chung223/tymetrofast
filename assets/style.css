@@ -167,6 +167,7 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .map-panel { padding: 10px 6px 6px; }
 .line-map-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
 .line-map { display: block; min-width: 690px; width: 100%; height: 104px; }
+.line-map.snake { min-width: 0; }
 .line-map .flow {
   stroke-dasharray: 3 9; opacity: 0.75;
   animation: dashflow 0.9s linear infinite;
@@ -183,6 +184,7 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .map-hint { font-size: 11px; color: var(--text-dim); padding: 4px 10px 6px; }
 .dot-demo { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #fff; border: 2px solid var(--blue); vertical-align: -1px; margin-right: 3px; }
 .dot-demo.express { border-color: var(--purple); width: 11px; height: 11px; }
+.dot-demo.live { width: 8px; height: 8px; background: var(--purple); border-color: var(--purple); box-shadow: 0 0 6px var(--purple); }
 
 /* ---------- 月台警示帶 ---------- */
 .platform-strip {
@@ -338,6 +340,13 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 
 /* ---------- 票價 / 提示 / 高鐵 ---------- */
 .fare-chip { color: var(--amber); font-weight: 900; }
+.last-chip {
+  font-size: 11px; font-weight: 900; letter-spacing: 0.08em;
+  color: #fff; background: var(--red); border-radius: 6px; padding: 2px 8px;
+  align-self: center; flex: none;
+}
+.board-row .last-chip { margin-left: auto; }
+.tpass-card { border-left-color: var(--green); }
 .tip-card {
   font-size: 13px; color: var(--text-dim); line-height: 1.7;
   border-left: 3px solid var(--amber);
