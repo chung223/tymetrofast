@@ -11,6 +11,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { chainEvents } from "./lib/chain.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const rawDir = join(root, "data/raw/tdx");
@@ -109,121 +110,22 @@ for (const rec of stt) {
   }
 }
 
-/* ---------- 沿路線做單調對齊，串成逐班車 ---------- */
-// 同車種同方向的列車不會互相超車，因此每站的事件與進行中列車保持相同順序。
-// 用順序保持的最小成本對齊（DP），比逐班貪婪匹配更能抵抗「尖峰密班 + 待避延誤」的歧義。
-const TERMINALS = { S: new Set(["A13", "A21", "A22"]), N: new Set(["A1"]) };
+/* ---------- 沿路線做單調對齊，串成逐班車（共用 lib/chain.mjs） ---------- */
+const TERMINALS = { S: new Set(["A13", "A21", "A22"]), N: new Set(["A12", "A1"]) };
 const ORIGINS = new Set(["A1", "A13", "A21", "A22"]); // 常見中途始發站
-const WIN_EARLY = 2, WIN_LATE = 9; // 匹配窗（分），寬限含待避
 
 function chain(day, dir, type, byStation) {
   const seqAll = dir === "S" ? order : [...order].reverse();
-  // 只走訪有事件的站（終點站通常沒有發車事件，收班時另行補上到站時刻）
-  const seq = seqAll.filter((id) => byStation[id]?.length);
-  const trains = [];
-  let open = []; // {stops:[[id,t]], cursor, dest}
-
-  const closeTrain = (tr) => {
-    // 依 dest 或終點站白名單補上終點到站時刻
-    const last = tr.stops[tr.stops.length - 1][0];
-    let terminal = tr.dest && idx.has(tr.dest) ? tr.dest : null;
-    if (!terminal) {
-      const ahead = seqAll.slice(seqAll.indexOf(last) + 1);
-      terminal = ahead.find((id) => TERMINALS[dir].has(id)) ?? null;
-    }
-    if (terminal && terminal !== last) {
-      const gap = Math.abs(idx.get(terminal) - idx.get(last));
-      const maxGap = type === "express" ? 8 : 2; // 直達車跳站、普通車終點最多差 2 站
-      if (gap <= maxGap && (dir === "S") === (idx.get(terminal) > idx.get(last))) {
-        tr.stops.push([terminal, Math.round((tr.cursor + runBetween(type, last, terminal)) * 2) / 2]);
-      }
-    }
-    if (tr.stops.length >= 2) trains.push(tr);
-  };
-
-  for (let si = 0; si < seq.length; si++) {
-    const sid = seq[si];
-    const evs = byStation[sid].slice().sort((a, b) => a.t - b.t);
-    open.sort((a, b) => a.cursor - b.cursor);
-
-    // 已到終點的列車先收班
-    const active = [];
-    for (const tr of open) {
-      if (tr.dest && tr.dest === tr.stops[tr.stops.length - 1][0]) closeTrain(tr);
-      else active.push(tr);
-    }
-
-    // DP 對齊：dp[i][j] = 前 i 班進行中列車對前 j 個事件的最小成本
-    const n = active.length, m = evs.length;
-    const exps = active.map((tr) => tr.cursor + runBetween(type, tr.stops[tr.stops.length - 1][0], sid));
-    const matchCost = (i, j) => {
-      const dev = evs[j].t - exps[i];
-      return dev < -WIN_EARLY || dev > WIN_LATE ? Infinity : Math.abs(dev);
-    };
-    const closeCost = (i) => {
-      const tr = active[i];
-      const last = tr.stops[tr.stops.length - 1][0];
-      if (tr.dest === last) return 0;
-      const li = idx.get(last);
-      const nearTerminal = [...TERMINALS[dir]].some(
-        (t) => Math.abs(idx.get(t) - li) <= 2 && (dir === "S") === (idx.get(t) >= li)
-      );
-      return nearTerminal ? 3 : 30;
-    };
-    const newCost = ORIGINS.has(sid) || si === 0 ? 1 : 30;
-    const INF = Infinity;
-    const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(INF));
-    const via = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0)); // 1=match 2=close 3=new
-    dp[0][0] = 0;
-    for (let i = 0; i <= n; i++) {
-      for (let j = 0; j <= m; j++) {
-        if (dp[i][j] === INF) continue;
-        if (i < n && j < m) {
-          const c = dp[i][j] + matchCost(i, j);
-          if (c < dp[i + 1][j + 1]) { dp[i + 1][j + 1] = c; via[i + 1][j + 1] = 1; }
-        }
-        if (i < n) {
-          const c = dp[i][j] + closeCost(i);
-          if (c < dp[i + 1][j]) { dp[i + 1][j] = c; via[i + 1][j] = 2; }
-        }
-        if (j < m) {
-          const c = dp[i][j] + newCost;
-          if (c < dp[i][j + 1]) { dp[i][j + 1] = c; via[i][j + 1] = 3; }
-        }
-      }
-    }
-    // 回溯
-    const ops = [];
-    for (let i = n, j = m; i > 0 || j > 0; ) {
-      const v = via[i][j];
-      ops.unshift(v);
-      if (v === 1) { i--; j--; }
-      else if (v === 2) i--;
-      else j--;
-    }
-    const nextOpen = [];
-    let i = 0, j = 0;
-    for (const v of ops) {
-      if (v === 1) {
-        const tr = active[i];
-        tr.stops.push([sid, evs[j].t]);
-        tr.cursor = evs[j].t;
-        if (!tr.dest && evs[j].dest) tr.dest = evs[j].dest;
-        nextOpen.push(tr);
-        i++; j++;
-      } else if (v === 2) {
-        closeTrain(active[i]);
-        i++;
-      } else {
-        nextOpen.push({ stops: [[sid, evs[j].t]], cursor: evs[j].t, dest: evs[j].dest || null });
-        j++;
-      }
-    }
-    open = nextOpen;
-  }
-  for (const tr of open) closeTrain(tr);
-
-  return trains.map((tr) => {
+  const chained = chainEvents({
+    byStation: new Map(Object.entries(byStation)),
+    seqAll,
+    terminals: TERMINALS[dir],
+    origins: ORIGINS,
+    runBetween: (a, b) => runBetween(type, a, b),
+    lineIndex: (id) => idx.get(id),
+    maxTerminalGap: type === "express" ? 8 : 2,
+  });
+  return chained.map((tr) => {
     const dep = Math.round(tr.stops[0][1]);
     const hh = String(Math.floor(dep / 60) % 24).padStart(2, "0");
     const mm = String(dep % 60).padStart(2, "0");

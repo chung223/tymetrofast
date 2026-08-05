@@ -16,11 +16,11 @@
 
 三種方式，由簡到細：
 
-### 方式一：跑 TDX 自動更新（建議）
+### 方式一：跑官方自動更新（建議）
 
-到 repo 的 **Actions → 更新官方時刻表（TDX） → Run workflow**。工作流程會從 [TDX 運輸資料流通服務](https://tdx.transportdata.tw) 抓桃捷官方各站時刻表，串連成逐班車時刻、驗證後自動 commit，接著自動重新部署。每週六清晨也會自動執行一次。
+到 repo 的 **Actions → 更新官方時刻表（TDX） → Run workflow**。工作流程會抓[桃捷官網各站時刻表](https://www.tymetro.com.tw/tymetro-new/tw/_pages/travel-guide/timetable.html)（平日與假日各一份，含直達車、尖峰增停直達、增開機場班次、尖峰跳站普通車等所有車種），串連成逐班車時刻、驗證後自動 commit，接著自動重新部署。每週六清晨也會自動執行一次。
 
-> **建議設定 TDX 金鑰**（匿名存取很容易被限流）：到 [TDX](https://tdx.transportdata.tw) 免費註冊會員 → 會員專區取得 Client Id / Secret，然後在 repo **Settings → Secrets and variables → Actions** 新增 `TDX_CLIENT_ID` 與 `TDX_CLIENT_SECRET`。
+> 備援資料源為 [TDX 運輸資料流通服務](https://tdx.transportdata.tw)，需要金鑰：TDX 免費註冊會員 → 會員專區取得 Client Id / Secret，在 repo **Settings → Secrets and variables → Actions** 新增 `TDX_CLIENT_ID` 與 `TDX_CLIENT_SECRET`。官網抓取正常時可不設定。
 
 ### 方式二：在 GitHub 網頁上編輯班距模式
 

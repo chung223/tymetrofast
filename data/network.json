@@ -31,6 +31,6 @@
     { "id": "A19",  "name": "桃園體育園區", "nameEn": "Taoyuan Sports Park",             "express": false, "transferSec": 150, "connections": [] },
     { "id": "A20",  "name": "興南",         "nameEn": "Xingnan",                         "express": false, "transferSec": 150, "connections": [] },
     { "id": "A21",  "name": "環北",         "nameEn": "Huanbei",                         "express": true,  "transferSec": 120, "connections": [] },
-    { "id": "A22",  "name": "老街溪",       "nameEn": "Laojie River",                    "express": true,  "transferSec": 120, "connections": [] }
+    { "id": "A22",  "name": "老街溪",       "nameEn": "Laojie River",                    "express": false, "transferSec": 120, "connections": [] }
   ]
 }

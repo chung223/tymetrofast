@@ -26,16 +26,16 @@ jobs:
         with:
           node-version: 22
 
-      - name: 抓取 TDX 桃捷原始資料（無金鑰時會失敗，僅警告）
+      - name: 抓取桃捷官網時刻表頁面（主要資料源，平日＋假日）
+        continue-on-error: true
+        run: bash scripts/fetch-official-site.sh
+
+      - name: 抓取 TDX 原始資料（備援；無金鑰時僅警告）
         continue-on-error: true
         env:
           TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
           TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
         run: node scripts/fetch-tdx.mjs
-
-      - name: 抓取桃捷官網時刻表頁面（備援資料源）
-        continue-on-error: true
-        run: bash scripts/fetch-official-site.sh
 
       - name: 提交原始資料
         run: |
@@ -47,12 +47,15 @@ jobs:
 
       - name: 串連成逐班車時刻並驗證
         run: |
-          if [ -f data/raw/tdx/StationTimeTable.json ]; then
+          if [ -d data/raw/official/weekday ] && [ -d data/raw/official/holiday ]; then
+            node scripts/official-to-timetable.mjs
+          elif [ -f data/raw/tdx/StationTimeTable.json ]; then
             node scripts/tdx-to-timetable.mjs
-            node scripts/test-planner.mjs
-            git add data/timetable.json
-            git diff --cached --quiet || git commit -m "chore: 依 TDX 官方資料更新時刻表"
-            git push
           else
-            echo "::warning::無 TDX 資料（請設定 TDX_CLIENT_ID/TDX_CLIENT_SECRET secrets），本次僅更新原始頁面"
+            echo "::warning::官網與 TDX 皆無資料，未更新時刻表"
+            exit 0
           fi
+          node scripts/test-planner.mjs
+          git add data/timetable.json
+          git diff --cached --quiet || git commit -m "chore: 依官方資料更新時刻表"
+          git push
