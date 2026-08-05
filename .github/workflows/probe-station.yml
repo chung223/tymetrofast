@@ -1,0 +1,49 @@
+name: 探測車站資訊頁（暫時）
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 抓取樣本站頁（中英文）
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+          mkdir -p probe
+          for lang in tw en; do
+            for id in A1 A12 A18; do
+              url="https://www.tymetro.com.tw/tymetro-new/$lang/_pages/travel-guide/$id"
+              curl -sS -L --compressed -A "$UA" --max-time 30 -o "probe/$lang-$id.html" "$url" || true
+              echo "=== $lang $id: $(wc -c < probe/$lang-$id.html) bytes"
+            done
+          done
+
+      - name: 摘錄設施相關段落
+        run: |
+          python3 - <<'EOF'
+          import re, glob
+          for f in sorted(glob.glob("probe/*.html")):
+              html = open(f, encoding="utf-8", errors="ignore").read()
+              print(f"\n########## {f} ##########")
+              # 列出 class 名稱分佈，找設施區塊
+              classes = sorted(set(re.findall(r'class="([^"]{1,60})"', html)))
+              print("CLASSES:", ", ".join(c for c in classes if re.search(r'stat|fac|exit|info|serv|icon|map', c, re.I))[:1500])
+              # 關鍵詞上下文
+              text = re.sub(r"<script.*?</script>|<style.*?</style>", "", html, flags=re.S)
+              for kw in ["電梯", "置物", "出口", "廁所", "設施", "嬰兒", "AED", "YouBike", "Elevator", "Locker", "Exit", "Toilet", "Restroom", "Facilit"]:
+                  for m in re.finditer(kw, text):
+                      s = max(0, m.start() - 120)
+                      frag = re.sub(r"\s+", " ", text[s:m.start() + 200])
+                      print(f"[{kw}] …{frag}…")
+                      break  # 每個關鍵詞印第一處即可
+          EOF
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: station-probe
+          path: probe/
+          retention-days: 3
