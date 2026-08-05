@@ -123,6 +123,21 @@ export function planDirect(index, { from, to, departAfter }) {
 }
 
 /**
+ * 趕時間反推：在 arriveBy 前抵達的「最晚出發」行程（找不到回傳 null）。
+ * 由起點站發車事件從晚到早逐一嘗試，配合 planJourney 的最早抵達驗證。
+ */
+export function planArriveBy(index, { from, to, arriveBy }) {
+  const deps = [...new Set(
+    index.connections.filter((c) => c.from === from && c.dep <= arriveBy).map((c) => c.dep)
+  )].sort((a, b) => b - a);
+  for (const t of deps) {
+    const j = planJourney(index, { from, to, departAfter: t });
+    if (j && j.arr <= arriveBy + 1e-9) return j;
+  }
+  return null;
+}
+
+/**
  * 查詢多個接續方案：回傳依出發時刻遞增的前 count 個「不被支配」行程
  * （每個行程都是該出發時刻之後的最早抵達；晚出發但同時抵達者取晚出發）。
  */
