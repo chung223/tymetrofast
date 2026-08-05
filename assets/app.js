@@ -542,7 +542,31 @@ async function loadFids() {
 }
 const termToStation = (term) => (/2/.test(term) ? "A13" : /1/.test(term) ? "A12" : "A13");
 
+// 桃園機場天氣（open-meteo，免金鑰）
+let wxCache = null, wxAt = 0;
+async function renderWx() {
+  const el = $("wx-strip");
+  try {
+    if (!wxCache || Date.now() - wxAt > 30 * 60 * 1000) {
+      const r = await fetch("https://api.open-meteo.com/v1/forecast?latitude=25.08&longitude=121.233&current=temperature_2m,weather_code,wind_speed_10m&hourly=precipitation_probability&forecast_days=1&timezone=Asia%2FTaipei");
+      if (!r.ok) throw new Error();
+      wxCache = await r.json();
+      wxAt = Date.now();
+    }
+    const c = wxCache.current;
+    const code = c.weather_code;
+    const icon = code === 0 ? "☀️" : code <= 2 ? "🌤" : code === 3 ? "☁️" : code < 50 ? "🌫" : code < 70 ? "🌦" : code < 80 ? "🌨" : code < 95 ? "🌧" : "⛈";
+    const hourIdx = Math.min(new Date(wxCache.current.time).getHours(), (wxCache.hourly?.precipitation_probability?.length ?? 1) - 1);
+    const pop = wxCache.hourly?.precipitation_probability?.[hourIdx];
+    el.innerHTML = `✈ TPE ${icon} <b>${Math.round(c.temperature_2m)}°</b>` +
+      (pop != null ? ` <span>☔ <b>${pop}%</b></span>` : "") +
+      ` <span>💨 <b>${Math.round(c.wind_speed_10m)}</b> km/h</span>`;
+    el.hidden = false;
+  } catch { el.hidden = true; }
+}
+
 async function renderFlight() {
+  renderWx();
   const list = $("flight-list");
   $("fl-dir-dep").textContent = t("flightDep");
   $("fl-dir-arr").textContent = t("flightArr");

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#171310">
+<meta name="theme-color" content="#120f0a">
 <meta name="description" content="桃園機場捷運快速轉乘計算器：比較直達車＋轉乘與普通車直達，依出發或抵達時間找出最快搭法。">
 <title>機捷快轉｜桃園機場捷運快速轉乘計算器</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=DotGothic16&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Noto+Serif+TC:wght@700;900&family=DotGothic16&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -97,6 +97,7 @@
 
   <div id="flight-wrap" hidden>
     <section class="panel flight-panel">
+      <div class="wx-strip" id="wx-strip" hidden></div>
       <div class="seg-control fl-dir" role="tablist">
         <button class="seg on" id="fl-dir-dep" role="tab">出發</button>
         <button class="seg" id="fl-dir-arr" role="tab">抵達</button>
@@ -114,7 +115,8 @@
   <p>非官方工具，時刻僅供參考，實際以
     <a href="https://www.tymetro.com.tw/tymetro-new/tw/_pages/travel-guide/timetable.html" target="_blank" rel="noopener">桃園捷運官方時刻表</a>為準。
   </p>
-  <p><a href="https://github.com/chung223/tymetrofast" target="_blank" rel="noopener">GitHub</a> · 改點時更新 repo 內 <code>data/</code> 後自動重新部署</p>
+  <p><a href="https://github.com/chung223/tymetrofast" target="_blank" rel="noopener">GitHub</a> · 改點時更新 repo 內 <code>data/</code> 後自動重新部署
+    · 姊妹站 <a href="https://chung223.github.io/as-jx/" target="_blank" rel="noopener">✈ 哩程玩家工具箱</a></p>
 </footer>
 
 <!-- 選站底部面板 -->
