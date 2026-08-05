@@ -35,6 +35,7 @@
   <nav class="view-tabs" role="tablist">
     <button class="vtab on" id="tab-plan" role="tab">路線查詢</button>
     <button class="vtab" id="tab-board" role="tab">車站看板</button>
+    <button class="vtab" id="tab-flight" role="tab">✈ 航班</button>
   </nav>
 
   <div id="plan-wrap">
@@ -91,6 +92,14 @@
         <span class="station-chip"><span class="code" id="board-code">A1</span><span class="stn-name" id="board-name">台北車站</span></span>
       </button>
       <ol class="board-list" id="board-list"></ol>
+    </section>
+  </div>
+
+  <div id="flight-wrap" hidden>
+    <section class="panel flight-panel">
+      <input type="search" id="flight-search" class="dt-input flight-search" placeholder="搜尋航班號或目的地">
+      <ol class="flight-list" id="flight-list"></ol>
+      <p class="map-hint" id="fids-note"></p>
     </section>
   </div>
 
