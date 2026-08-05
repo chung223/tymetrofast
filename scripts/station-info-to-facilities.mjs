@@ -60,10 +60,13 @@ function parseExits(html) {
   let m;
   while ((m = rowRe.exec(seg))) {
     const cells = [...m[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)].map((x) => cellText(x[1]).replace(/\n/g, " "));
-    if (cells.length < 2 || /Exit No|出口編號/i.test(cells[0])) continue;
-    // A1 頁面出口表後緊接公車路線表（3–4 位數路線號），排除；實體出口編號不會超過 2 位數
-    if (/^\d{3,}/.test(cells[0])) continue;
-    exits.push([cells[0], cells.slice(1).filter(Boolean).join("・")]);
+    if (cells.length < 2) continue;
+    const no = cells[0], val = cells.slice(1).filter(Boolean).join("・");
+    // 只收實體出口列：編號為 1–2 位數（可帶字母）。A1 中文頁此區為公車轉乘表
+    //（表頭「路線名稱」、值含「××客運・市區公車」），以編號格式＋業者字樣雙重排除。
+    if (!/^[A-Za-z]?\d{1,2}[A-Za-z]?$/.test(no)) continue;
+    if (/客運|市區公車|國道公車|Bus Co/i.test(val)) continue;
+    exits.push([no, val]);
     if (exits.length >= 15) break;
   }
   return exits;
