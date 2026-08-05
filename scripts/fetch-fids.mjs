@@ -80,8 +80,14 @@ for (const [kind, path] of [["dep", "Departure"], ["arr", "Arrival"]]) {
   if (kind === "arr") await new Promise((r) => setTimeout(r, 1500));
   const res = await fetchRetry(`https://tdx.transportdata.tw/api/basic/v2/Air/FIDS/Airport/${path}/TPE?%24top=400&%24format=JSON`);
   if (!res.ok) { console.error(`${path} 失敗 ${res.status}`); process.exit(1); }
-  data.airports.TPE[kind] = norm(await res.json(), kind);
-  console.log(`${kind}: ${data.airports.TPE[kind].length} 班`);
+  const raw = await res.json();
+  const rows = Array.isArray(raw) ? raw : raw?.FIDSAirports ?? raw?.data ?? [];
+  data.airports.TPE[kind] = norm(rows, kind);
+  console.log(`${kind}: raw ${rows.length} → ${data.airports.TPE[kind].length} 班`);
+  if (!data.airports.TPE[kind].length) {
+    if (!Array.isArray(raw)) console.log("非陣列回應，鍵:", Object.keys(raw ?? {}).join(","));
+    if (rows.length) console.log("首筆樣本:", JSON.stringify(rows[0]).slice(0, 500));
+  }
 }
 
 if ((data.airports.TPE.dep?.length ?? 0) < 3) { console.error("出發班次過少，疑似資料異常，不寫檔"); process.exit(1); }
