@@ -26,28 +26,33 @@ jobs:
         with:
           node-version: 22
 
-      - name: 抓取 TDX 桃捷原始資料
+      - name: 抓取 TDX 桃捷原始資料（無金鑰時會失敗，僅警告）
+        continue-on-error: true
         env:
           TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
           TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
         run: node scripts/fetch-tdx.mjs
 
+      - name: 抓取桃捷官網時刻表頁面（備援資料源）
+        continue-on-error: true
+        run: bash scripts/fetch-official-site.sh
+
       - name: 提交原始資料
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A data/raw/tdx
-          git diff --cached --quiet || git commit -m "chore: 更新 TDX 原始資料"
+          git add -A data/raw
+          git diff --cached --quiet || git commit -m "chore: 更新官方時刻表原始資料"
           git push
 
-      - name: 串連成逐班車時刻
-        run: node scripts/tdx-to-timetable.mjs
-
-      - name: 轉乘引擎測試
-        run: node scripts/test-planner.mjs
-
-      - name: 提交更新後的時刻表
+      - name: 串連成逐班車時刻並驗證
         run: |
-          git add data/timetable.json
-          git diff --cached --quiet || git commit -m "chore: 依 TDX 官方資料更新時刻表"
-          git push
+          if [ -f data/raw/tdx/StationTimeTable.json ]; then
+            node scripts/tdx-to-timetable.mjs
+            node scripts/test-planner.mjs
+            git add data/timetable.json
+            git diff --cached --quiet || git commit -m "chore: 依 TDX 官方資料更新時刻表"
+            git push
+          else
+            echo "::warning::無 TDX 資料（請設定 TDX_CLIENT_ID/TDX_CLIENT_SECRET secrets），本次僅更新原始頁面"
+          fi
