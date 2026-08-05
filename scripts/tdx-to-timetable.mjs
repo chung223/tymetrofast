@@ -70,15 +70,10 @@ function runBetween(type, a, b) {
 }
 
 /* ---------- 整理各站發車事件 ---------- */
-// TDX 桃捷 TrainType：1=普通車、2=直達車（防禦式判讀，缺欄位時當普通車）
-function typeOf(rec) {
-  const t = rec.TrainType;
-  if (t === 2 || t === "2") return "express";
-  if (typeof rec.TripHeadSign === "string" && rec.TripHeadSign.includes("直達")) return "express";
-  return "local";
-}
+// TDX 桃捷實際結構：TrainType 與 StoppingPatternID 在每筆時刻上
+// （TrainType 1=普通車、2=直達車；StoppingPatternID 區分停站模式，如 SP2=直達、SP3=增開機場班次）
 function destOf(rec) {
-  return norm(rec.DestinationStationID ?? rec.DestinationStaionID ?? "");
+  return norm(rec.DestinationStationID ?? rec.DestinationStaionID ?? ""); // TDX 有拼字錯誤欄位
 }
 function dirOf(rec) {
   const from = norm(rec.StationID), dest = destOf(rec);
@@ -93,19 +88,21 @@ function dayTypesOf(rec) {
   return out.length ? out : ["weekday", "holiday"];
 }
 
-// events[dayType][dir][type][stationId] = [{t, dest}]，依時間排序
+// events[dayType][dir][停站模式] = { express, byStation: {stationId: [{t, dest}]} }
 const events = { weekday: {}, holiday: {} };
 for (const rec of stt) {
   const sid = norm(rec.StationID);
   if (!idx.has(sid)) continue;
-  const type = typeOf(rec);
   const dir = dirOf(rec);
+  const dest = destOf(rec);
   for (const day of dayTypesOf(rec)) {
     for (const tt of rec.Timetables ?? []) {
       const hm = tt.DepartureTime || tt.ArrivalTime;
       if (!hm) continue;
-      const bucket = ((events[day][dir] ??= {})[type] ??= {});
-      (bucket[sid] ??= []).push({ t: toMin(hm), dest: destOf(rec) });
+      const isExp = tt.TrainType === 2 || tt.TrainType === "2";
+      const sp = tt.StoppingPatternID ?? (isExp ? "EXP" : "LOC");
+      const g = ((events[day][dir] ??= {})[sp] ??= { express: isExp, byStation: {} });
+      (g.byStation[sid] ??= []).push({ t: toMin(hm), dest: idx.has(dest) ? dest : null });
     }
   }
 }
@@ -114,23 +111,24 @@ for (const rec of stt) {
 const TERMINALS = { S: new Set(["A13", "A21", "A22"]), N: new Set(["A12", "A1"]) };
 const ORIGINS = new Set(["A1", "A13", "A21", "A22"]); // 常見中途始發站
 
-function chain(day, dir, type, byStation) {
+function chain(dir, sp, group) {
   const seqAll = dir === "S" ? order : [...order].reverse();
+  const type = group.express ? "express" : "local";
   const chained = chainEvents({
-    byStation: new Map(Object.entries(byStation)),
+    byStation: new Map(Object.entries(group.byStation)),
     seqAll,
     terminals: TERMINALS[dir],
     origins: ORIGINS,
     runBetween: (a, b) => runBetween(type, a, b),
     lineIndex: (id) => idx.get(id),
-    maxTerminalGap: type === "express" ? 8 : 2,
+    maxTerminalGap: group.express ? 8 : 2,
   });
   return chained.map((tr) => {
     const dep = Math.round(tr.stops[0][1]);
     const hh = String(Math.floor(dep / 60) % 24).padStart(2, "0");
     const mm = String(dep % 60).padStart(2, "0");
     return {
-      id: `${dir}-${type === "express" ? "EXP" : "LOC"}-${hh}${mm}-${tr.stops[0][0]}`,
+      id: `${dir}-${group.express ? "EXP" : "LOC"}-${hh}${mm}-${sp}`,
       type, dir, stops: tr.stops,
     };
   });
@@ -140,10 +138,8 @@ const dayTypes = {};
 for (const day of ["weekday", "holiday"]) {
   const trains = [];
   for (const dir of ["S", "N"]) {
-    for (const type of ["local", "express"]) {
-      const byStation = events[day]?.[dir]?.[type];
-      if (!byStation) continue;
-      trains.push(...chain(day, dir, type, byStation));
+    for (const [sp, group] of Object.entries(events[day]?.[dir] ?? {})) {
+      trains.push(...chain(dir, sp, group));
     }
   }
   trains.sort((a, b) => a.stops[0][1] - b.stops[0][1] || a.id.localeCompare(b.id));

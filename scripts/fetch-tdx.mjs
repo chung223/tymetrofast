@@ -44,6 +44,7 @@ async function getToken() {
 const token = await getToken();
 let okCount = 0;
 for (const res of RESOURCES) {
+  if (okCount) await new Promise((r) => setTimeout(r, 1500)); // TDX 免費額度限流，放慢請求
   const url = `${BASE}/${res}/TYMC?%24top=100000&%24format=JSON`;
   try {
     const r = await fetch(url, {
