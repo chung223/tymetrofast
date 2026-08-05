@@ -42,17 +42,29 @@ async function getToken() {
 }
 
 const token = await getToken();
+
+// TDX 免費額度有短時間連續呼叫限流：429 時等 65 秒重試
+async function fetchRetry(url, headers) {
+  for (let i = 0; i < 3; i++) {
+    const r = await fetch(url, { headers });
+    if (r.status === 429 && i < 2) {
+      console.log("  （限流，65 秒後重試）");
+      await new Promise((res) => setTimeout(res, 65000));
+      continue;
+    }
+    return r;
+  }
+}
+
 let okCount = 0;
 for (const res of RESOURCES) {
-  if (okCount) await new Promise((r) => setTimeout(r, 1500)); // TDX 免費額度限流，放慢請求
+  if (okCount) await new Promise((r) => setTimeout(r, 1500)); // 放慢請求
   const url = `${BASE}/${res}/TYMC?%24top=100000&%24format=JSON`;
   try {
-    const r = await fetch(url, {
-      headers: {
-        accept: "application/json",
-        "accept-encoding": "gzip",
-        ...(token ? { authorization: `Bearer ${token}` } : {}),
-      },
+    const r = await fetchRetry(url, {
+      accept: "application/json",
+      "accept-encoding": "gzip",
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
     });
     if (!r.ok) throw new Error(`HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
     const data = await r.json();

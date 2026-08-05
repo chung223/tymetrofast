@@ -31,11 +31,25 @@ const TARGETS = [
   ["THSR_Station", "https://tdx.transportdata.tw/api/basic/v2/Rail/THSR/Station?%24top=100&%24format=JSON"],
   ["THSR_GeneralTimetable", "https://tdx.transportdata.tw/api/basic/v2/Rail/THSR/GeneralTimetable?%24top=2000&%24format=JSON"],
 ];
+
+// TDX 免費額度有短時間連續呼叫限流：429 時等 65 秒重試
+async function fetchRetry(url) {
+  for (let i = 0; i < 3; i++) {
+    const r = await fetch(url, { headers: { accept: "application/json", authorization: `Bearer ${token}` } });
+    if (r.status === 429 && i < 2) {
+      console.log("  （限流，65 秒後重試）");
+      await new Promise((res) => setTimeout(res, 65000));
+      continue;
+    }
+    return r;
+  }
+}
+
 let ok = 0;
 for (const [name, url] of TARGETS) {
   if (ok) await new Promise((r) => setTimeout(r, 1500));
   try {
-    const r = await fetch(url, { headers: { accept: "application/json", authorization: `Bearer ${token}` } });
+    const r = await fetchRetry(url);
     if (!r.ok) throw new Error(`HTTP ${r.status} ${(await r.text()).slice(0, 150)}`);
     const data = await r.json();
     writeFileSync(join(outDir, `${name}.json`), JSON.stringify(data));
