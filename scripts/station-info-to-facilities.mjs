@@ -49,24 +49,27 @@ function parseInfo(html) {
   return rows;
 }
 
-/** 出口資訊表：<caption>出口資訊</caption> 之後的 tbody 列 */
+/** 出口資訊表：掃描所有 <caption>…出口資訊…</caption> 段落（A1 頁有多張表）的列 */
 function parseExits(html) {
-  const cap = html.indexOf("<caption>出口資訊</caption>");
-  if (cap < 0) return [];
-  const end = html.indexOf("</table>", cap);
-  const seg = html.slice(cap, end < 0 ? undefined : end);
   const exits = [];
-  const rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/g;
-  let m;
-  while ((m = rowRe.exec(seg))) {
-    const cells = [...m[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)].map((x) => cellText(x[1]).replace(/\n/g, " "));
-    if (cells.length < 2) continue;
-    const no = cells[0], val = cells.slice(1).filter(Boolean).join("・");
-    // 只收實體出口列：標籤含「出口／Exit」（如 出口1、Exit 1、機場連通道出口）。
-    // A1 中文頁此區塊夾帶公車轉乘表（標籤為路線號或「路線名稱」），一律不含這兩詞。
-    if (!/出口|Exit/i.test(no)) continue;
-    exits.push([no, val]);
-    if (exits.length >= 15) break;
+  const capRe = /<caption>[^<]*出口資訊[^<]*<\/caption>/g;
+  let c;
+  while ((c = capRe.exec(html)) && exits.length < 15) {
+    const end = html.indexOf("</table>", c.index);
+    const seg = html.slice(c.index, end < 0 ? undefined : end);
+    const rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/g;
+    let m;
+    while ((m = rowRe.exec(seg))) {
+      const cells = [...m[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)].map((x) => cellText(x[1]).replace(/\n/g, " "));
+      if (cells.length < 2) continue;
+      const no = cells[0], val = cells.slice(1).filter(Boolean).join("・");
+      // 只收實體出口列：標籤含「出口／Exit」（出口1、Exit 1、機場連通道出口…），
+      // 但排除表頭（出口編號／Exit No.）；公車轉乘列標籤為路線號，天然不含關鍵詞。
+      if (!/出口|Exit/i.test(no) || /出口編號|Exit No/i.test(no)) continue;
+      if (exits.some((e) => e[0] === no)) continue;
+      exits.push([no, val]);
+      if (exits.length >= 15) break;
+    }
   }
   return exits;
 }
