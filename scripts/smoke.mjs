@@ -6,7 +6,7 @@
  * 本機無下載瀏覽器時可用 SMOKE_CHROMIUM=/path/to/chromium 指定執行檔。
  */
 import { createServer } from "node:http";
-import { readFile } from "node:fs/promises";
+import { readFile, mkdir } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { chromium } from "playwright";
 
@@ -68,12 +68,27 @@ try {
   await page.waitForSelector(".flight-row, .board-row.empty", { timeout: 10000 }).catch(() => fail("航班頁沒有內容"));
   console.log("✓ 航班頁");
 
-  // 5. 語言切換
+  // 5. 高鐵頁（深夜無班次時允許空清單）
+  await page.click("#tab-hsr");
+  await page.waitForSelector("#hsr-list .flight-row, #hsr-list .board-row.empty", { timeout: 8000 }).catch(() => fail("高鐵頁沒有內容"));
+  console.log("✓ 高鐵頁");
+
+  // 6. 語言切換
   await page.selectOption("#lang-sel", "en");
   await page
     .waitForFunction(() => document.getElementById("tab-plan").textContent.includes("Journey"), null, { timeout: 5000 })
     .catch(() => fail("語言切換未生效"));
   console.log("✓ 語言切換");
+
+  // 視覺回歸截圖（上傳為 Actions artifact，改版時可前後對照）
+  await mkdir("smoke-shots", { recursive: true });
+  await page.selectOption("#lang-sel", "zh");
+  for (const [name, tab] of [["plan", "#tab-plan"], ["board", "#tab-board"], ["flight", "#tab-flight"], ["hsr", "#tab-hsr"]]) {
+    await page.click(tab);
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: `smoke-shots/${name}.png`, fullPage: true });
+  }
+  console.log("✓ 截圖已存 smoke-shots/");
 
   // 外部資源（天氣、備援看板）在 CI 允許失敗；其餘頁面錯誤視為致命
   const fatal = errors.filter((e) => !/favicon|open-meteo|vatsim|tdx\.json|fids\.json|Failed to load resource|net::|fetch/i.test(e));

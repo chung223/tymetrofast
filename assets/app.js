@@ -6,7 +6,7 @@ const $ = (id) => document.getElementById(id);
 const loadJson = (u) => fetch(u).then((r) => (r.ok ? r.json() : Promise.reject(u)));
 const tryJson = (u) => loadJson(u).catch(() => null);
 
-const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile, passesFile] = await Promise.all([
+const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile, passesFile, itciFile] = await Promise.all([
   loadJson("data/network.json"),
   loadJson("data/timetable.json"),
   loadJson("data/holidays.json"),
@@ -15,6 +15,7 @@ const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile, pa
   tryJson("data/fares.json"),
   tryJson("data/hsr-a18.json"),
   tryJson("data/passes.json"),
+  tryJson("data/itci.json"),
 ]);
 const holidays = new Set(holidaysFile.holidays);
 const stations = network.stations;
@@ -22,6 +23,8 @@ const stationById = new Map(stations.map((s) => [s.id, s]));
 const fares = faresFile?.pairs ?? null;
 const hsr = hsrFile?.trains?.length ? hsrFile.trains : null;
 const passes = passesFile?.passes?.length ? passesFile.passes : null;
+const itci = itciFile?.airlines?.length ? itciFile : null;
+const hm2min = (s) => Number(s.slice(0, 2)) * 60 + Number(s.slice(3));
 const indexCache = new Map();
 const getIndex = (dayType) => {
   if (!indexCache.has(dayType)) indexCache.set(dayType, buildIndex(network, timetable, dayType));
@@ -56,8 +59,8 @@ function dayTypeOf(dateStr) {
 }
 
 /* ---------- 狀態 ---------- */
-const state = { view: "plan", from: "A1", to: "A16", boardStation: "A1", mode: "now", custom: null, flightCtx: null, flightDir: "dep" };
-let hashHadFrom = false, pendingFlightSearch = null;
+const state = { view: "plan", from: "A1", to: "A16", boardStation: "A1", mode: "now", custom: null, flightCtx: null, flightDir: "dep", hsrCtx: null, hsrDir: 1 };
+let hashHadFrom = false, pendingFlightSearch = null, pendingView = null;
 (function initFromHash() {
   const p = new URLSearchParams(location.hash.slice(1));
   if (stationById.has(p.get("from"))) { state.from = p.get("from"); hashHadFrom = true; }
@@ -67,6 +70,7 @@ let hashHadFrom = false, pendingFlightSearch = null;
   if (p.get("t") && p.get("t") !== "now") state.custom = p.get("t");
   if (state.mode !== "now" && !state.custom) state.mode = "now";
   if (p.get("flight")) pendingFlightSearch = p.get("flight").toUpperCase();
+  if (["board", "flight", "hsr"].includes(p.get("v"))) pendingView = p.get("v");
 })();
 function syncHash() {
   const parts = [`from=${state.from}`, `to=${state.to}`, `m=${state.mode}`];
@@ -250,7 +254,7 @@ function hsrPanel(arrMinAtA18, ctx) {
   if (!groups[0].length && !groups[1].length) return "";
   const row = (dirKey, label) => groups[dirKey].length
     ? `<div class="hsr-row"><span class="hsr-dir">${label}</span>${groups[dirKey]
-        .map((x) => `<span class="hsr-train"><b>${x.dep}</b> ${t("hsrTo")}${x.to?.[lang] ?? x.to?.zh ?? ""}</span>`).join("")}</div>`
+        .map((x) => `<span class="hsr-train"><b>${x.dep}</b> ${t("hsrDest", x.to?.[lang] ?? x.to?.zh ?? "")}</span>`).join("")}</div>`
     : "";
   return `
   <aside class="panel hsr-panel">
@@ -293,6 +297,19 @@ function renderResults({ options = [], direct, nextDay, error, arriveMode, cantM
       ? `<span class="fl-tag bag warn">${t(dMin > 0 ? "flightDelayed" : "flightEarly", Math.abs(dMin))}</span>` +
         (fc.replanned ? "" : `<button class="fl-go" id="btn-replan">${t("replanBtn")}</button>`)
       : "";
+    // A1 市區預辦登機判斷（依 data/itci.json 支援航空與時段）
+    let itciHtml = "";
+    if (isDep && itci) {
+      if (!itci.airlines.includes(fc.f.slice(0, 2))) itciHtml = `<span class="fl-tag">${t("itciNo")}</span>`;
+      else {
+        const now = taipeiNow();
+        const dep = hm2min(fc.st);
+        const usable = fc.date === now.date
+          ? now.min >= hm2min(itci.open) && now.min <= hm2min(itci.close) && now.min <= dep - itci.cutoffMin
+          : dep >= hm2min(itci.open) + itci.cutoffMin;
+        itciHtml = `<span class="fl-tag ${usable ? "bag" : ""}">${t(usable ? "itciOk" : "itciLate")}</span>`;
+      }
+    }
     html += `
     <aside class="panel flight-banner">
       <span class="fl-no">✈ ${fc.f}</span><span class="b-time">${fc.st}</span><span class="fl-dest">${isDep ? "→" : "←"} ${fc.o}</span>
@@ -300,8 +317,19 @@ function renderResults({ options = [], direct, nextDay, error, arriveMode, cantM
       ${isDep && fc.ck ? `<span class="fl-tag ck">${t("counterL")} ${fc.ck}</span>` : ""}
       ${!isDep && fc.belt ? `<span class="fl-tag ck">${t("beltL")} ${fc.belt}</span>` : ""}
       ${isDep && fc.gate ? `<span class="fl-tag">${t("gateL")} ${fc.gate}</span>` : ""}
-      ${bagHtml}${delayHtml}
+      ${bagHtml}${delayHtml}${itciHtml}
       <span class="fl-note">${t(isDep ? "flightPlanNote" : "pickupNote")}</span>
+    </aside>`;
+  }
+  // 🚄 趕高鐵情境橫幅
+  const hc = state.hsrCtx;
+  if (hc && state.to === "A18" && !fc) {
+    html += `
+    <aside class="panel flight-banner">
+      <span class="fl-no">🚄</span><span class="b-time">${hc.dep}</span>
+      <span class="fl-dest">${t("hsrDest", hc.to?.[lang] ?? hc.to?.zh ?? "")}</span>
+      <span class="fl-tag term">${hc.dir === 1 ? t("hsrNorth") : t("hsrSouth")} · ${t("alightAt", stnLabel("A18"))}</span>
+      <span class="fl-note">${t("hsrPlanNote")}</span>
     </aside>`;
   }
   if (nextDay) html += `<div class="panel empty-card">${t("noServiceToday")}</div>`;
@@ -333,8 +361,8 @@ function renderResults({ options = [], direct, nextDay, error, arriveMode, cantM
   // A18 高鐵接駁
   const a18 = best.legs.find((l) => l.to === "A18") ?? (state.to === "A18" ? best.legs[best.legs.length - 1] : null);
   if (a18 && ctx) html += hsrPanel(a18.arr, ctx);
-  // 機場預辦登機提示
-  if (state.to === "A12" || state.to === "A13") html += `<aside class="panel tip-card">${t("checkinTip")}</aside>`;
+  // 機場預辦登機提示（有航班情境時已在橫幅顯示個別判斷，不重複）
+  if ((state.to === "A12" || state.to === "A13") && !(fc && fc.kind !== "arr" && itci)) html += `<aside class="panel tip-card">${t("checkinTip")}</aside>`;
 
   box.innerHTML = html;
   renderLineMap(best);
@@ -378,12 +406,13 @@ async function refreshFlightEt(fc) {
 }
 
 /* ---------- 📤 行程分享卡（canvas → PNG） ---------- */
+let qrMod = null;
 async function shareCard(j, ctx, fare, btn) {
   try { await Promise.all(["400 40px DotGothic16", "700 17px 'Noto Sans TC'", "900 21px 'Noto Serif TC'"].map((f) => document.fonts.load(f))); } catch { /* 字型未載入時退回系統字 */ }
   const W = 420, X = 28;
-  const fc = state.flightCtx;
+  const fc = state.flightCtx, hc = state.hsrCtx;
   const legRows = j.legs.length * 44 + (j.legs.length - 1) * 26;
-  const H = 208 + (fc ? 30 : 0) + legRows + 30 + 52;
+  const H = 208 + (fc || hc ? 30 : 0) + legRows + 30 + 118;
   const cv = document.createElement("canvas");
   const S = 2;
   cv.width = W * S; cv.height = H * S;
@@ -425,6 +454,10 @@ async function shareCard(j, ctx, fare, btn) {
     c.fillStyle = "#7fa8cc"; c.font = "600 13px 'Chakra Petch', 'Noto Sans TC', sans-serif";
     c.fillText(`✈ ${fc.f} ${fc.st} ${fc.kind === "arr" ? "←" : "→"} ${fc.o}${fc.term ? `  T${fc.term}` : ""}${fc.ck ? `  ${t("counterL")} ${fc.ck}` : ""}`, X, y);
     y += 30;
+  } else if (hc) {
+    c.fillStyle = "#7fa8cc"; c.font = "600 13px 'Chakra Petch', 'Noto Sans TC', sans-serif";
+    c.fillText(`🚄 ${hc.dep} ${t("hsrDest", hc.to?.[lang] ?? hc.to?.zh ?? "")}`, X, y);
+    y += 30;
   }
   dash(y - 12); y += 14;
   for (let i = 0; i < j.legs.length; i++) {
@@ -449,8 +482,22 @@ async function shareCard(j, ctx, fare, btn) {
   c.font = "700 14.5px 'Noto Sans TC', sans-serif";
   c.fillText(`${fmtTime(last.arr)}  ${stnName(last.to)}  ${t("arriveAt")}`, X + 22, y);
   dash(y + 16);
+  // 掃碼開同一行程（QR 產生器載入失敗就只留網址）
+  try {
+    qrMod ??= (await import("./qrcode.mjs")).default;
+    const link = `https://chung223.github.io/tymetrofast/#from=${state.from}&to=${state.to}&m=depart&t=${ctx?.date ?? taipeiNow().date}T${fmtTime(j.dep)}`;
+    const qr = qrMod(0, "M");
+    qr.addData(link);
+    qr.make();
+    const n = qr.getModuleCount();
+    const qsize = 72, cell = qsize / n, qx = W - X - qsize, qy = y + 30;
+    c.fillStyle = "#f0e8d8";
+    c.fillRect(qx - 6, qy - 6, qsize + 12, qsize + 12);
+    c.fillStyle = "#16120c";
+    for (let r = 0; r < n; r++) for (let q = 0; q < n; q++) if (qr.isDark(r, q)) c.fillRect(qx + q * cell, qy + r * cell, Math.ceil(cell), Math.ceil(cell));
+  } catch { /* 離線或載入失敗 */ }
   c.fillStyle = "#7b6d55"; c.font = "500 10px 'Chakra Petch', sans-serif";
-  c.fillText("chung223.github.io/tymetrofast", X, y + 36);
+  c.fillText("chung223.github.io/tymetrofast", X, y + 70);
   cv.toBlob(async (blob) => {
     if (!blob) return;
     const file = new File([blob], `mrt-${fmtTime(j.dep).replace(":", "")}.png`, { type: "image/png" });
@@ -731,6 +778,19 @@ function renderBoard() {
   };
   push(dayTypeOf(now.date), 0);
   if (now.min < 180) push(dayTypeOf(shiftDate(now.date, -1)), -1440);
+  // 首末班總覽（當日日別）
+  const flIdx = getIndex(dayTypeOf(now.date));
+  const fl = { S: [Infinity, -1], N: [Infinity, -1] };
+  for (const c of flIdx.connections) {
+    if (c.from !== sid) continue;
+    fl[c.dir][0] = Math.min(fl[c.dir][0], c.dep);
+    fl[c.dir][1] = Math.max(fl[c.dir][1], c.dep);
+  }
+  $("board-firstlast").innerHTML = ["S", "N"].filter((d) => fl[d][1] >= 0).map((d) => `
+    <span class="fl-cell"><b>${d === "S" ? t("towardS") : t("towardN")}</b>
+      <span class="flc">${t("firstChip")} <span class="b-time sm">${fmtTime(fl[d][0])}</span></span>
+      <span class="flc">${t("lastChip")} <span class="b-time sm">${fmtTime(fl[d][1])}</span></span>
+    </span>`).join("");
   rows.sort((a, b) => a.dep - b.dep);
   const seen = new Set();
   const list = rows.filter((r) => {
@@ -915,10 +975,26 @@ async function renderFlight() {
           ${isDep && r.ck ? `<span class="fl-tag ck">${t("counterL")} ${r.ck}</span>` : ""}
           ${!isDep && r.belt ? `<span class="fl-tag ck">${t("beltL")} ${r.belt}</span>` : ""}
           ${isDep && r.gate ? `<span class="fl-tag">${t("gateL")} ${r.gate}</span>` : ""}
+          <button class="fl-go alt" data-share="${i}">${t("shareLink")}</button>
           <button class="fl-go" data-fi="${i}">${t("planGo")}</button>
         </div>
       </li>`).join("")
     : `<li class="board-row empty">${t("noneFound")}</li>`;
+
+  // 分享航班深連結（接送機協調用：對方打開直接看到這班）
+  list.querySelectorAll("[data-share]").forEach((btn) => (btn.onclick = async () => {
+    const r = rows[Number(btn.dataset.share)];
+    const url = `${location.origin}${location.pathname}#flight=${r.f}`;
+    const text = `✈ ${r.f} ${r.st} ${isDep ? "→" : "←"} ${r.o}${r.term ? ` · T${r.term}` : ""}`;
+    try {
+      if (navigator.share) await navigator.share({ title: "機捷快轉", text, url });
+      else {
+        await navigator.clipboard.writeText(url);
+        btn.textContent = t("linkCopied");
+        setTimeout(() => (btn.textContent = t("shareLink")), 2000);
+      }
+    } catch { /* 使用者取消 */ }
+  }));
 
   list.querySelectorAll(".fl-go").forEach((btn) => (btn.onclick = () => {
     const r = rows[Number(btn.dataset.fi)];
@@ -930,6 +1006,7 @@ async function renderFlight() {
     state.to = termToStation(r.term);
     state.mode = "arrive";
     state.custom = `${date}T${fmtTime(target)}`;
+    state.hsrCtx = null;
     state.flightCtx = { kind: state.flightDir, f: r.f, o: r.o, st: r.st, et: r.et ?? "", term: r.term, ck: r.ck ?? "", gate: r.gate ?? "", belt: r.belt ?? "", date };
     $("custom-time").value = state.custom;
     refreshOD(); renderFavs(); syncHash();
@@ -940,6 +1017,52 @@ async function renderFlight() {
 $("flight-search").addEventListener("input", () => renderFlight());
 $("fl-dir-dep").addEventListener("click", () => { state.flightDir = "dep"; renderFlight(); });
 $("fl-dir-arr").addEventListener("click", () => { state.flightDir = "arr"; renderFlight(); });
+
+/* ---------- 🚄 趕高鐵（A18 高鐵桃園站定期時刻） ---------- */
+function renderHsr() {
+  $("hsr-dir-n").textContent = t("hsrNorth");
+  $("hsr-dir-s").textContent = t("hsrSouth");
+  $("hsr-dir-n").classList.toggle("on", state.hsrDir === 1);
+  $("hsr-dir-s").classList.toggle("on", state.hsrDir === 0);
+  $("hsr-note").textContent = `${t("hsrNote")} · ${t("version")} ${hsrFile?.updated ?? ""}`;
+  const list = $("hsr-list");
+  if (!hsr) { list.innerHTML = `<li class="board-row empty">${t("noneFound")}</li>`; return; }
+  const now = taipeiNow();
+  const dow = (dowOf(now.date) + 6) % 7; // 0=Mon
+  const rows = hsr
+    .filter((tr) => tr.dir === state.hsrDir && tr.days[dow])
+    .map((tr) => ({ ...tr, m: hm2min(tr.dep) }))
+    .filter((tr) => tr.m >= now.min)
+    .sort((a, b) => a.m - b.m)
+    .slice(0, 25);
+  list.innerHTML = rows.length
+    ? rows.map((tr, i) => `
+      <li class="flight-row">
+        <div class="fl-main">
+          <span class="b-time">${tr.dep}</span>
+          <span class="fl-no">🚄 ${t("hsrDest", tr.to?.[lang] ?? tr.to?.zh ?? "")}</span>
+          <span class="fl-dest">${tr.m - now.min < 90 ? t("inMin", tr.m - now.min) : ""}</span>
+          <button class="fl-go" data-hi="${i}" style="margin-left:auto">${t("planGo")}</button>
+        </div>
+      </li>`).join("")
+    : `<li class="board-row empty">${t("noneFound")}</li>`;
+  list.querySelectorAll("[data-hi]").forEach((btn) => (btn.onclick = () => {
+    const tr = rows[Number(btn.dataset.hi)];
+    const now2 = taipeiNow();
+    const target = Math.max(tr.m - 10, now2.min + 1);
+    state.to = "A18";
+    state.mode = "arrive";
+    state.custom = `${now2.date}T${fmtTime(target)}`;
+    state.flightCtx = null;
+    state.hsrCtx = { dep: tr.dep, to: tr.to, dir: tr.dir };
+    $("custom-time").value = state.custom;
+    refreshOD(); renderFavs(); syncHash();
+    setView("plan");
+    setMode("arrive");
+  }));
+}
+$("hsr-dir-n").addEventListener("click", () => { state.hsrDir = 1; renderHsr(); });
+$("hsr-dir-s").addEventListener("click", () => { state.hsrDir = 0; renderHsr(); });
 
 /* ---------- 選站面板 ---------- */
 let picking = null;
@@ -976,7 +1099,7 @@ $("station-list").addEventListener("click", (e) => {
   const btn = e.target.closest("[data-id]");
   if (!btn || !picking) return;
   if (picking === "board") state.boardStation = btn.dataset.id;
-  else { state[picking] = btn.dataset.id; state.flightCtx = null; }
+  else { state[picking] = btn.dataset.id; state.flightCtx = null; state.hsrCtx = null; }
   closeSheet();
   refreshOD(); renderFavs(); syncHash();
   state.view === "board" ? renderBoard() : runQuery();
@@ -997,6 +1120,7 @@ $("btn-board-station").addEventListener("click", () => openSheet("board"));
 $("btn-swap").addEventListener("click", () => {
   [state.from, state.to] = [state.to, state.from];
   state.flightCtx = null;
+  state.hsrCtx = null;
   refreshOD(); renderFavs(); syncHash(); runQuery();
 });
 
@@ -1022,17 +1146,19 @@ $("custom-time").addEventListener("change", (e) => { state.custom = e.target.val
 
 function setView(view) {
   state.view = view;
-  for (const v of ["plan", "board", "flight"]) {
+  for (const v of ["plan", "board", "flight", "hsr"]) {
     $(`tab-${v}`).classList.toggle("on", view === v);
     $(`${v}-wrap`).hidden = view !== v;
   }
   if (view === "board") renderBoard();
   else if (view === "flight") renderFlight();
+  else if (view === "hsr") renderHsr();
   else runQuery();
 }
 $("tab-plan").addEventListener("click", () => setView("plan"));
 $("tab-board").addEventListener("click", () => setView("board"));
 $("tab-flight").addEventListener("click", () => setView("flight"));
+$("tab-hsr").addEventListener("click", () => setView("hsr"));
 
 /* ---------- 語言切換 ---------- */
 function applyStatic() {
@@ -1044,6 +1170,7 @@ function applyStatic() {
   $("tab-plan").textContent = t("tabPlan");
   $("tab-board").textContent = t("tabBoard");
   $("tab-flight").textContent = t("tabFlight");
+  $("tab-hsr").textContent = t("tabHsr");
   $("flight-search").placeholder = t("flightSearchPh");
   $("fav-title").textContent = t("favTitle");
   $("board-title").textContent = t("boardTitle");
@@ -1087,7 +1214,8 @@ function tick() {
   if (now.min !== lastMin) {
     lastMin = now.min;
     if (state.view === "board") renderBoard();
-    else if (state.mode === "now") runQuery();
+    else if (state.view === "hsr") renderHsr();
+    else if (state.view === "plan" && state.mode === "now") runQuery();
   }
   // 每 5 秒更新路線圖上的列車位置模擬
   if (state.view === "plan" && mapCtx) {
@@ -1107,6 +1235,7 @@ refreshOD();
 renderFavs();
 if (state.mode !== "now") { $("custom-time").value = state.custom; setMode(state.mode); }
 if (pendingFlightSearch) { $("flight-search").value = pendingFlightSearch; setView("flight"); }
+else if (pendingView) setView(pendingView);
 tick();
 
 // 已授權過定位時，靜默預選最近車站（不彈權限視窗）
