@@ -1,0 +1,8 @@
+{
+  "updated": "2026-08-05",
+  "comment": "A1 台北車站市區預辦登機（In-Town Check-In）支援航空。名單異動時對照官方頁面編輯 airlines 的 IATA 代碼即可：https://www.tymetro.com.tw/tymetro-new/tw/_pages/travel-guide/in-town-check-in.html",
+  "open": "06:00",
+  "close": "21:30",
+  "cutoffMin": 180,
+  "airlines": ["CI", "AE", "BR", "B7", "JX", "CX", "IT", "AK", "D7", "FD", "Z2"]
+}
