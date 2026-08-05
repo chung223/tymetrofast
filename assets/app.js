@@ -832,8 +832,10 @@ function renderFacilities(sid) {
   const rows = L.info
     .filter(([, v]) => !/^(none|無|沒有)[。.]?$/i.test(v.trim()))
     .map(([k, v]) => `<div class="fac-row"><span class="fac-k">${icon(k)} ${k}</span><span class="fac-v">${v.replace(/\n/g, "<br>")}</span></div>`);
-  if (L.exits?.length) {
-    rows.push(`<div class="fac-row"><span class="fac-k">🚪 ${t("exitsL")}</span><span class="fac-v">${L.exits.map(([n, loc]) => `<b>${n}</b>　${loc}`).join("<br>")}</span></div>`);
+  // 出口清單：目前語言沒有就回落另一語言（A1 中文頁無出口表）
+  const exits = L.exits?.length ? L.exits : fac.zh?.exits?.length ? fac.zh.exits : fac.en?.exits ?? [];
+  if (exits.length) {
+    rows.push(`<div class="fac-row"><span class="fac-k">🚪 ${t("exitsL")}</span><span class="fac-v">${exits.map(([n, loc]) => `<b>${n}</b>　${loc}`).join("<br>")}</span></div>`);
   }
   $("fac-body").innerHTML = rows.join("");
   card.hidden = false;
