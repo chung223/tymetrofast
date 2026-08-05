@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildIndex, planJourney, planDirect, planOptions, fmtTime } from "../assets/planner.js";
+import { buildIndex, planJourney, planDirect, planOptions, planArriveBy, fmtTime } from "../assets/planner.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const network = JSON.parse(readFileSync(join(root, "data/network.json"), "utf8"));
@@ -60,6 +60,12 @@ expect(j6 === null || j6.arr >= 1440, "深夜查詢：回報無班次或跨午�
 console.log("\n▍案例7：機場第二航廈 → 台北車站，21:03 出發");
 const j7 = planJourney(index, { from: "A13", to: "A1", departAfter: 1263 });
 show("最快", j7);
+
+console.log("\n▍案例8：趕飛機反推 台北車站 → 機場第二航廈，09:00 前抵達");
+const j8 = planArriveBy(index, { from: "A1", to: "A13", arriveBy: 540 });
+show("最晚出發", j8);
+expect(j8 && j8.arr <= 540, "抵達不晚於 09:00");
+expect(j8 && j8.dep >= 480, "最晚出發合理（08:00 之後）");
 
 console.log(failures ? `\n${failures} 項檢查失敗` : "\n全部通過");
 process.exit(failures ? 1 : 0);

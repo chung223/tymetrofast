@@ -3,10 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0c111c">
-<meta name="description" content="桃園機場捷運快速轉乘計算器：比較直達車＋轉乘與普通車直達，依出發時間找出最快搭法。">
+<meta name="theme-color" content="#171310">
+<meta name="description" content="桃園機場捷運快速轉乘計算器：比較直達車＋轉乘與普通車直達，依出發或抵達時間找出最快搭法。">
 <title>機捷快轉｜桃園機場捷運快速轉乘計算器</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%238E4E9E'/%3E%3Ctext x='50' y='68' font-size='52' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='white'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=DotGothic16&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -21,58 +23,85 @@
       <h1>機捷快轉</h1>
       <p class="sign-sub">TAOYUAN AIRPORT MRT · FAST TRANSFER PLANNER</p>
     </div>
+    <select id="lang-sel" class="lang-sel" aria-label="Language">
+      <option value="zh">中</option><option value="en">EN</option><option value="ja">日</option><option value="ko">한</option>
+    </select>
     <span class="clock" id="clock" aria-label="台灣時間">--:--</span>
   </div>
   <div class="sign-stripe" aria-hidden="true"></div>
 </header>
 
 <main>
-  <!-- 查詢面板 -->
-  <section class="panel query-panel" aria-label="行程查詢">
-    <div class="od-row">
-      <button class="station-btn" id="btn-from" aria-haspopup="dialog">
-        <span class="od-label">出發</span>
-        <span class="station-chip"><span class="code" id="from-code">A1</span><span class="stn-name" id="from-name">台北車站</span></span>
-      </button>
-      <button class="swap-btn" id="btn-swap" title="交換起訖" aria-label="交換起訖">⇅</button>
-      <button class="station-btn" id="btn-to" aria-haspopup="dialog">
-        <span class="od-label">前往</span>
-        <span class="station-chip"><span class="code" id="to-code">A16</span><span class="stn-name" id="to-name">橫山</span></span>
-      </button>
-    </div>
+  <nav class="view-tabs" role="tablist">
+    <button class="vtab on" id="tab-plan" role="tab">路線查詢</button>
+    <button class="vtab" id="tab-board" role="tab">車站看板</button>
+  </nav>
 
-    <div class="time-row">
-      <div class="seg-control" role="tablist" aria-label="出發時間模式">
-        <button class="seg on" id="mode-now" role="tab" aria-selected="true">現在出發</button>
-        <button class="seg" id="mode-custom" role="tab" aria-selected="false">指定時間</button>
+  <div id="plan-wrap">
+    <!-- 查詢面板 -->
+    <section class="panel query-panel" aria-label="行程查詢">
+      <div class="od-row">
+        <button class="station-btn" id="btn-from" aria-haspopup="dialog">
+          <span class="od-label" id="od-label-from">出發</span>
+          <span class="station-chip"><span class="code" id="from-code">A1</span><span class="stn-name" id="from-name">台北車站</span></span>
+        </button>
+        <button class="swap-btn" id="btn-swap" title="⇅" aria-label="⇅">⇅</button>
+        <button class="station-btn" id="btn-to" aria-haspopup="dialog">
+          <span class="od-label" id="od-label-to">前往</span>
+          <span class="station-chip"><span class="code" id="to-code">A16</span><span class="stn-name" id="to-name">橫山</span></span>
+        </button>
       </div>
-      <input type="datetime-local" id="custom-time" class="dt-input" hidden>
-      <span class="daytype-chip" id="daytype-chip">平日班表</span>
-    </div>
-  </section>
 
-  <!-- 全線路線圖 -->
-  <section class="panel map-panel" aria-label="路線圖">
-    <div class="line-map-scroll">
-      <svg id="line-map" class="line-map" role="img" aria-label="機場線路線圖與本次行程"></svg>
-    </div>
-    <p class="map-hint"><span class="dot-demo express"></span>直達車停靠　<span class="dot-demo"></span>普通車各站停靠</p>
-  </section>
+      <div class="time-row">
+        <div class="seg-control" role="tablist" aria-label="時間模式">
+          <button class="seg on" id="mode-now" role="tab" aria-selected="true">現在出發</button>
+          <button class="seg" id="mode-depart" role="tab" aria-selected="false">指定出發</button>
+          <button class="seg arrive" id="mode-arrive" role="tab" aria-selected="false">指定抵達</button>
+        </div>
+        <input type="datetime-local" id="custom-time" class="dt-input" hidden>
+        <span class="daytype-chip" id="daytype-chip">平日班表</span>
+      </div>
 
-  <!-- 月台警示帶 -->
-  <div class="platform-strip" aria-hidden="true"></div>
+      <div class="fav-block">
+        <span class="fav-label" id="fav-title">常用路線</span>
+        <div class="fav-row" id="fav-row"></div>
+      </div>
+    </section>
 
-  <!-- 查詢結果 -->
-  <section id="results" aria-live="polite"></section>
+    <!-- 路線圖 -->
+    <section class="panel map-panel" aria-label="路線圖">
+      <button class="map-toggle" id="map-toggle">地圖</button>
+      <div class="line-map-scroll">
+        <svg id="line-map" class="line-map" role="img" aria-label="機場線路線圖與本次行程"></svg>
+      </div>
+      <p class="map-hint" id="map-hint-text"></p>
+    </section>
+
+    <!-- 月台警示帶 -->
+    <div class="platform-strip" aria-hidden="true"></div>
+
+    <!-- 查詢結果 -->
+    <section id="results" aria-live="polite"></section>
+  </div>
+
+  <div id="board-wrap" hidden>
+    <section class="panel board-panel">
+      <button class="station-btn board-pick" id="btn-board-station" aria-haspopup="dialog">
+        <span class="od-label" id="board-title">即將發車</span>
+        <span class="station-chip"><span class="code" id="board-code">A1</span><span class="stn-name" id="board-name">台北車站</span></span>
+      </button>
+      <ol class="board-list" id="board-list"></ol>
+    </section>
+  </div>
 
   <p class="disclaimer" id="data-note"></p>
 </main>
 
 <footer class="site-footer">
-  <p>非官方工具，時刻為推算值，實際以
+  <p>非官方工具，時刻僅供參考，實際以
     <a href="https://www.tymetro.com.tw/tymetro-new/tw/_pages/travel-guide/timetable.html" target="_blank" rel="noopener">桃園捷運官方時刻表</a>為準。
   </p>
-  <p><a id="repo-link" href="https://github.com/chung223/tymetrofast" target="_blank" rel="noopener">GitHub</a> · 改點時更新 repo 內 <code>data/</code> 後自動重新部署</p>
+  <p><a href="https://github.com/chung223/tymetrofast" target="_blank" rel="noopener">GitHub</a> · 改點時更新 repo 內 <code>data/</code> 後自動重新部署</p>
 </footer>
 
 <!-- 選站底部面板 -->

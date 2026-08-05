@@ -1,28 +1,43 @@
 /* 機捷快轉 · 前端主程式 */
-import { buildIndex, planDirect, planOptions, fmtTime } from "./planner.js";
+import { buildIndex, planDirect, planOptions, planJourney, planArriveBy, fmtTime } from "./planner.js";
+import { LANGS, LANG_LABEL, makeT } from "./i18n.js";
 
 const $ = (id) => document.getElementById(id);
+const loadJson = (u) => fetch(u).then((r) => (r.ok ? r.json() : Promise.reject(u)));
+const tryJson = (u) => loadJson(u).catch(() => null);
 
-const [network, timetable, holidaysFile] = await Promise.all(
-  ["data/network.json", "data/timetable.json", "data/holidays.json"].map((u) =>
-    fetch(u).then((r) => {
-      if (!r.ok) throw new Error(`載入失敗 ${u}`);
-      return r.json();
-    })
-  )
-);
+const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile] = await Promise.all([
+  loadJson("data/network.json"),
+  loadJson("data/timetable.json"),
+  loadJson("data/holidays.json"),
+  tryJson("data/station-names.json"),
+  tryJson("data/geo.json"),
+  tryJson("data/fares.json"),
+  tryJson("data/hsr-a18.json"),
+]);
 const holidays = new Set(holidaysFile.holidays);
 const stations = network.stations;
 const stationById = new Map(stations.map((s) => [s.id, s]));
+const fares = faresFile?.pairs ?? null;
+const hsr = hsrFile?.trains?.length ? hsrFile.trains : null;
 const indexCache = new Map();
 const getIndex = (dayType) => {
   if (!indexCache.has(dayType)) indexCache.set(dayType, buildIndex(network, timetable, dayType));
   return indexCache.get(dayType);
 };
 
+/* ---------- 語言 ---------- */
+const savedLang = localStorage.getItem("tymf-lang");
+const navLang = (navigator.language || "zh").toLowerCase();
+let lang = savedLang && LANGS.includes(savedLang) ? savedLang
+  : navLang.startsWith("zh") ? "zh" : navLang.startsWith("ja") ? "ja" : navLang.startsWith("ko") ? "ko" : LANGS.includes(navLang.slice(0, 2)) ? navLang.slice(0, 2) : "en";
+let t = makeT(lang);
+const stnName = (id) => (lang === "zh" ? stationById.get(id).name : extraNames?.[id]?.[lang] || stationById.get(id).nameEn);
+const stnLabel = (id) => `${id} ${stnName(id)}`;
+
 /* ---------- 台灣時間 ---------- */
 function taipeiNow() {
-  const s = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Taipei" }); // YYYY-MM-DD HH:mm:ss
+  const s = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Taipei" });
   return { date: s.slice(0, 10), min: Number(s.slice(11, 13)) * 60 + Number(s.slice(14, 16)) };
 }
 function shiftDate(dateStr, days) {
@@ -30,192 +45,269 @@ function shiftDate(dateStr, days) {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
+const dowOf = (dateStr) => new Date(`${dateStr}T12:00:00Z`).getUTCDay(); // 0=Sun
 function dayTypeOf(dateStr) {
   if (holidays.has(dateStr)) return "holiday";
-  const dow = new Date(`${dateStr}T12:00:00Z`).getUTCDay();
+  const dow = dowOf(dateStr);
   return dow === 0 || dow === 6 ? "holiday" : "weekday";
 }
 
 /* ---------- 狀態 ---------- */
-const state = { from: "A1", to: "A16", mode: "now", custom: null };
+const state = { view: "plan", from: "A1", to: "A16", boardStation: "A1", mode: "now", custom: null };
 (function initFromHash() {
   const p = new URLSearchParams(location.hash.slice(1));
   if (stationById.has(p.get("from"))) state.from = p.get("from");
   if (stationById.has(p.get("to"))) state.to = p.get("to");
-  if (p.get("t") && p.get("t") !== "now") { state.mode = "custom"; state.custom = p.get("t"); }
+  const m = p.get("m");
+  if (m === "arrive" || m === "depart") state.mode = m;
+  if (p.get("t") && p.get("t") !== "now") state.custom = p.get("t");
+  if (state.mode !== "now" && !state.custom) state.mode = "now";
 })();
 function syncHash() {
-  const t = state.mode === "now" ? "now" : state.custom ?? "now";
-  history.replaceState(null, "", `#from=${state.from}&to=${state.to}&t=${t}`);
+  const parts = [`from=${state.from}`, `to=${state.to}`, `m=${state.mode}`];
+  if (state.mode !== "now" && state.custom) parts.push(`t=${state.custom}`);
+  history.replaceState(null, "", `#${parts.join("&")}`);
+}
+
+/* ---------- 最愛路線 ---------- */
+const favs = JSON.parse(localStorage.getItem("tymf-favs") ?? "[]");
+const favKey = () => `${state.from}|${state.to}`;
+function renderFavs() {
+  const box = $("fav-row");
+  const isFav = favs.some((f) => f === favKey());
+  let html = `<button class="fav-star ${isFav ? "on" : ""}" id="fav-toggle">${isFav ? t("favSaved") : t("favSave")}</button>`;
+  for (const f of favs) {
+    const [a, b] = f.split("|");
+    html += `<button class="fav-chip ${f === favKey() ? "cur" : ""}" data-fav="${f}"><span class="fc">${a}</span>→<span class="fc">${b}</span></button>`;
+  }
+  box.innerHTML = html;
+  $("fav-toggle").onclick = () => {
+    const k = favKey();
+    const i = favs.indexOf(k);
+    if (i >= 0) favs.splice(i, 1);
+    else { favs.unshift(k); favs.splice(6); }
+    localStorage.setItem("tymf-favs", JSON.stringify(favs));
+    renderFavs();
+  };
+  box.querySelectorAll("[data-fav]").forEach((btn) => (btn.onclick = () => {
+    [state.from, state.to] = btn.dataset.fav.split("|");
+    refreshOD(); syncHash(); runQuery(); renderFavs();
+  }));
 }
 
 /* ---------- 查詢 ---------- */
 function queryContext() {
-  if (state.mode === "now") return taipeiNow();
-  const v = state.custom;
-  if (!v) return taipeiNow();
-  return { date: v.slice(0, 10), min: Number(v.slice(11, 13)) * 60 + Number(v.slice(14, 16)) };
+  if (state.mode === "now" || !state.custom) return taipeiNow();
+  return { date: state.custom.slice(0, 10), min: Number(state.custom.slice(11, 13)) * 60 + Number(state.custom.slice(14, 16)) };
 }
-
-function candidatesFor(ctx) {
-  const list = [{ dayType: dayTypeOf(ctx.date), departAfter: ctx.min, dayOffset: 0 }];
-  if (ctx.min < 180) {
-    list.push({ dayType: dayTypeOf(shiftDate(ctx.date, -1)), departAfter: ctx.min + 1440, dayOffset: -1 });
-  }
+function candidatesFor(ctx, key) {
+  const list = [{ dayType: dayTypeOf(ctx.date), [key]: ctx.min, dayOffset: 0 }];
+  if (ctx.min < 180) list.push({ dayType: dayTypeOf(shiftDate(ctx.date, -1)), [key]: ctx.min + 1440, dayOffset: -1 });
   return list;
+}
+const abs = (j) => j.arr + j.dayOffset * 1440;
+const absDep = (j) => j.dep + j.dayOffset * 1440;
+
+function collect(cands, from, to, count) {
+  const opts = [];
+  let direct = null;
+  for (const c of cands) {
+    const idx = getIndex(c.dayType);
+    for (const j of planOptions(idx, { from, to, departAfter: c.departAfter, count })) {
+      opts.push({ ...j, dayOffset: c.dayOffset });
+    }
+    const d = planDirect(idx, { from, to, departAfter: c.departAfter });
+    if (d) {
+      d.dayOffset = c.dayOffset;
+      if (!direct || abs(d) < abs(direct)) direct = d;
+    }
+  }
+  opts.sort((a, b) => abs(a) - abs(b) || absDep(b) - absDep(a));
+  const clean = [];
+  for (const o of opts) {
+    if (!clean.some((k) => absDep(k) >= absDep(o) && abs(k) <= abs(o))) clean.push(o);
+  }
+  return { options: clean.slice(0, 4), direct };
 }
 
 function runQuery() {
+  if (state.view !== "plan") return;
   const { from, to } = state;
   const ctx = queryContext();
   const dayType = dayTypeOf(ctx.date);
-  $("daytype-chip").textContent = `${ctx.date.slice(5).replace("-", "/")} ${dayType === "weekday" ? "平日" : "假日"}班表`;
+  $("daytype-chip").textContent = `${ctx.date.slice(5).replace("-", "/")} ${t(dayType === "weekday" ? "weekdaySched" : "holidaySched")}`;
 
-  if (from === to) {
-    renderResults({ error: "起點與訖點相同，請選擇不同車站。" });
+  if (from === to) { renderResults({ error: t("sameStation") }); return; }
+
+  if (state.mode === "arrive") {
+    const results = [];
+    for (const c of candidatesFor(ctx, "arriveBy")) {
+      const idx = getIndex(c.dayType);
+      let target = c.arriveBy;
+      for (let i = 0; i < 3; i++) {
+        const j = planArriveBy(idx, { from, to, arriveBy: target });
+        if (!j) break;
+        results.push({ ...j, dayOffset: c.dayOffset });
+        target = j.dep - 0.5;
+      }
+    }
+    results.sort((a, b) => absDep(b) - absDep(a));
+    const dedup = [];
+    for (const r of results) if (!dedup.some((k) => absDep(k) === absDep(r))) dedup.push(r);
+    if (dedup.length) {
+      renderResults({ options: dedup.slice(0, 3), arriveMode: true, ctx });
+    } else {
+      const { options, direct } = collect(candidatesFor({ ...ctx }, "departAfter").map((c) => ({ ...c, departAfter: c.arriveBy ?? c.departAfter ?? ctx.min })), from, to, 3);
+      renderResults({ options, direct, cantMake: true, ctx });
+    }
     return;
   }
 
-  const collect = (cands, count) => {
-    const opts = [];
-    let direct = null;
-    for (const c of cands) {
-      const idx = getIndex(c.dayType);
-      for (const j of planOptions(idx, { from, to, departAfter: c.departAfter, count })) {
-        opts.push({ ...j, dayOffset: c.dayOffset });
-      }
-      const d = planDirect(idx, { from, to, departAfter: c.departAfter });
-      if (d) {
-        d.dayOffset = c.dayOffset;
-        if (!direct || d.arr + d.dayOffset * 1440 < direct.arr + direct.dayOffset * 1440) direct = d;
-      }
-    }
-    opts.sort((a, b) => (a.arr + a.dayOffset * 1440) - (b.arr + b.dayOffset * 1440) || (b.dep + b.dayOffset * 1440) - (a.dep + a.dayOffset * 1440));
-    // 去除被支配方案（晚發又晚到）
-    const clean = [];
-    for (const o of opts) {
-      if (!clean.some((k) => k.dep + k.dayOffset * 1440 >= o.dep + o.dayOffset * 1440 && k.arr + k.dayOffset * 1440 <= o.arr + o.dayOffset * 1440)) clean.push(o);
-    }
-    return { options: clean.slice(0, 4), direct };
-  };
-
-  let { options, direct } = collect(candidatesFor(ctx), 4);
+  let { options, direct } = collect(candidatesFor(ctx, "departAfter"), from, to, 4);
   let nextDay = null;
   if (!options.length) {
     const d1 = shiftDate(ctx.date, 1);
-    const r = collect([{ dayType: dayTypeOf(d1), departAfter: 0, dayOffset: 1 }], 2);
-    options = r.options;
-    direct = r.direct;
-    nextDay = d1;
+    const r = collect([{ dayType: dayTypeOf(d1), departAfter: 0, dayOffset: 1 }], from, to, 2);
+    options = r.options; direct = r.direct; nextDay = d1;
   }
-  renderResults({ options, direct, nextDay });
-  renderMap(options[0] ?? null);
+  renderResults({ options, direct, nextDay, ctx });
 }
 
 /* ---------- 呈現 ---------- */
-const stnLabel = (id) => `${id} ${stationById.get(id).name}`;
 function transferHint(stationId, fromDir, toDir) {
   const s = stationById.get(stationId);
-  if (fromDir === toDir) return "原月台候車即可";
+  if (fromDir === toDir) return t("samePlatform");
   const sec = s.transferReverseSec ?? network.defaultTransferReverseSec ?? 150;
-  return sec <= 90 ? "同月台即可折返" : "";
+  return sec <= 90 ? t("sameReverse") : "";
 }
 
 function legHtml(leg, journey, i) {
-  const train = leg.type === "express" ? "直達車" : "普通車";
-  const skip = leg.type === "express" ? "中途過站不停部分車站" : `沿途停靠 ${leg.hops - 1} 站`;
-  const dirTxt = leg.dir === "S" ? "往老街溪方向" : "往台北方向";
+  const detail = [leg.dir === "S" ? t("towardS") : t("towardN"),
+    leg.hops === 1 ? t("nextStop") : leg.type === "express" ? t("skipNote") : t("stopsVia", leg.hops - 1),
+    t("rideN", Math.round(leg.arr - leg.dep))].join(" · ");
   let html = `
     <div class="leg ${leg.type}">
       <div class="leg-rail"></div>
       <div class="leg-body">
         <div class="leg-line1">
-          <span class="train-chip">${train}</span>
+          <span class="train-chip">${t(leg.type)}</span>
           <span class="leg-time">${fmtTime(leg.dep)}</span>
-          <span class="leg-stations">${stnLabel(leg.from)} 上車</span>
+          <span class="leg-stations">${stnLabel(leg.from)} ${t("boardAt")}</span>
         </div>
-        <div class="leg-detail">${dirTxt} · ${leg.hops === 1 ? "下一站即到" : skip} · 乘車 ${Math.round(leg.arr - leg.dep)} 分</div>
+        <div class="leg-detail">${detail}</div>
       </div>
     </div>`;
   const next = journey.legs[i + 1];
   if (next) {
-    const wait = Math.round(next.dep - leg.arr);
     const hint = transferHint(leg.to, leg.dir, next.dir);
     html += `
       <div class="transfer-row">
-        <span><b>${stnLabel(leg.to)}</b>（${fmtTime(leg.arr)} 到）轉乘 · 等 ${wait} 分</span>
+        <span><b>${stnLabel(leg.to)}</b>（${fmtTime(leg.arr)}）${t("transfer")} · ${t("waitN", Math.round(next.dep - leg.arr))}</span>
         ${hint ? `<span class="same-platform">${hint}</span>` : ""}
       </div>`;
   } else {
     html += `
       <div class="alight-row">
         <span class="leg-time">${fmtTime(leg.arr)}</span>
-        <span class="leg-stations">${stnLabel(leg.to)} 抵達</span>
+        <span class="leg-stations">${stnLabel(leg.to)} ${t("arriveAt")}</span>
       </div>`;
   }
   return html;
 }
 
-function journeyCard(j, { badge, badgeAlt, saveMin, nextDay } = {}) {
+function journeyCard(j, { badge, badgeAlt, saveMin, nextDay, fare } = {}) {
   const total = Math.round(j.arr - j.dep);
   return `
   <article class="panel journey-card ${badgeAlt ? "" : "best"}">
     <div class="jc-head">
       <span class="jc-badge ${badgeAlt ? "alt" : ""}">${badge}</span>
-      ${nextDay ? `<span class="nextday-chip">明日 ${nextDay.slice(5).replace("-", "/")}</span>` : ""}
+      ${nextDay ? `<span class="nextday-chip">${t("tomorrow")} ${nextDay.slice(5).replace("-", "/")}</span>` : ""}
       <span class="jc-times">${fmtTime(j.dep)}<span class="jc-arrow">▶</span><span class="arr">${fmtTime(j.arr)}</span></span>
-      <span class="jc-meta"><b>${total} 分</b> · ${j.transfers ? `轉乘 ${j.transfers} 次` : "免轉乘"}
-        ${saveMin > 0 ? ` · <span class="save-chip">快 ${saveMin} 分</span>` : ""}</span>
+      <span class="jc-meta"><b>${total} ${t("min")}</b> · ${j.transfers ? t("transfersN", j.transfers) : t("noTransfer")}
+        ${saveMin > 0 ? ` · <span class="save-chip">${t("faster", saveMin)}</span>` : ""}
+        ${fare ? ` · <span class="fare-chip">${t("fare", fare)}</span>` : ""}</span>
     </div>
     <div class="legs">${j.legs.map((l, i) => legHtml(l, j, i)).join("")}</div>
   </article>`;
 }
 
-function renderResults({ options, direct, nextDay, error }) {
-  const box = $("results");
-  if (error) {
-    box.innerHTML = `<div class="panel empty-card">${error}</div>`;
-    renderMap(null);
-    return;
+function hsrPanel(arrMinAtA18, ctx) {
+  if (!hsr) return "";
+  const dow = (dowOf(ctx.date) + 6) % 7; // 0=Mon
+  const groups = { 1: [], 0: [] }; // 1=北上 0=南下
+  for (const tr of hsr) {
+    if (!tr.days[dow]) continue;
+    const dep = Number(tr.dep.slice(0, 2)) * 60 + Number(tr.dep.slice(3));
+    if (dep >= arrMinAtA18 % 1440 + 8 && groups[tr.dir].length < 3) groups[tr.dir].push(tr);
   }
-  if (!options.length) {
-    box.innerHTML = `<div class="panel empty-card">查無班次 😴</div>`;
-    return;
-  }
-  const best = options[0];
-  let html = "";
-  if (nextDay) {
-    html += `<div class="panel empty-card">今日已無可抵達的班次，為你找出<b>明日首班</b>方案：</div>`;
-  }
-  const directIsBest = direct && direct.dep === best.dep && direct.arr === best.arr && best.transfers === 0;
-  const saveMin = direct ? Math.round(direct.arr + direct.dayOffset * 1440 - (best.arr + best.dayOffset * 1440)) : 0;
-  html += journeyCard(best, { badge: "最快抵達", saveMin, nextDay });
-
-  if (direct && !directIsBest && best.transfers > 0) {
-    html += journeyCard(direct, { badge: "免轉乘方案", badgeAlt: true, nextDay });
-  }
-  const rest = options.slice(1).filter((o) => !(direct && o.dep === direct.dep && o.arr === direct.arr && o.transfers === 0));
-  if (rest.length) {
-    html += `<h3 class="options-title">接續班次</h3>`;
-    for (const o of rest) html += journeyCard(o, { badge: "下一班", badgeAlt: true, nextDay });
-  }
-  box.innerHTML = html;
+  if (!groups[0].length && !groups[1].length) return "";
+  const row = (dirKey, label) => groups[dirKey].length
+    ? `<div class="hsr-row"><span class="hsr-dir">${label}</span>${groups[dirKey]
+        .map((x) => `<span class="hsr-train"><b>${x.dep}</b> ${t("hsrTo")}${x.to?.[lang] ?? x.to?.zh ?? ""}</span>`).join("")}</div>`
+    : "";
+  return `
+  <aside class="panel hsr-panel">
+    <h3>🚄 ${t("hsrTitle")}</h3>
+    ${row(1, t("hsrNorth"))}${row(0, t("hsrSouth"))}
+    <p class="hsr-note">${t("hsrNote")}</p>
+  </aside>`;
 }
 
-/* ---------- 路線圖 ---------- */
-function renderMap(journey) {
+function renderResults({ options = [], direct, nextDay, error, arriveMode, cantMake, ctx }) {
+  const box = $("results");
+  if (error) { box.innerHTML = `<div class="panel empty-card">${error}</div>`; renderLineMap(null); return; }
+  if (!options.length) { box.innerHTML = `<div class="panel empty-card">${t("noneFound")}</div>`; renderLineMap(null); return; }
+
+  const best = options[0];
+  const fare = fares?.[`${state.from}|${state.to}`] ?? fares?.[`${state.to}|${state.from}`];
+  let html = "";
+  if (nextDay) html += `<div class="panel empty-card">${t("noServiceToday")}</div>`;
+  if (cantMake) html += `<div class="panel empty-card">${t("cantMake")}</div>`;
+
+  if (arriveMode) {
+    html += journeyCard(best, { badge: t("latestDep"), fare });
+    for (const o of options.slice(1)) html += journeyCard(o, { badge: t("nextCard"), badgeAlt: true });
+  } else {
+    const directIsBest = direct && direct.dep === best.dep && direct.arr === best.arr && best.transfers === 0;
+    const saveMin = direct ? Math.round(abs(direct) - abs(best)) : 0;
+    html += journeyCard(best, { badge: t("fastest"), saveMin, nextDay, fare });
+    if (direct && !directIsBest && best.transfers > 0) html += journeyCard(direct, { badge: t("directCard"), badgeAlt: true, nextDay });
+    const rest = options.slice(1).filter((o) => !(direct && o.dep === direct.dep && o.arr === direct.arr && o.transfers === 0));
+    if (rest.length) {
+      html += `<h3 class="options-title">${t("nextCard")}</h3>`;
+      for (const o of rest) html += journeyCard(o, { badge: t("nextCard"), badgeAlt: true, nextDay });
+    }
+  }
+
+  // A18 高鐵接駁
+  const a18 = best.legs.find((l) => l.to === "A18") ?? (state.to === "A18" ? best.legs[best.legs.length - 1] : null);
+  if (a18 && ctx) html += hsrPanel(a18.arr, ctx);
+  // 機場預辦登機提示
+  if (state.to === "A12" || state.to === "A13") html += `<aside class="panel tip-card">${t("checkinTip")}</aside>`;
+
+  box.innerHTML = html;
+  renderLineMap(best);
+}
+
+/* ---------- 路線圖（示意 / 地理） ---------- */
+let mapView = localStorage.getItem("tymf-map") ?? "schematic";
+function renderLineMap(journey) {
+  lastJourney = journey;
+  if (mapView === "geo" && geo) renderGeoMap(journey);
+  else renderSchematic(journey);
+  $("map-toggle").textContent = mapView === "geo" ? t("mapSchematic") : t("mapGeo");
+}
+let lastJourney = null;
+
+function renderSchematic(journey) {
   const svg = $("line-map");
   const n = stations.length;
   const W = Math.max(690, svg.clientWidth || 690);
   const PAD = 26, Y = 40;
   const x = (i) => PAD + (i * (W - PAD * 2)) / (n - 1);
   const pos = new Map(stations.map((s, i) => [s.id, i]));
-  let g = "";
+  let g = `<line x1="${PAD}" y1="${Y}" x2="${W - PAD}" y2="${Y}" stroke="var(--rail)" stroke-width="5" stroke-linecap="round"/>`;
 
-  // 主線
-  g += `<line x1="${PAD}" y1="${Y}" x2="${W - PAD}" y2="${Y}" stroke="#3a4666" stroke-width="5" stroke-linecap="round"/>`;
-
-  // 行程覆蓋層（每一段一條，折返段往下偏移）
   if (journey) {
     journey.legs.forEach((leg, li) => {
       const x1 = x(pos.get(leg.from)), x2 = x(pos.get(leg.to));
@@ -224,24 +316,15 @@ function renderMap(journey) {
       g += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${color}" stroke-width="7" stroke-linecap="round" opacity="0.95"/>`;
       g += `<line class="flow" x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#fff" stroke-width="2" stroke-linecap="round"/>`;
       const mid = (x1 + x2) / 2;
-      g += `<polygon points="${mid - 5},${y - 4} ${mid - 5},${y + 4} ${mid + 4},${y}" fill="#0c111c" transform="${x2 < x1 ? `rotate(180 ${mid} ${y})` : ""}"/>`;
+      g += `<polygon points="${mid - 5},${y - 4} ${mid - 5},${y + 4} ${mid + 4},${y}" fill="var(--ink)" transform="${x2 < x1 ? `rotate(180 ${mid} ${y})` : ""}"/>`;
     });
   }
-
-  // 車站點與代碼
   stations.forEach((s, i) => {
     const cx = x(i);
-    const isEx = s.express;
     const inJourney = journey && journey.legs.some((l) => l.from === s.id || l.to === s.id);
-    const r = isEx ? 6 : 4.5;
-    const ring = isEx ? "var(--purple)" : "var(--blue)";
-    g += `<circle cx="${cx}" cy="${Y}" r="${r}" fill="${inJourney ? "var(--amber)" : "#fff"}" stroke="${ring}" stroke-width="2.5"/>`;
-    g += `<text x="${cx}" y="${Y + 22}" transform="rotate(-52 ${cx} ${Y + 22})" text-anchor="end"
-      font-size="10" font-family="Chakra Petch, sans-serif" font-weight="600"
-      fill="${inJourney ? "var(--amber)" : "#93a1bb"}">${s.id}</text>`;
+    g += `<circle cx="${cx}" cy="${Y}" r="${s.express ? 6 : 4.5}" fill="${inJourney ? "var(--amber)" : "#fff"}" stroke="${s.express ? "var(--purple)" : "var(--blue)"}" stroke-width="2.5"/>`;
+    g += `<text x="${cx}" y="${Y + 22}" transform="rotate(-52 ${cx} ${Y + 22})" text-anchor="end" font-size="10" font-family="Chakra Petch, sans-serif" font-weight="600" fill="${inJourney ? "var(--amber)" : "var(--text-dim)"}">${s.id}</text>`;
   });
-
-  // 起訖/轉乘站站名標籤（相鄰時分兩層避免重疊）
   if (journey) {
     const marks = new Map();
     marks.set(journey.legs[0].from, "起");
@@ -253,16 +336,12 @@ function renderMap(journey) {
       const cx = x(pos.get(id));
       const tier = cx - prevX < 88 && prevTier === 1 ? 2 : 1;
       prevX = cx; prevTier = tier;
-      const color = kind === "轉" ? "var(--amber)" : "var(--green)";
-      g += `<text x="${cx}" y="${tier === 1 ? Y - 12 : Y - 26}" text-anchor="middle" font-size="11" font-weight="700"
-        font-family="Noto Sans TC, sans-serif" fill="${color}">${stationById.get(id).name}</text>`;
+      g += `<text x="${cx}" y="${tier === 1 ? Y - 12 : Y - 26}" text-anchor="middle" font-size="11" font-weight="700" font-family="Noto Sans TC, sans-serif" fill="${kind === "轉" ? "var(--amber)" : "var(--green)"}">${stnName(id)}</text>`;
     }
   }
-
   svg.setAttribute("viewBox", `0 0 ${W} 104`);
+  svg.style.height = "104px";
   svg.innerHTML = g;
-
-  // 手機上自動捲到行程範圍
   if (journey) {
     const xs = journey.legs.flatMap((l) => [x(pos.get(l.from)), x(pos.get(l.to))]);
     const scroller = svg.closest(".line-map-scroll");
@@ -271,37 +350,114 @@ function renderMap(journey) {
   }
 }
 
+function renderGeoMap(journey) {
+  const svg = $("line-map");
+  const W = 690, H = 300, PAD = 30;
+  const lons = stations.map((s) => geo[s.id][0]), lats = stations.map((s) => geo[s.id][1]);
+  const minLon = Math.min(...lons), maxLon = Math.max(...lons);
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const kx = (W - PAD * 2) / (maxLon - minLon);
+  const ky = (H - PAD * 2) / (maxLat - minLat);
+  const k = Math.min(kx, ky * 1.0);
+  const px = (id) => PAD + (geo[id][0] - minLon) * kx;
+  const py = (id) => H - PAD - (geo[id][1] - minLat) * ky;
+  const pts = stations.map((s) => `${px(s.id)},${py(s.id)}`).join(" ");
+  let g = `<polyline points="${pts}" fill="none" stroke="var(--rail)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  if (journey) {
+    const pos = new Map(stations.map((s, i) => [s.id, i]));
+    for (const leg of journey.legs) {
+      const i1 = pos.get(leg.from), i2 = pos.get(leg.to);
+      const [a, b] = i1 < i2 ? [i1, i2] : [i2, i1];
+      const sub = stations.slice(a, b + 1).map((s) => `${px(s.id)},${py(s.id)}`).join(" ");
+      const color = leg.type === "express" ? "var(--purple)" : "var(--blue)";
+      g += `<polyline points="${sub}" fill="none" stroke="${color}" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>`;
+      g += `<polyline class="flow" points="${sub}" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    }
+  }
+  const KEY = new Set(["A1", "A8", "A12", "A13", "A18", "A21", "A22", state.from, state.to]);
+  for (const s of stations) {
+    const inJourney = journey && journey.legs.some((l) => l.from === s.id || l.to === s.id);
+    g += `<circle cx="${px(s.id)}" cy="${py(s.id)}" r="${s.express ? 5.5 : 4}" fill="${inJourney ? "var(--amber)" : "#fff"}" stroke="${s.express ? "var(--purple)" : "var(--blue)"}" stroke-width="2.5"/>`;
+    if (KEY.has(s.id)) {
+      const cx = px(s.id);
+      const anchor = cx > W - 110 ? "end" : cx < 110 ? "start" : geo[s.id][0] > (minLon + maxLon) / 2 ? "start" : "end";
+      g += `<text x="${cx + (anchor === "start" ? 9 : -9)}" y="${py(s.id) + 4}" text-anchor="${anchor}" font-size="11" font-weight="700" font-family="Noto Sans TC, sans-serif" fill="${inJourney ? "var(--amber)" : "var(--text-dim)"}">${stnName(s.id)}</text>`;
+    }
+  }
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.style.height = "300px";
+  svg.innerHTML = g;
+}
+$("map-toggle").addEventListener("click", () => {
+  mapView = mapView === "geo" ? "schematic" : "geo";
+  localStorage.setItem("tymf-map", mapView);
+  renderLineMap(lastJourney);
+});
+
+/* ---------- 車站看板 ---------- */
+function renderBoard() {
+  const now = taipeiNow();
+  const sid = state.boardStation;
+  $("board-code").textContent = sid;
+  $("board-name").textContent = stnName(sid);
+  const rows = [];
+  const push = (dayType, offset) => {
+    const idx = getIndex(dayType);
+    for (const c of idx.connections) {
+      if (c.from !== sid) continue;
+      const dep = c.dep + offset;
+      const dm = dep - now.min;
+      if (dm < -0.5 || dm > 120) continue;
+      const train = idx.trainById.get(c.trip);
+      rows.push({ dep, dm, type: c.type, dir: c.dir, terminal: train.stops[train.stops.length - 1][0] });
+    }
+  };
+  push(dayTypeOf(now.date), 0);
+  if (now.min < 180) push(dayTypeOf(shiftDate(now.date, -1)), -1440);
+  rows.sort((a, b) => a.dep - b.dep);
+  const seen = new Set();
+  const list = rows.filter((r) => {
+    const k = `${Math.round(r.dep)}|${r.dir}|${r.type}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  }).slice(0, 14);
+  $("board-list").innerHTML = list.length
+    ? list.map((r) => `
+      <li class="board-row ${r.type}">
+        <span class="b-time">${fmtTime(r.dep)}</span>
+        <span class="b-count">${r.dm < 1 ? t("now") : t("inMin", Math.round(r.dm))}</span>
+        <span class="train-chip">${t(r.type)}</span>
+        <span class="b-dest">${r.dir === "S" ? "→" : "←"} ${stnName(r.terminal)}</span>
+      </li>`).join("")
+    : `<li class="board-row empty">${t("noneFound")}</li>`;
+}
+
 /* ---------- 選站面板 ---------- */
 let picking = null;
 function openSheet(which) {
   picking = which;
-  $("sheet-title").textContent = which === "from" ? "選擇出發站" : "選擇前往站";
-  const list = $("station-list");
-  list.innerHTML = stations
-    .map((s) => `
-      <li><button class="pick-btn ${s.express ? "express" : "local-only"} ${state[which] === s.id ? "picked" : ""}" data-id="${s.id}">
+  $("sheet-title").textContent = t(which === "from" ? "pickOrigin" : which === "to" ? "pickDest" : "pickBoard");
+  const cur = which === "board" ? state.boardStation : state[which];
+  $("station-list").innerHTML = stations.map((s) => `
+      <li><button class="pick-btn ${s.express ? "express" : "local-only"} ${cur === s.id ? "picked" : ""}" data-id="${s.id}">
         <span class="code">${s.id}</span>
-        <span><span class="pick-name">${s.name}</span><span class="pick-en">${s.nameEn}</span></span>
-        ${s.express ? '<span class="pick-tag">直達車停靠</span>' : ""}
-      </button></li>`)
-    .join("");
+        <span><span class="pick-name">${stnName(s.id)}</span><span class="pick-en">${lang === "zh" ? stationById.get(s.id).nameEn : stationById.get(s.id).name}</span></span>
+        ${s.express ? `<span class="pick-tag">${t("expressTag")}</span>` : ""}
+      </button></li>`).join("");
   $("station-sheet").hidden = false;
   $("sheet-backdrop").hidden = false;
-  list.querySelector(".picked")?.scrollIntoView({ block: "center" });
+  $("station-list").querySelector(".picked")?.scrollIntoView({ block: "center" });
 }
-function closeSheet() {
-  $("station-sheet").hidden = true;
-  $("sheet-backdrop").hidden = true;
-  picking = null;
-}
+function closeSheet() { $("station-sheet").hidden = true; $("sheet-backdrop").hidden = true; picking = null; }
 $("station-list").addEventListener("click", (e) => {
   const btn = e.target.closest("[data-id]");
   if (!btn || !picking) return;
-  state[picking] = btn.dataset.id;
+  if (picking === "board") state.boardStation = btn.dataset.id;
+  else state[picking] = btn.dataset.id;
   closeSheet();
-  refreshOD();
-  syncHash();
-  runQuery();
+  refreshOD(); renderFavs(); syncHash();
+  state.view === "board" ? renderBoard() : runQuery();
 });
 $("sheet-backdrop").addEventListener("click", closeSheet);
 addEventListener("keydown", (e) => e.key === "Escape" && closeSheet());
@@ -310,35 +466,70 @@ addEventListener("keydown", (e) => e.key === "Escape" && closeSheet());
 function refreshOD() {
   for (const w of ["from", "to"]) {
     $(`${w}-code`).textContent = state[w];
-    $(`${w}-name`).textContent = stationById.get(state[w]).name;
+    $(`${w}-name`).textContent = stnName(state[w]);
   }
 }
 $("btn-from").addEventListener("click", () => openSheet("from"));
 $("btn-to").addEventListener("click", () => openSheet("to"));
+$("btn-board-station").addEventListener("click", () => openSheet("board"));
 $("btn-swap").addEventListener("click", () => {
   [state.from, state.to] = [state.to, state.from];
-  refreshOD(); syncHash(); runQuery();
+  refreshOD(); renderFavs(); syncHash(); runQuery();
 });
+
 function setMode(mode) {
   state.mode = mode;
-  $("mode-now").classList.toggle("on", mode === "now");
-  $("mode-now").setAttribute("aria-selected", mode === "now");
-  $("mode-custom").classList.toggle("on", mode === "custom");
-  $("mode-custom").setAttribute("aria-selected", mode === "custom");
+  for (const m of ["now", "depart", "arrive"]) {
+    $(`mode-${m}`).classList.toggle("on", mode === m);
+    $(`mode-${m}`).setAttribute("aria-selected", String(mode === m));
+  }
   const dt = $("custom-time");
-  dt.hidden = mode !== "custom";
-  if (mode === "custom" && !dt.value) {
+  dt.hidden = mode === "now";
+  if (mode !== "now" && !dt.value) {
     const now = taipeiNow();
     dt.value = state.custom ?? `${now.date}T${fmtTime(now.min)}`;
-    state.custom = dt.value;
   }
+  if (mode !== "now") state.custom = dt.value;
   syncHash(); runQuery();
 }
 $("mode-now").addEventListener("click", () => setMode("now"));
-$("mode-custom").addEventListener("click", () => setMode("custom"));
-$("custom-time").addEventListener("change", (e) => {
-  state.custom = e.target.value;
-  syncHash(); runQuery();
+$("mode-depart").addEventListener("click", () => setMode("depart"));
+$("mode-arrive").addEventListener("click", () => setMode("arrive"));
+$("custom-time").addEventListener("change", (e) => { state.custom = e.target.value; syncHash(); runQuery(); });
+
+function setView(view) {
+  state.view = view;
+  $("tab-plan").classList.toggle("on", view === "plan");
+  $("tab-board").classList.toggle("on", view === "board");
+  $("plan-wrap").hidden = view !== "plan";
+  $("board-wrap").hidden = view !== "board";
+  view === "board" ? renderBoard() : runQuery();
+}
+$("tab-plan").addEventListener("click", () => setView("plan"));
+$("tab-board").addEventListener("click", () => setView("board"));
+
+/* ---------- 語言切換 ---------- */
+function applyStatic() {
+  $("od-label-from").textContent = t("from");
+  $("od-label-to").textContent = t("to");
+  $("mode-now").textContent = t("modeNow");
+  $("mode-depart").textContent = t("modeDepart");
+  $("mode-arrive").textContent = t("modeArrive");
+  $("tab-plan").textContent = t("tabPlan");
+  $("tab-board").textContent = t("tabBoard");
+  $("fav-title").textContent = t("favTitle");
+  $("board-title").textContent = t("boardTitle");
+  $("map-hint-text").innerHTML = `<span class="dot-demo express"></span>${t("legendExpress")}　<span class="dot-demo"></span>${t("legendLocal")}`;
+  $("data-note").innerHTML = `${timetable.dataStatus === "estimate" ? t("dataEstimate") : t("dataOfficial")} · ${t("version")} <code>${timetable.version}</code>`;
+  $("lang-sel").value = lang;
+}
+$("lang-sel").addEventListener("change", (e) => {
+  lang = e.target.value;
+  localStorage.setItem("tymf-lang", lang);
+  t = makeT(lang);
+  document.documentElement.lang = lang === "zh" ? "zh-Hant-TW" : lang;
+  applyStatic(); refreshOD(); renderFavs();
+  state.view === "board" ? renderBoard() : runQuery();
 });
 
 /* ---------- 時鐘與自動更新 ---------- */
@@ -346,21 +537,21 @@ let lastMin = -1;
 function tick() {
   const now = taipeiNow();
   $("clock").innerHTML = `${fmtTime(now.min).slice(0, 2)}<span class="tick">:</span>${fmtTime(now.min).slice(3)}`;
-  if (state.mode === "now" && now.min !== lastMin) {
+  if (now.min !== lastMin) {
     lastMin = now.min;
-    runQuery();
+    if (state.view === "board") renderBoard();
+    else if (state.mode === "now") runQuery();
   }
 }
 setInterval(tick, 5000);
 
-/* ---------- 資料版本註記 ---------- */
-$("data-note").innerHTML =
-  (timetable.dataStatus === "estimate"
-    ? `<span class="warn">⚠ 目前為推估班表</span>（依官方公告班距與行駛時間推算，誤差可能 1–3 分鐘）。`
-    : `✓ 官方時刻表資料。`) +
-  ` 資料版本 <code>${timetable.version}</code>`;
+/* ---------- PWA ---------- */
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 
 /* ---------- 啟動 ---------- */
+document.documentElement.lang = lang === "zh" ? "zh-Hant-TW" : lang;
+applyStatic();
 refreshOD();
-if (state.mode === "custom") setMode("custom");
+renderFavs();
+if (state.mode !== "now") { $("custom-time").value = state.custom; setMode(state.mode); }
 tick();

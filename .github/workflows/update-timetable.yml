@@ -61,6 +61,18 @@ jobs:
           git diff --cached --quiet || git commit -m "chore: 依官方資料更新時刻表"
           git push
 
+      - name: 更新加值資料（票價／高鐵接駁）
+        continue-on-error: true
+        env:
+          TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
+          TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
+        run: |
+          node scripts/fetch-extras.mjs
+          node scripts/build-extras.mjs
+          git add data/fares.json data/hsr-a18.json 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "chore: 更新票價與高鐵接駁資料"
+          git push
+
       # GITHUB_TOKEN 的 push 不會觸發其他 workflow，須主動觸發部署
       - name: 觸發網站重新部署
         if: github.ref == 'refs/heads/main'
