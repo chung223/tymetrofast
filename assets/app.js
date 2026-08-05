@@ -502,7 +502,8 @@ async function shareCard(j, ctx, fare, btn) {
     if (!blob) return;
     const file = new File([blob], `mrt-${fmtTime(j.dep).replace(":", "")}.png`, { type: "image/png" });
     if (navigator.canShare?.({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: "機捷快轉" }); return; } catch { /* 使用者取消改走下載 */ }
+      try { await navigator.share({ files: [file], title: "機捷快轉" }); return; }
+      catch (e) { if (e?.name === "AbortError") return; /* 其他失敗改走下載 */ }
     }
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -986,17 +987,27 @@ async function renderFlight() {
     const r = rows[Number(btn.dataset.share)];
     const url = `${location.origin}${location.pathname}#flight=${r.f}`;
     const text = `✈ ${r.f} ${r.st} ${isDep ? "→" : "←"} ${r.o}${r.term ? ` · T${r.term}` : ""}`;
-    try {
-      if (navigator.share) await navigator.share({ title: "機捷快轉", text, url });
-      else {
-        await navigator.clipboard.writeText(url);
-        btn.textContent = t("linkCopied");
-        setTimeout(() => (btn.textContent = t("shareLink")), 2000);
+    let shared = false;
+    if (navigator.share) {
+      try { await navigator.share({ title: "機捷快轉", text, url }); shared = true; }
+      catch (e) { if (e?.name === "AbortError") return; }
+    }
+    if (!shared) {
+      // 桌機或分享面板不可用：退回複製連結
+      try { await navigator.clipboard.writeText(url); } catch {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
       }
-    } catch { /* 使用者取消 */ }
+      btn.textContent = t("linkCopied");
+      setTimeout(() => (btn.textContent = t("shareLink")), 2000);
+    }
   }));
 
-  list.querySelectorAll(".fl-go").forEach((btn) => (btn.onclick = () => {
+  list.querySelectorAll("[data-fi]").forEach((btn) => (btn.onclick = () => {
     const r = rows[Number(btn.dataset.fi)];
     const now = taipeiNow();
     const st = Number(r.st.slice(0, 2)) * 60 + Number(r.st.slice(3));
@@ -1238,22 +1249,29 @@ if (pendingFlightSearch) { $("flight-search").value = pendingFlightSearch; setVi
 else if (pendingView) setView(pendingView);
 tick();
 
-// 已授權過定位時，靜默預選最近車站（不彈權限視窗）
-if (!hashHadFrom && !pendingFlightSearch && geo && navigator.permissions?.query) {
-  navigator.permissions.query({ name: "geolocation" }).then((p) => {
-    if (p.state !== "granted") return;
-    navigator.geolocation.getCurrentPosition((pos) => {
-      const here = [pos.coords.longitude, pos.coords.latitude];
-      let best = null, bestKm = Infinity;
-      for (const s of stations) {
-        const km = haversineKm(here, geo[s.id]);
-        if (km < bestKm) { bestKm = km; best = s.id; }
-      }
-      if (best && best !== state.from && best !== state.to) {
-        state.from = best;
-        refreshOD(); renderFavs(); syncHash();
-        if (state.view === "plan") runQuery();
-      }
-    }, () => {}, { timeout: 6000, maximumAge: 300000 });
-  }).catch(() => {});
+// 定位預選最近車站：首次造訪主動請求一次權限，之後同意過就每次靜默套用
+if (!hashHadFrom && !pendingFlightSearch && geo && navigator.geolocation) {
+  const applyNearest = (pos) => {
+    const here = [pos.coords.longitude, pos.coords.latitude];
+    let best = null, bestKm = Infinity;
+    for (const s of stations) {
+      const km = haversineKm(here, geo[s.id]);
+      if (km < bestKm) { bestKm = km; best = s.id; }
+    }
+    if (best && best !== state.from && best !== state.to) {
+      state.from = best;
+      refreshOD(); renderFavs(); syncHash();
+      if (state.view === "plan") runQuery();
+    }
+  };
+  const locate = () => navigator.geolocation.getCurrentPosition(applyNearest, () => {}, { timeout: 8000, maximumAge: 300000 });
+  if (!localStorage.getItem("tymf-geo-asked")) {
+    // 首次：直接請求（瀏覽器跳權限視窗），之後不再主動打擾
+    localStorage.setItem("tymf-geo-asked", "1");
+    locate();
+  } else if (navigator.permissions?.query) {
+    navigator.permissions.query({ name: "geolocation" })
+      .then((p) => { if (p.state === "granted") locate(); })
+      .catch(() => {});
+  }
 }
