@@ -1,19 +1,21 @@
 /* ============ 機捷快轉 · 捷運signage風格 ============ */
 :root {
-  --ink: #1b1512;            /* 暖炭底色 */
-  --panel: #251d17;
-  --panel-2: #2d241c;
-  --line: #453729;
-  --rail: #57493a;
-  --text: #f7efe2;
-  --text-dim: #bda98e;
-  --purple: #c08ae0;         /* 直達車 */
+  /* 與 as-jx（哩程玩家工具箱）同家族的香檳金色系 */
+  --ink: #16120c;            /* 深金褐底色 */
+  --panel: #1f1913;
+  --panel-2: #2a2216;
+  --line: rgba(212, 175, 110, 0.16);
+  --line-strong: rgba(212, 175, 110, 0.32);
+  --rail: #5a4c38;
+  --text: #f0e8d8;
+  --text-dim: #a29377;
+  --purple: #b995d8;         /* 直達車（桃捷識別色，調入金色世界） */
   --purple-deep: #8e4e9e;
-  --blue: #64aae8;           /* 普通車 */
-  --blue-deep: #2f6cb3;
-  --amber: #ffb454;          /* LED 看板時刻 */
-  --green: #4fd884;
-  --red: #ff6d5d;
+  --blue: #7fa8cc;           /* 普通車 */
+  --blue-deep: #3c6e9e;
+  --amber: #d4af6e;          /* 香檳金・LED 看板時刻 */
+  --green: #8cc1a0;          /* 鼠尾草綠 */
+  --red: #c96f5f;
   --radius: 14px;
   --font-num: "Chakra Petch", "Noto Sans TC", monospace;
   --font-led: "DotGothic16", "Chakra Petch", "Noto Sans TC", monospace;
@@ -23,9 +25,9 @@
 html { -webkit-text-size-adjust: 100%; }
 body {
   background:
-    radial-gradient(1200px 520px at 80% -10%, rgba(255, 170, 84, 0.13), transparent 60%),
-    radial-gradient(900px 420px at -10% 25%, rgba(142, 78, 158, 0.12), transparent 55%),
-    radial-gradient(700px 380px at 55% 110%, rgba(214, 126, 44, 0.08), transparent 60%),
+    radial-gradient(1200px 520px at 80% -10%, rgba(212, 175, 110, 0.10), transparent 60%),
+    radial-gradient(900px 420px at -10% 25%, rgba(142, 78, 158, 0.09), transparent 55%),
+    radial-gradient(700px 380px at 55% 110%, rgba(138, 109, 59, 0.08), transparent 60%),
     var(--ink);
   color: var(--text);
   font-family: var(--font-body);
@@ -44,20 +46,20 @@ a { color: var(--blue); }
 button { font-family: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 
 /* ---------- 站名燈箱式頁首 ---------- */
-.station-sign { background: #171210; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; }
+.station-sign { background: #120f0a; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; }
 .sign-inner { max-width: 760px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
 .line-roundel {
   flex: none; width: 44px; height: 44px; border-radius: 50%;
   background: var(--purple-deep); color: #fff;
   display: grid; place-items: center;
   font: 700 26px/1 var(--font-num);
-  box-shadow: 0 0 0 3px #fff2, 0 0 18px rgba(168, 107, 214, 0.55);
+  box-shadow: 0 0 0 3px #fff2, 0 0 18px rgba(185, 149, 216, 0.5);
 }
-.sign-title h1 { font-size: 22px; font-weight: 900; letter-spacing: 0.12em; }
+.sign-title h1 { font: 900 22px/1.2 "Noto Serif TC", "Songti TC", serif; letter-spacing: 0.14em; }
 .sign-sub { font: 600 9.5px/1.3 var(--font-num); letter-spacing: 0.18em; color: var(--text-dim); }
 .clock {
   margin-left: auto; font: 400 24px/1 var(--font-led);
-  color: var(--amber); text-shadow: 0 0 14px rgba(255, 180, 84, 0.55), 0 0 3px rgba(255, 180, 84, 0.9);
+  color: var(--amber); text-shadow: 0 0 14px rgba(212, 175, 110, 0.55), 0 0 3px rgba(212, 175, 110, 0.9);
   font-variant-numeric: tabular-nums;
 }
 .clock .tick { animation: blink 1s steps(1) infinite; }
@@ -83,7 +85,7 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
   transition: border-color 0.15s, transform 0.06s;
 }
 .station-btn:active { transform: scale(0.985); }
-.station-btn:hover { border-color: var(--purple); box-shadow: 0 4px 14px rgba(142, 78, 158, 0.18); }
+.station-btn:hover { border-color: var(--purple); box-shadow: 0 4px 14px rgba(212, 175, 110, 0.15); }
 .od-label { display: block; font-size: 11px; color: var(--text-dim); letter-spacing: 0.25em; }
 .station-chip { display: flex; align-items: center; gap: 8px; margin-top: 4px; min-width: 0; }
 .code {
@@ -105,7 +107,7 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .time-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
 .seg-control { display: flex; background: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
 .seg { padding: 7px 16px; border-radius: 999px; font-size: 14px; font-weight: 700; color: var(--text-dim); }
-.seg.on { background: var(--purple-deep); color: #fff; box-shadow: 0 0 12px rgba(168, 107, 214, 0.4); }
+.seg.on { background: var(--purple-deep); color: #fff; box-shadow: 0 0 12px rgba(185, 149, 216, 0.35); }
 .dt-input {
   background: var(--ink); border: 1px solid var(--line); color: var(--text);
   border-radius: 10px; padding: 8px 10px; font: 600 14px var(--font-num);
@@ -140,7 +142,7 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 /* ---------- 月台警示帶 ---------- */
 .platform-strip {
   height: 7px; margin: 18px 2px 4px; border-radius: 4px; opacity: 0.6;
-  background: repeating-linear-gradient(-55deg, #f5c518 0 10px, var(--ink) 10px 20px);
+  background: repeating-linear-gradient(-55deg, #d4af6e 0 10px, var(--ink) 10px 20px);
 }
 
 /* ---------- 結果卡 ---------- */
@@ -149,7 +151,7 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
   content: ""; position: absolute; inset: 0; pointer-events: none;
   background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(255, 255, 255, 0.015) 3px 4px);
 }
-.journey-card.best { border-color: #6b4c8f; box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45), 0 0 24px rgba(142, 78, 158, 0.12); }
+.journey-card.best { border-color: #6b4c8f; box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45), 0 0 24px rgba(142, 78, 158, 0.10); }
 .journey-card.best::before {
   content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
   background: linear-gradient(90deg, var(--purple), var(--blue));
@@ -160,8 +162,8 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
   color: #0c111c; background: var(--amber); border-radius: 6px; padding: 2px 8px;
 }
 .jc-badge.alt { background: var(--line); color: var(--text-dim); }
-.jc-times { font: 400 26px/1.2 var(--font-led); font-variant-numeric: tabular-nums; text-shadow: 0 0 10px rgba(238, 242, 248, 0.25); }
-.jc-times .arr { color: var(--green); text-shadow: 0 0 12px rgba(55, 214, 122, 0.5); }
+.jc-times { font: 400 26px/1.2 var(--font-led); font-variant-numeric: tabular-nums; text-shadow: 0 0 10px rgba(240, 232, 216, 0.22); }
+.jc-times .arr { color: var(--green); text-shadow: 0 0 12px rgba(140, 193, 160, 0.5); }
 .jc-arrow { color: var(--text-dim); font-size: 16px; margin: 0 2px; }
 .jc-meta { margin-left: auto; text-align: right; font-size: 13px; color: var(--text-dim); }
 .jc-meta b { color: var(--text); font-size: 16px; }
@@ -188,7 +190,7 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
   background: var(--blue-deep); letter-spacing: 0.1em;
 }
 .leg.express .train-chip { background: var(--purple-deep); }
-.leg-time { font: 400 16px var(--font-led); color: var(--amber); font-variant-numeric: tabular-nums; text-shadow: 0 0 8px rgba(255, 180, 84, 0.4); }
+.leg-time { font: 400 16px var(--font-led); color: var(--amber); font-variant-numeric: tabular-nums; text-shadow: 0 0 8px rgba(212, 175, 110, 0.4); }
 .leg-stations { font-size: 15px; font-weight: 700; }
 .leg-detail { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
 .transfer-row {
@@ -202,7 +204,7 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .alight-row { display: flex; align-items: center; gap: 8px; padding-left: 32px; position: relative; }
 .alight-row::before {
   content: ""; position: absolute; left: 3px; top: 4px; width: 10px; height: 10px;
-  border-radius: 50%; background: var(--green); box-shadow: 0 0 10px rgba(55, 214, 122, 0.7);
+  border-radius: 50%; background: var(--green); box-shadow: 0 0 10px rgba(140, 193, 160, 0.7);
 }
 .alight-row .leg-stations { color: var(--green); }
 
@@ -290,7 +292,7 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 }
 .hsr-panel h3 { font-size: 14px; color: var(--text); letter-spacing: 0.1em; margin-bottom: 8px; }
 .hsr-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 4px 0; }
-.hsr-dir { flex: none; font-size: 12px; font-weight: 900; color: var(--ink); background: #d97f36; border-radius: 5px; padding: 1px 8px; }
+.hsr-dir { flex: none; font-size: 12px; font-weight: 900; color: var(--ink); background: var(--gold-deep, #8a6d3b); border-radius: 5px; padding: 1px 8px; }
 .hsr-train { font-size: 13px; color: var(--text-dim); }
 .hsr-train b { font: 400 15px var(--font-led); color: var(--amber); }
 .hsr-note { font-size: 11px; color: var(--text-dim); opacity: 0.75; margin-top: 6px; }
@@ -305,7 +307,7 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
   font-size: 14px;
 }
 .board-row:last-child { border-bottom: 0; }
-.board-row .b-time { font: 400 19px var(--font-led); color: var(--amber); min-width: 64px; text-shadow: 0 0 8px rgba(255, 180, 84, 0.4); }
+.board-row .b-time { font: 400 19px var(--font-led); color: var(--amber); min-width: 64px; text-shadow: 0 0 8px rgba(212, 175, 110, 0.4); }
 .board-row .b-count { min-width: 72px; color: var(--green); font-weight: 700; font-size: 12.5px; }
 .board-row .train-chip { background: var(--blue-deep); }
 .board-row.express .train-chip { background: var(--purple-deep); }
@@ -339,6 +341,14 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .flight-banner .b-time { font: 400 17px var(--font-led); color: var(--amber); }
 .flight-banner .fl-note { flex-basis: 100%; font-size: 11.5px; color: var(--text-dim); }
 .fl-dir { margin-bottom: 8px; }
+.wx-strip {
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  font-size: 13px; color: var(--text-dim);
+  border: 1px dashed var(--line); border-radius: 10px;
+  padding: 7px 12px; margin-bottom: 8px;
+}
+.wx-strip b { color: var(--text); font-family: var(--font-num); }
+.wx-strip[hidden] { display: none; }
 .fl-tag.bag { color: var(--green); border-color: #3a6b4a; font-weight: 700; }
 .fl-tag.bag.warn { color: var(--red); border-color: #7a3a33; }
 .cal-btn {
