@@ -78,7 +78,8 @@ function norm(rows, kind) {
 const data = { updated_at: nowTW.toISOString().slice(0, 16).replace("T", " "), airports: { TPE: {} } };
 for (const [kind, path] of [["dep", "Departure"], ["arr", "Arrival"]]) {
   if (kind === "arr") await new Promise((r) => setTimeout(r, 1500));
-  const res = await fetchRetry(`https://tdx.transportdata.tw/api/basic/v2/Air/FIDS/Airport/${path}/TPE?%24top=400&%24format=JSON`);
+  // 不帶 $top：FIDS 依時間升冪，$top 會截到最舊（昨日）的班次
+  const res = await fetchRetry(`https://tdx.transportdata.tw/api/basic/v2/Air/FIDS/Airport/${path}/TPE?%24format=JSON`);
   if (!res.ok) { console.error(`${path} 失敗 ${res.status}`); process.exit(1); }
   const raw = await res.json();
   const rows = Array.isArray(raw) ? raw : raw?.FIDSAirports ?? raw?.data ?? [];
