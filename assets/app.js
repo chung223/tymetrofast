@@ -791,6 +791,25 @@ $("lang-sel").addEventListener("change", (e) => {
   state.view === "board" ? renderBoard() : runQuery();
 });
 
+/* ---------- 深淺模式（◐自動 → ●深 → ○淺） ---------- */
+const THEME_ICON = { auto: "◐", dark: "●", light: "○" };
+let theme = localStorage.getItem("tymf-theme") ?? "auto";
+if (!THEME_ICON[theme]) theme = "auto";
+function applyTheme() {
+  if (theme === "auto") delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = theme;
+  $("theme-btn").textContent = THEME_ICON[theme];
+  const dark = theme === "dark" || (theme === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#120f0a" : "#ece4d2");
+}
+$("theme-btn").addEventListener("click", () => {
+  theme = theme === "auto" ? "dark" : theme === "dark" ? "light" : "auto";
+  localStorage.setItem("tymf-theme", theme);
+  applyTheme();
+});
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", applyTheme);
+applyTheme();
+
 /* ---------- 時鐘與自動更新 ---------- */
 let lastMin = -1;
 function tick() {
