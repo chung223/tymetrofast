@@ -15,6 +15,7 @@
   --red: #ff5d5d;
   --radius: 14px;
   --font-num: "Chakra Petch", "Noto Sans TC", monospace;
+  --font-led: "DotGothic16", "Chakra Petch", "Noto Sans TC", monospace;
   --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -30,6 +31,12 @@ body {
   min-height: 100dvh;
   padding-bottom: env(safe-area-inset-bottom);
 }
+/* 細顆粒質感 */
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.02 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+main, .station-sign, .site-footer { position: relative; z-index: 1; }
 main { max-width: 760px; margin: 0 auto; padding: 14px 14px 40px; }
 a { color: var(--blue); }
 button { font-family: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
@@ -47,8 +54,8 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .sign-title h1 { font-size: 22px; font-weight: 900; letter-spacing: 0.12em; }
 .sign-sub { font: 600 9.5px/1.3 var(--font-num); letter-spacing: 0.18em; color: var(--text-dim); }
 .clock {
-  margin-left: auto; font: 600 22px/1 var(--font-num);
-  color: var(--amber); text-shadow: 0 0 12px rgba(255, 180, 84, 0.5);
+  margin-left: auto; font: 400 24px/1 var(--font-led);
+  color: var(--amber); text-shadow: 0 0 14px rgba(255, 180, 84, 0.55), 0 0 3px rgba(255, 180, 84, 0.9);
   font-variant-numeric: tabular-nums;
 }
 .clock .tick { animation: blink 1s steps(1) infinite; }
@@ -74,7 +81,7 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
   transition: border-color 0.15s, transform 0.06s;
 }
 .station-btn:active { transform: scale(0.985); }
-.station-btn:hover { border-color: var(--purple); }
+.station-btn:hover { border-color: var(--purple); box-shadow: 0 4px 14px rgba(142, 78, 158, 0.18); }
 .od-label { display: block; font-size: 11px; color: var(--text-dim); letter-spacing: 0.25em; }
 .station-chip { display: flex; align-items: center; gap: 8px; margin-top: 4px; min-width: 0; }
 .code {
@@ -111,13 +118,28 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .map-panel { padding: 10px 6px 6px; }
 .line-map-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
 .line-map { display: block; min-width: 690px; width: 100%; height: 104px; }
+.line-map line.flow {
+  stroke-dasharray: 3 9; opacity: 0.75;
+  animation: dashflow 0.9s linear infinite;
+}
+@keyframes dashflow { from { stroke-dashoffset: 12; } to { stroke-dashoffset: 0; } }
 .map-hint { font-size: 11px; color: var(--text-dim); padding: 4px 10px 6px; }
 .dot-demo { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #fff; border: 2px solid var(--blue); vertical-align: -1px; margin-right: 3px; }
 .dot-demo.express { border-color: var(--purple); width: 11px; height: 11px; }
 
+/* ---------- 月台警示帶 ---------- */
+.platform-strip {
+  height: 7px; margin: 18px 2px 4px; border-radius: 4px; opacity: 0.55;
+  background: repeating-linear-gradient(-55deg, #f5c518 0 10px, #10141f 10px 20px);
+}
+
 /* ---------- 結果卡 ---------- */
 .journey-card { position: relative; overflow: hidden; }
-.journey-card.best { border-color: #6b4c8f; }
+.journey-card::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(255, 255, 255, 0.015) 3px 4px);
+}
+.journey-card.best { border-color: #6b4c8f; box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45), 0 0 24px rgba(142, 78, 158, 0.12); }
 .journey-card.best::before {
   content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
   background: linear-gradient(90deg, var(--purple), var(--blue));
@@ -128,8 +150,8 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
   color: #0c111c; background: var(--amber); border-radius: 6px; padding: 2px 8px;
 }
 .jc-badge.alt { background: var(--line); color: var(--text-dim); }
-.jc-times { font: 600 24px/1.2 var(--font-num); font-variant-numeric: tabular-nums; }
-.jc-times .arr { color: var(--green); }
+.jc-times { font: 400 26px/1.2 var(--font-led); font-variant-numeric: tabular-nums; text-shadow: 0 0 10px rgba(238, 242, 248, 0.25); }
+.jc-times .arr { color: var(--green); text-shadow: 0 0 12px rgba(55, 214, 122, 0.5); }
 .jc-arrow { color: var(--text-dim); font-size: 16px; margin: 0 2px; }
 .jc-meta { margin-left: auto; text-align: right; font-size: 13px; color: var(--text-dim); }
 .jc-meta b { color: var(--text); font-size: 16px; }
@@ -156,7 +178,7 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
   background: var(--blue-deep); letter-spacing: 0.1em;
 }
 .leg.express .train-chip { background: var(--purple-deep); }
-.leg-time { font: 600 15px var(--font-num); color: var(--amber); font-variant-numeric: tabular-nums; }
+.leg-time { font: 400 16px var(--font-led); color: var(--amber); font-variant-numeric: tabular-nums; text-shadow: 0 0 8px rgba(255, 180, 84, 0.4); }
 .leg-stations { font-size: 15px; font-weight: 700; }
 .leg-detail { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
 .transfer-row {

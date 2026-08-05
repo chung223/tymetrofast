@@ -14,8 +14,12 @@ export function fmtTime(min) {
 export function buildIndex(network, timetable, dayType) {
   const trains = timetable.dayTypes[dayType];
   if (!trains) throw new Error(`無此日別班表: ${dayType}`);
+  // 轉乘緩衝：同方向轉乘＝下車原月台候車即可；折返轉乘通常需換月台（部分車站同月台可折返）
   const transferMin = new Map(
-    network.stations.map((s) => [s.id, (s.transferSec ?? network.defaultTransferSec) / 60])
+    network.stations.map((s) => [s.id, {
+      same: (s.transferSameSec ?? network.defaultTransferSameSec ?? 45) / 60,
+      reverse: (s.transferReverseSec ?? network.defaultTransferReverseSec ?? 150) / 60,
+    }])
   );
   const connections = [];
   for (const t of trains) {
@@ -47,10 +51,15 @@ export function planJourney(index, { from, to, departAfter }) {
   for (const c of connections) {
     if (c.dep < departAfter) continue;
     const arrAtFrom = arrival.get(c.from);
+    let buffer = 0;
+    if (c.from !== from && arrAtFrom !== undefined) {
+      const arrivedDir = inConn.get(c.from)?.dir;
+      const tm = transferMin.get(c.from);
+      buffer = arrivedDir === c.dir ? tm.same : tm.reverse;
+    }
     const canBoard =
       boardable.has(c.trip) ||
-      (arrAtFrom !== undefined &&
-        arrAtFrom + (c.from === from ? 0 : transferMin.get(c.from)) <= c.dep + 1e-9);
+      (arrAtFrom !== undefined && arrAtFrom + buffer <= c.dep + 1e-9);
     if (!canBoard) continue;
     boardable.add(c.trip);
     if (c.arr < (arrival.get(c.to) ?? Infinity) - 1e-9) {
