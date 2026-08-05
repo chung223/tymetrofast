@@ -62,10 +62,9 @@ function parseExits(html) {
     const cells = [...m[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)].map((x) => cellText(x[1]).replace(/\n/g, " "));
     if (cells.length < 2) continue;
     const no = cells[0], val = cells.slice(1).filter(Boolean).join("・");
-    // 只收實體出口列：編號為 1–2 位數（可帶字母）。A1 中文頁此區為公車轉乘表
-    //（表頭「路線名稱」、值含「××客運・市區公車」），以編號格式＋業者字樣雙重排除。
-    if (!/^[A-Za-z]?\d{1,2}[A-Za-z]?$/.test(no)) continue;
-    if (/客運|市區公車|國道公車|Bus Co/i.test(val)) continue;
+    // 只收實體出口列：標籤含「出口／Exit」（如 出口1、Exit 1、機場連通道出口）。
+    // A1 中文頁此區塊夾帶公車轉乘表（標籤為路線號或「路線名稱」），一律不含這兩詞。
+    if (!/出口|Exit/i.test(no)) continue;
     exits.push([no, val]);
     if (exits.length >= 15) break;
   }
