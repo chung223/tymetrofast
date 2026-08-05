@@ -23,6 +23,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # fids.json 由排程產生、不進版控：部署前抓回線上版避免被洗掉
+      - name: 保留線上航班看板資料
+        run: curl -sf https://chung223.github.io/tymetrofast/data/fids.json -o data/fids.json || true
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
