@@ -1,0 +1,15 @@
+{
+  "$comment": "as-jx tdx.json 的結構樣本（僅供本地測試與文件用；正式資料來自 https://chung223.github.io/as-jx/tdx.json）",
+  "updated_at": "2026-08-05 10:00",
+  "airports": {
+    "TPE": {
+      "dep": [
+        { "f": "JX802", "cs": ["AS7038"], "o": "NRT", "st": "09:40", "et": "", "at": "", "rm": "準時ON TIME", "gate": "D6", "term": "1", "belt": "", "ck": "05", "ac": "A359" },
+        { "f": "BR198", "cs": [], "o": "HND", "st": "10:00", "et": "10:15", "at": "", "rm": "延遲DELAYED", "gate": "C2", "term": "2", "belt": "", "ck": "07-08", "ac": "789" },
+        { "f": "CI753", "cs": [], "o": "SIN", "st": "10:20", "et": "", "at": "", "rm": "", "gate": "D4", "term": "1", "belt": "", "ck": "03", "ac": "77W" },
+        { "f": "JX201", "cs": [], "o": "MFM", "st": "11:05", "et": "", "at": "", "rm": "", "gate": "A5", "term": "1", "belt": "", "ck": "06", "ac": "A21N" }
+      ],
+      "arr": []
+    }
+  }
+}
