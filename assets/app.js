@@ -542,27 +542,75 @@ async function loadFids() {
 }
 const termToStation = (term) => (/2/.test(term) ? "A13" : /1/.test(term) ? "A12" : "A13");
 
-// 桃園機場天氣（open-meteo，免金鑰）
-let wxCache = null, wxAt = 0;
+// 桃園機場天氣＋METAR（open-meteo / metar.vatsim.net，皆免金鑰）
+let wxCache = null, wxAt = 0, metarLoaded = false;
+const wxIcon = (code) =>
+  code === 0 ? "☀️" : code <= 2 ? "🌤" : code === 3 ? "☁️" : code < 50 ? "🌫" : code < 70 ? "🌦" : code < 80 ? "🌨" : code < 95 ? "🌧" : "⛈";
+const WMO_ZH = { 0: "晴", 1: "大致晴朗", 2: "多雲時晴", 3: "陰", 45: "霧", 48: "凍霧", 51: "毛毛雨", 53: "毛毛雨", 55: "毛毛雨", 61: "小雨", 63: "降雨", 65: "大雨", 80: "陣雨", 81: "陣雨", 82: "強陣雨", 95: "雷雨", 96: "雷雨", 99: "雷雨" };
+const WIND_DIR = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+
 async function renderWx() {
-  const el = $("wx-strip");
+  const card = $("wx-details");
   try {
     if (!wxCache || Date.now() - wxAt > 30 * 60 * 1000) {
-      const r = await fetch("https://api.open-meteo.com/v1/forecast?latitude=25.08&longitude=121.233&current=temperature_2m,weather_code,wind_speed_10m&hourly=precipitation_probability&forecast_days=1&timezone=Asia%2FTaipei");
+      const r = await fetch("https://api.open-meteo.com/v1/forecast?latitude=25.08&longitude=121.233&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&hourly=precipitation_probability&forecast_days=1&timezone=Asia%2FTaipei");
       if (!r.ok) throw new Error();
       wxCache = await r.json();
       wxAt = Date.now();
+      metarLoaded = false;
     }
-    const c = wxCache.current;
-    const code = c.weather_code;
-    const icon = code === 0 ? "☀️" : code <= 2 ? "🌤" : code === 3 ? "☁️" : code < 50 ? "🌫" : code < 70 ? "🌦" : code < 80 ? "🌨" : code < 95 ? "🌧" : "⛈";
-    const hourIdx = Math.min(new Date(wxCache.current.time).getHours(), (wxCache.hourly?.precipitation_probability?.length ?? 1) - 1);
+    const c = wxCache.current, d = wxCache.daily;
+    const hourIdx = Math.min(new Date(c.time).getHours(), (wxCache.hourly?.precipitation_probability?.length ?? 1) - 1);
     const pop = wxCache.hourly?.precipitation_probability?.[hourIdx];
-    el.innerHTML = `✈ TPE ${icon} <b>${Math.round(c.temperature_2m)}°</b>` +
+    $("wx-strip").innerHTML = `✈ TPE ${wxIcon(c.weather_code)} <b>${Math.round(c.temperature_2m)}°</b>` +
       (pop != null ? ` <span>☔ <b>${pop}%</b></span>` : "") +
-      ` <span>💨 <b>${Math.round(c.wind_speed_10m)}</b> km/h</span>`;
-    el.hidden = false;
-  } catch { el.hidden = true; }
+      ` <span>💨 <b>${Math.round(c.wind_speed_10m)}</b> km/h</span> <span class="wx-more">▾</span>`;
+    const dir = WIND_DIR[Math.round((c.wind_direction_10m ?? 0) / 22.5) % 16];
+    $("wx-body").innerHTML = `
+      <div class="wx-row">
+        ${lang === "zh" && WMO_ZH[c.weather_code] ? `<span><b>${WMO_ZH[c.weather_code]}</b></span>` : ""}
+        <span>🌡 <b>${c.temperature_2m}°</b>（體感 ${Math.round(c.apparent_temperature)}°）</span>
+        <span>💧 <b>${c.relative_humidity_2m}%</b></span>
+        <span>💨 <b>${dir} ${Math.round(c.wind_speed_10m)}</b>${c.wind_gusts_10m > c.wind_speed_10m + 10 ? ` G${Math.round(c.wind_gusts_10m)}` : ""} km/h</span>
+        <span>↕ <b>${Math.round(d.temperature_2m_min[0])}–${Math.round(d.temperature_2m_max[0])}°</b></span>
+        <span>☔ max <b>${d.precipitation_probability_max[0]}%</b></span>
+      </div>
+      <div class="wx-metar" id="wx-metar"></div>`;
+    card.hidden = false;
+    if (card.open) loadMetar();
+  } catch { card.hidden = true; }
+}
+$("wx-details").addEventListener("toggle", () => { if ($("wx-details").open) loadMetar(); });
+
+async function loadMetar() {
+  if (metarLoaded) return;
+  const el = $("wx-metar");
+  if (!el) return;
+  metarLoaded = true;
+  try {
+    const raw = (await (await fetch("https://metar.vatsim.net/RCTP")).text()).trim();
+    if (!raw.startsWith("RCTP")) throw new Error();
+    const wind = raw.match(/ (\d{3}|VRB)(\d{2,3})(?:G(\d{2,3}))?KT/);
+    const visM = raw.match(/ (\d{4}) /);
+    const cavok = raw.includes("CAVOK");
+    const qnh = raw.match(/ Q(\d{4})/);
+    const temps = raw.match(/ (M?\d{2})\/(M?\d{2}) /);
+    const n = (s) => Number(String(s).replace("M", "-"));
+    let ceil = Infinity;
+    for (const m of raw.matchAll(/(BKN|OVC)(\d{3})/g)) ceil = Math.min(ceil, Number(m[2]) * 100);
+    const vis = cavok ? 10000 : visM ? Number(visM[1]) : 9999;
+    const cat = vis < 1600 || ceil < 500 ? "LIFR" : vis < 4800 || ceil < 1000 ? "IFR" : vis <= 8000 || ceil <= 3000 ? "MVFR" : "VFR";
+    el.innerHTML = `
+      <div class="wx-row metar">
+        <span class="metar-cat ${cat.toLowerCase()}">${cat}</span>
+        ${wind ? `<span>WIND <b>${wind[1]}° ${wind[2]}${wind[3] ? `G${wind[3]}` : ""}kt</b></span>` : ""}
+        <span>VIS <b>${cavok ? "CAVOK" : vis >= 9999 ? "10km+" : `${vis}m`}</b></span>
+        ${ceil < Infinity ? `<span>CEIL <b>${ceil}ft</b></span>` : ""}
+        ${temps ? `<span>T/Td <b>${n(temps[1])}/${n(temps[2])}°</b></span>` : ""}
+        ${qnh ? `<span>QNH <b>${qnh[1]}</b></span>` : ""}
+      </div>
+      <code class="metar-raw">${raw}</code>`;
+  } catch { el.innerHTML = ""; metarLoaded = false; }
 }
 
 async function renderFlight() {
