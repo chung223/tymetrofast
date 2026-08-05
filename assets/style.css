@@ -341,14 +341,25 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .flight-banner .b-time { font: 400 17px var(--font-led); color: var(--amber); }
 .flight-banner .fl-note { flex-basis: 100%; font-size: 11.5px; color: var(--text-dim); }
 .fl-dir { margin-bottom: 8px; }
+.wx-card { border: 1px dashed var(--line); border-radius: 10px; margin-bottom: 8px; }
+.wx-card[hidden] { display: none; }
 .wx-strip {
   display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
   font-size: 13px; color: var(--text-dim);
-  border: 1px dashed var(--line); border-radius: 10px;
-  padding: 7px 12px; margin-bottom: 8px;
+  padding: 7px 12px; cursor: pointer; list-style: none;
 }
-.wx-strip b { color: var(--text); font-family: var(--font-num); }
-.wx-strip[hidden] { display: none; }
+.wx-strip::-webkit-details-marker { display: none; }
+.wx-strip b, .wx-body b { color: var(--text); font-family: var(--font-num); }
+.wx-more { margin-left: auto; color: var(--amber); }
+.wx-card[open] .wx-more { transform: rotate(180deg); }
+.wx-body { padding: 2px 12px 10px; }
+.wx-row { display: flex; align-items: baseline; gap: 10px 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-dim); padding: 4px 0; }
+.wx-row.metar { border-top: 1px dashed var(--line); margin-top: 6px; padding-top: 9px; }
+.metar-cat { font: 700 11px var(--font-num); border-radius: 5px; padding: 2px 8px; color: var(--ink); background: var(--green); }
+.metar-cat.mvfr { background: #7fa8cc; }
+.metar-cat.ifr { background: var(--red); color: #fff; }
+.metar-cat.lifr { background: #9c5fd4; color: #fff; }
+.metar-raw { display: block; font-size: 10.5px; color: var(--text-dim); opacity: 0.8; margin-top: 6px; word-break: break-all; }
 .fl-tag.bag { color: var(--green); border-color: #3a6b4a; font-weight: 700; }
 .fl-tag.bag.warn { color: var(--red); border-color: #7a3a33; }
 .cal-btn {
