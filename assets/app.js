@@ -1373,7 +1373,8 @@ function renderThsrFull() {
     const tg = row.querySelector(".sr-toggle");
     if (tg) tg.textContent = `${t("seatRouteHint")} ${d.hidden ? "▾" : "▴"}`;
   }));
-  $("hsr-note").textContent = `${t("thsrFullNote")} · ${t("fidsUpdated")} ${thsrLiveFile?.updated ?? thsrTTFile?.updated ?? ""}`;
+  const someNoSeat = state.thsrDay === 0 && thsrSeat && trips.some((x) => !seatFor(from, x.no, to));
+  $("hsr-note").textContent = `${t("thsrFullNote")}${someNoSeat ? ` · ${t("seatCoverage")}` : ""} · ${t("fidsUpdated")} ${thsrLiveFile?.updated ?? thsrTTFile?.updated ?? ""}`;
   // 抵達桃園 → 一鍵接機捷（抵達 +10 分從 A18 出發）
   list.querySelectorAll("[data-cmrt]").forEach((btn) => (btn.onclick = () => {
     const dep = Math.min(hm2min(btn.dataset.cmrt) + 10, 1439);
