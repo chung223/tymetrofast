@@ -94,3 +94,49 @@ for (const [kind, path] of [["dep", "Departure"], ["arr", "Arrival"]]) {
 if ((data.airports.TPE.dep?.length ?? 0) < 3) { console.error("出發班次過少，疑似資料異常，不寫檔"); process.exit(1); }
 writeFileSync(join(root, "data/fids.json"), JSON.stringify(data));
 console.log("已寫入 data/fids.json");
+
+/* ── 定期航班時刻表（供搜尋明日／後天班次）：失敗僅警告，不影響看板 ── */
+try {
+  await new Promise((r) => setTimeout(r, 1500));
+  const candidates = [
+    "https://tdx.transportdata.tw/api/basic/v2/Air/FlightSchedule?%24format=JSON",
+    "https://tdx.transportdata.tw/api/basic/v2/Air/Schedule?%24format=JSON",
+    "https://tdx.transportdata.tw/api/basic/v2/Air/GeneralSchedule?%24format=JSON",
+  ];
+  let rows = null, used = "";
+  for (const url of candidates) {
+    const r = await fetchRetry(url);
+    if (!r?.ok) { console.log(`（時刻表端點 ${url.split("/v2/")[1].split("?")[0]}：HTTP ${r?.status}）`); continue; }
+    const raw = await r.json();
+    const arr = Array.isArray(raw) ? raw : raw?.data ?? null;
+    if (arr?.length) { rows = arr; used = url; break; }
+  }
+  if (!rows) throw new Error("無可用時刻表端點");
+  console.log(`時刻表端點：${used.split("/v2/")[1].split("?")[0]}，原始 ${rows.length} 筆`);
+  console.log("首筆欄位:", Object.keys(rows[0]).join(","));
+  const days = (r) => ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    .map((d) => (r[d] === true || r[d] === 1 ? 1 : 0));
+  const flights = [];
+  for (const r of rows) {
+    if (r.IsCargo) continue;
+    const depApt = r.DepartureAirportID ?? r.DepartureAirport ?? "";
+    const arrApt = r.ArrivalAirportID ?? r.ArrivalAirport ?? "";
+    const kind = depApt === "TPE" ? "dep" : arrApt === "TPE" ? "arr" : null;
+    if (!kind) continue;
+    const t = kind === "dep" ? (r.DepartureTime ?? "") : (r.ArrivalTime ?? "");
+    if (!/^\d{2}:\d{2}/.test(t)) continue;
+    flights.push({
+      f: `${r.AirlineID ?? ""}${r.FlightNumber ?? ""}`,
+      kind,
+      o: kind === "dep" ? arrApt : depApt,
+      t: t.slice(0, 5),
+      term: String(r.Terminal ?? "").trim(),
+      days: days(r),
+    });
+  }
+  if (flights.length < 100) throw new Error(`TPE 班次僅 ${flights.length} 筆，疑似欄位不符`);
+  writeFileSync(join(root, "data/flight-schedule.json"), JSON.stringify({ updated: data.updated_at, flights }));
+  console.log(`已寫入 data/flight-schedule.json（TPE ${flights.length} 筆定期班次）`);
+} catch (e) {
+  console.log(`::warning::定期時刻表未更新：${e.message}`);
+}

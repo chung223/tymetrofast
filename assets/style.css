@@ -425,6 +425,8 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .fl-go.alt:hover { color: var(--amber); border-color: var(--amber); }
 .fav-star-fl { flex: none; font-size: 15px; color: var(--amber); padding: 0 2px; line-height: 1; }
 .fl-tag.mile-link { color: var(--blue); border-color: var(--blue-deep); font-weight: 700; text-decoration: none; }
+.ck-map { flex-basis: 100%; width: 100%; max-width: 380px; height: auto; margin-top: 2px; }
+.board-row.sched-head { font-size: 12px; font-weight: 700; color: var(--amber); letter-spacing: 0.08em; justify-content: flex-start; }
 .flight-banner { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; border-left: 3px solid var(--purple); }
 .flight-banner .b-time { font: 400 17px var(--font-led); color: var(--amber); }
 .flight-banner .fl-note { flex-basis: 100%; font-size: 11.5px; color: var(--text-dim); }

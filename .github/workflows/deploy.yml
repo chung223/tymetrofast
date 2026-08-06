@@ -44,6 +44,7 @@ jobs:
           cp index.html hub.html manifest.webmanifest sw.js _site/
           cp -r assets icons _site/
           cp data/*.json _site/data/
+          node scripts/build-share-pages.mjs _site
 
       # 只在部署流程跑（FIDS 每 30 分排程不跑，節省額度）
       - name: 煙霧測試（Playwright 實際渲染主要功能）
