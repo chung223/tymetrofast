@@ -12,7 +12,8 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # 與排程資料更新共用群組：改為排隊而非取消，避免掐掉進行中的資料抓取
+  cancel-in-progress: false
 
 jobs:
   build-deploy:

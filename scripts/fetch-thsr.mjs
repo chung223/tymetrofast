@@ -28,6 +28,15 @@ const token = (await tokRes.json()).access_token;
 
 const BASE = "https://tdx.transportdata.tw/api/basic/v2/Rail";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// TDX 免費層約每分鐘 5 次：所有呼叫間隔 13.5 秒，避免 429 罰 65 秒把 job 拖長
+const nap = () => sleep(13500);
+const cached = (f) => {
+  try { return JSON.parse(readFileSync(join(root, "data", f), "utf8")); } catch { return null; }
+};
+const ageDays = (obj) => {
+  const d = new Date(`${(obj?.updated ?? "").slice(0, 10)}T00:00:00`);
+  return Number.isNaN(+d) ? Infinity : (Date.now() - d.getTime()) / 86400000;
+};
 async function get(url) {
   for (let i = 0; i < 3; i++) {
     const r = await fetch(url, { headers: { accept: "application/json", authorization: `Bearer ${token}` } });
@@ -42,55 +51,71 @@ const today = nowTW.toISOString().slice(0, 10);
 const tomorrow = new Date(nowTW.getTime() + 86400000).toISOString().slice(0, 10);
 const stamp = nowTW.toISOString().slice(0, 16).replace("T", " ");
 
-/* ── 車站 ── */
+/* ── 車站（變動極少：快取 30 天內直接沿用，省呼叫） ── */
 let stations = null;
 try {
-  const raw = await get(`${BASE}/THSR/Station?%24format=JSON`);
-  stations = raw.map((s) => ({
-    id: s.StationID,
-    zh: s.StationName?.Zh_tw ?? "",
-    en: s.StationName?.En ?? "",
-    lat: s.StationPosition?.PositionLat ?? null,
-    lon: s.StationPosition?.PositionLon ?? null,
-  })).sort((a, b) => a.id.localeCompare(b.id));
-  if (stations.length < 10) throw new Error(`僅 ${stations.length} 站`);
-  out("thsr-stations.json", { updated: stamp, stations });
-  console.log(`✓ 車站 ${stations.length} 站`);
+  const c = cached("thsr-stations.json");
+  if (c?.stations?.length >= 10 && ageDays(c) < 30) {
+    stations = c.stations;
+    console.log(`✓ 車站 ${stations.length} 站（沿用快取）`);
+  } else {
+    const raw = await get(`${BASE}/THSR/Station?%24format=JSON`);
+    stations = raw.map((s) => ({
+      id: s.StationID,
+      zh: s.StationName?.Zh_tw ?? "",
+      en: s.StationName?.En ?? "",
+      lat: s.StationPosition?.PositionLat ?? null,
+      lon: s.StationPosition?.PositionLon ?? null,
+    })).sort((a, b) => a.id.localeCompare(b.id));
+    if (stations.length < 10) throw new Error(`僅 ${stations.length} 站`);
+    out("thsr-stations.json", { updated: stamp, stations });
+    console.log(`✓ 車站 ${stations.length} 站`);
+    await nap();
+  }
 } catch (e) { console.log(`::warning::高鐵車站未更新：${e.message}`); }
 
-/* ── 今明兩日逐班時刻 ── */
+/* ── 今明兩日逐班時刻（當日已抓過且涵蓋今明兩日就跳過） ── */
 try {
-  await sleep(1200);
-  const days = {};
-  for (const d of [today, tomorrow]) {
-    const raw = await get(`${BASE}/THSR/DailyTimetable/TrainDate/${d}?%24format=JSON`);
-    days[d] = raw.map((t) => ({
-      no: t.DailyTrainInfo?.TrainNo ?? "",
-      dir: t.DailyTrainInfo?.Direction ?? 0, // 0=南下 1=北上
-      stops: (t.StopTimes ?? []).map((s) => [s.StationID, s.DepartureTime || s.ArrivalTime, s.ArrivalTime || s.DepartureTime]),
-    })).filter((t) => t.no && t.stops.length >= 2);
-    if (days[d].length < 50) throw new Error(`${d} 僅 ${days[d].length} 班`);
-    await sleep(1200);
+  const c = cached("thsr-timetable.json");
+  if (c?.days?.[today]?.length >= 50 && c?.days?.[tomorrow]?.length >= 50) {
+    console.log(`✓ 時刻表沿用快取（${today} ${c.days[today].length} 班／${tomorrow} ${c.days[tomorrow].length} 班）`);
+  } else {
+    const days = {};
+    for (const d of [today, tomorrow]) {
+      const raw = await get(`${BASE}/THSR/DailyTimetable/TrainDate/${d}?%24format=JSON`);
+      days[d] = raw.map((t) => ({
+        no: t.DailyTrainInfo?.TrainNo ?? "",
+        dir: t.DailyTrainInfo?.Direction ?? 0, // 0=南下 1=北上
+        stops: (t.StopTimes ?? []).map((s) => [s.StationID, s.DepartureTime || s.ArrivalTime, s.ArrivalTime || s.DepartureTime]),
+      })).filter((t) => t.no && t.stops.length >= 2);
+      if (days[d].length < 50) throw new Error(`${d} 僅 ${days[d].length} 班`);
+      await nap();
+    }
+    out("thsr-timetable.json", { updated: stamp, days });
+    console.log(`✓ 時刻表 ${today} ${days[today].length} 班／${tomorrow} ${days[tomorrow].length} 班`);
   }
-  out("thsr-timetable.json", { updated: stamp, days });
-  console.log(`✓ 時刻表 ${today} ${days[today].length} 班／${tomorrow} ${days[tomorrow].length} 班`);
 } catch (e) { console.log(`::warning::高鐵時刻表未更新：${e.message}`); }
 
-/* ── 全 OD 票價（標準廂對號） ── */
+/* ── 全 OD 票價（7 天內沿用快取） ── */
 try {
-  await sleep(1200);
-  const raw = await get(`${BASE}/THSR/ODFare?%24format=JSON`);
-  const pairs = {};
-  for (const r of raw) {
-    const o = r.OriginStationID, d = r.DestinationStationID;
-    const fare = (r.Fares ?? []).find((f) => f.TicketType === 1 && f.FareClass === 1 && f.CabinClass === 1)
-      ?? (r.Fares ?? []).find((f) => /標準|Standard/i.test(`${f.CabinClassName ?? ""}${f.TicketTypeName ?? ""}`))
-      ?? (r.Fares ?? [])[0];
-    if (o && d && fare?.Price != null) pairs[`${o}|${d}`] = fare.Price;
+  const cf = cached("thsr-fares.json");
+  if (cf?.pairs && Object.keys(cf.pairs).length >= 100 && ageDays(cf) < 7) {
+    console.log(`✓ 票價沿用快取（${Object.keys(cf.pairs).length} 組）`);
+  } else {
+    const raw = await get(`${BASE}/THSR/ODFare?%24format=JSON`);
+    const pairs = {};
+    for (const r of raw) {
+      const o = r.OriginStationID, d = r.DestinationStationID;
+      const fare = (r.Fares ?? []).find((f) => f.TicketType === 1 && f.FareClass === 1 && f.CabinClass === 1)
+        ?? (r.Fares ?? []).find((f) => /標準|Standard/i.test(`${f.CabinClassName ?? ""}${f.TicketTypeName ?? ""}`))
+        ?? (r.Fares ?? [])[0];
+      if (o && d && fare?.Price != null) pairs[`${o}|${d}`] = fare.Price;
+    }
+    if (Object.keys(pairs).length < 100) throw new Error(`僅 ${Object.keys(pairs).length} 組`);
+    out("thsr-fares.json", { updated: stamp, pairs });
+    console.log(`✓ 票價 ${Object.keys(pairs).length} 組`);
+    await nap();
   }
-  if (Object.keys(pairs).length < 100) throw new Error(`僅 ${Object.keys(pairs).length} 組`);
-  out("thsr-fares.json", { updated: stamp, pairs });
-  console.log(`✓ 票價 ${Object.keys(pairs).length} 組`);
 } catch (e) { console.log(`::warning::高鐵票價未更新：${e.message}`); }
 
 /* ── 各站即時剩餘座位 ── */
@@ -105,7 +130,7 @@ try {
   const code = (v) => (/avail|^O$/i.test(v ?? "") ? "O" : /limit|^L$/i.test(v ?? "") ? "L" : /full|^X$/i.test(v ?? "") ? "X" : "");
   let logged = false;
   for (const sid of ids) {
-    await sleep(5000); // 12 站連續呼叫會撞 TDX 突發限流（罰 65 秒），拉開間隔更省時
+    await nap();
     let raw;
     try { raw = await get(`${BASE}/THSR/AvailableSeatStatusList/Station/${sid}?%24format=JSON`); }
     catch { raw = await get(`${BASE}/THSR/AvailableSeatStatusList/${sid}?%24format=JSON`); }
@@ -140,7 +165,7 @@ try {
 
 /* ── 營運通阻（高鐵＋桃捷） ── */
 try {
-  await sleep(1200);
+  await nap();
   const alerts = [];
   for (const [sys, url] of [["THSR", `${BASE}/THSR/AlertInfo?%24format=JSON`], ["TYMC", `${BASE}/Metro/Alert/TYMC?%24format=JSON`]]) {
     try {
@@ -155,7 +180,7 @@ try {
         if (!title && !desc) continue;
         alerts.push({ sys, title: title || desc.slice(0, 40), desc: desc.slice(0, 200) });
       }
-      await sleep(1200);
+      await nap();
     } catch (e) { console.log(`（${sys} 警示端點：${e.message}）`); }
   }
   out("alerts.json", { updated: stamp, alerts });

@@ -17,10 +17,18 @@ concurrency:
 jobs:
   fids-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     environment:
       name: github-pages
     steps:
       - uses: actions/checkout@v4
+
+      # 排程產生、不進版控的資料：先抓回線上版，避免某一步失敗時部署把它洗掉
+      - name: 保留線上動態資料
+        run: |
+          for f in fids.json fids-future.json thsr-stations.json thsr-timetable.json thsr-fares.json thsr-live.json alerts.json; do
+            curl -sf "https://chung223.github.io/tymetrofast/data/$f" -o "data/$f" || true
+          done
 
       - uses: actions/setup-node@v4
         with:
