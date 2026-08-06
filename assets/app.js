@@ -80,7 +80,7 @@ function dayTypeOf(dateStr) {
 const state = {
   view: "plan", from: "A1", to: "A16", boardStation: "A1", mode: "now", custom: null,
   flightCtx: null, flightDir: "dep", hsrCtx: null, hsrDir: 1,
-  thsrFrom: localStorage.getItem("trav-hsr-from") ?? "1000", thsrTo: "1070", thsrDay: 0,
+  thsrFrom: localStorage.getItem("trav-hsr-from") ?? "1000", thsrTo: "1070", thsrDay: 0, thsrSeatOnly: false,
 };
 if (state.thsrFrom === state.thsrTo) state.thsrTo = state.thsrFrom === "1000" ? "1070" : "1000";
 let hashHadFrom = false, pendingFlightSearch = null, pendingView = null;
@@ -1283,14 +1283,14 @@ function seatRoute(from, no) {
   const ent = thsrSeat?.[from]?.[no];
   return Array.isArray(ent?.[0]) && ent[0][0] !== "*" ? ent : null;
 }
-/** 高鐵某日 O→D 班次（依出發時刻排序） */
+/** 高鐵某日 O→D 班次（依出發時刻排序，含中途停站數） */
 function thsrTrips(dateKey, from, to) {
   const trips = [];
   for (const tr of thsrTT?.[dateKey] ?? []) {
     const iF = tr.stops.findIndex(([sid]) => sid === from);
     const iT = tr.stops.findIndex(([sid]) => sid === to);
     if (iF < 0 || iT < 0 || iF >= iT) continue;
-    trips.push({ no: tr.no, dep: tr.stops[iF][1], arr: tr.stops[iT][2] });
+    trips.push({ no: tr.no, dep: tr.stops[iF][1], arr: tr.stops[iT][2], via: iT - iF - 1 });
   }
   return trips.sort((a, b) => a.dep.localeCompare(b.dep));
 }
@@ -1320,23 +1320,44 @@ function renderThsrFull() {
   const list = $("hsr-list");
   if (from === to) { list.innerHTML = `<li class="board-row empty">${t("sameStation")}</li>`; return; }
   if (!thsrTT[dateKey]) { list.innerHTML = `<li class="board-row empty">${t("noneFound")}</li>`; return; }
+  const availBtn = $("thsr-avail");
+  availBtn.textContent = t("seatOnly");
+  availBtn.classList.toggle("on", state.thsrSeatOnly);
+  availBtn.hidden = state.thsrDay !== 0 || !thsrSeat;
   const trips = thsrTrips(dateKey, from, to)
     .filter((x) => state.thsrDay > 0 || hm2min(x.dep) >= now.min)
+    .filter((x) => !(state.thsrSeatOnly && state.thsrDay === 0) || seatFor(from, x.no, to)?.[0] !== "X")
     .slice(0, 15);
+  // 標記：最快抵達（今日）、最速班次、晚發早到提示
+  let bestArrIdx = -1, bestRideIdx = -1, bestArr = Infinity, bestRide = Infinity;
+  trips.forEach((x, i) => {
+    x.depM = hm2min(x.dep);
+    x.arrM = hm2min(x.arr);
+    x.ride = (x.arrM - x.depM + 1440) % 1440;
+    if (state.thsrDay === 0 && x.arrM < bestArr) { bestArr = x.arrM; bestArrIdx = i; }
+    if (x.ride < bestRide) { bestRide = x.ride; bestRideIdx = i; }
+  });
+  for (const x of trips) {
+    const dom = trips.find((y) => y.depM > x.depM && y.arrM < x.arrM);
+    if (dom) x.laterFaster = { dep: dom.dep, save: x.arrM - dom.arrM };
+  }
   list.innerHTML = trips.length
-    ? trips.map((x) => {
+    ? trips.map((x, i) => {
         const seats = state.thsrDay === 0 ? seatFor(from, x.no, to) : null;
         const route = state.thsrDay === 0 ? seatRoute(from, x.no) : null;
-        const mins = Math.round((hm2min(x.arr) - hm2min(x.dep) + 1440) % 1440);
         return `
         <li class="flight-row ${route ? "has-route" : ""}">
           <div class="fl-main">
+            ${i === bestArrIdx ? `<span class="jc-badge sm">${t("fastestArr")}</span>` : ""}
             <span class="b-time">${x.dep}</span><span class="jc-arrow">▶</span><span class="b-time arr-t">${x.arr}</span>
-            <span class="fl-dest">${t("trainNoL", x.no)} · ${t("rideN", mins)}</span>
+            <span class="fl-dest">${t("trainNoL", x.no)} · ${t("rideN", x.ride)}</span>
             ${to === TY ? `<button class="fl-go" data-cmrt="${x.arr}" data-cdate="${dateKey}">${t("connectMrt")}</button>` : ""}
           </div>
           <div class="fl-sub">
+            ${i === bestRideIdx ? `<span class="fl-tag fast">${t("fastestRide", x.ride)}</span>` : ""}
+            <span class="fl-tag">${x.via === 0 ? t("thsrNonstop") : t("stopsVia", x.via)}</span>
             ${state.thsrDay === 0 ? seatChip(seats?.[0], t("seatStd")) + seatChip(seats?.[1], t("seatBiz")) : `<span class="fl-tag">${t("schedTag")}</span>`}
+            ${x.laterFaster ? `<span class="later-hint">${t("laterFaster", x.laterFaster.dep, x.laterFaster.save)}</span>` : ""}
             ${route ? `<span class="sr-toggle">${t("seatRouteHint")} ▾</span>` : ""}
           </div>
           ${route ? `<div class="seat-route" hidden>${route.map(([sid2, st2, bz2]) =>
@@ -1426,6 +1447,7 @@ $("thsr-swap").addEventListener("click", () => {
 });
 $("thsr-d0").addEventListener("click", () => { state.thsrDay = 0; renderHsr(); });
 $("thsr-d1").addEventListener("click", () => { state.thsrDay = 1; renderHsr(); });
+$("thsr-avail").addEventListener("click", () => { state.thsrSeatOnly = !state.thsrSeatOnly; renderHsr(); });
 $("thsr-locate").addEventListener("click", () => {
   if (!thsrStations || !navigator.geolocation) return;
   const btn = $("thsr-locate");
