@@ -38,6 +38,7 @@ jobs:
           cp index.html hub.html manifest.webmanifest sw.js _site/
           cp -r assets icons _site/
           cp data/*.json _site/data/
+          node scripts/build-share-pages.mjs _site
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
