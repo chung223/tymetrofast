@@ -127,8 +127,15 @@ try {
     }
   }
   if (!Object.keys(seat).length) throw new Error("無餘票資料");
+  // 品質訊號：有多少筆帶有效狀態碼（全空代表欄位對映失效）
+  let withStatus = 0, total = 0;
+  for (const trains of Object.values(seat)) for (const ent of Object.values(trains)) {
+    total++;
+    if (ent.some((e) => e[1] || e[2])) withStatus++;
+  }
+  if (!withStatus) console.log("::warning::餘票狀態值全空，欄位對映可能失效");
   out("thsr-live.json", { updated: stamp, seat });
-  console.log(`✓ 餘票 ${Object.keys(seat).length} 站`);
+  console.log(`✓ 餘票 ${Object.keys(seat).length} 站（${withStatus}/${total} 筆含狀態值）`);
 } catch (e) { console.log(`::warning::高鐵餘票未更新：${e.message}`); }
 
 /* ── 營運通阻（高鐵＋桃捷） ── */
