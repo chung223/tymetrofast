@@ -101,6 +101,8 @@ try {
       : []);
   if (!ids.length) throw new Error("無車站清單");
   const seat = {};
+  // 狀態壓縮：O=充足 L=有限 X=售完
+  const code = (v) => (/avail|^O$/i.test(v ?? "") ? "O" : /limit|^L$/i.test(v ?? "") ? "L" : /full|^X$/i.test(v ?? "") ? "X" : "");
   let logged = false;
   for (const sid of ids) {
     await sleep(5000); // 12 站連續呼叫會撞 TDX 突發限流（罰 65 秒），拉開間隔更省時
@@ -108,12 +110,20 @@ try {
     try { raw = await get(`${BASE}/THSR/AvailableSeatStatusList/Station/${sid}?%24format=JSON`); }
     catch { raw = await get(`${BASE}/THSR/AvailableSeatStatusList/${sid}?%24format=JSON`); }
     const item = Array.isArray(raw) ? raw[0] : raw;
-    if (!logged && item) { console.log("餘票首筆欄位:", Object.keys(item).join(",")); logged = true; }
     const list = item?.AvailableSeats ?? item?.AvailableSeatStatusList ?? (Array.isArray(raw) ? raw : []);
+    if (!logged && list[0]) {
+      console.log("餘票首筆欄位:", Object.keys(list[0]).join(","));
+      console.log("餘票首筆樣本:", JSON.stringify(list[0]).slice(0, 500));
+      logged = true;
+    }
     for (const s of list) {
       const no = s.TrainNo ?? s.DailyTrainInfo?.TrainNo;
       if (!no) continue;
-      (seat[sid] ??= {})[no] = [s.StandardSeatStatus ?? "", s.BusinessSeatStatus ?? ""];
+      // 逐站餘票：StopStations = 由查詢站搭到各後續停靠站的狀態
+      const stops = s.StopStations ?? s.StopStation ?? [];
+      (seat[sid] ??= {})[no] = stops.length
+        ? stops.map((x) => [x.StationID ?? x.NextStationID ?? "", code(x.StandardSeatStatus), code(x.BusinessSeatStatus)])
+        : [["*", code(s.StandardSeatStatus), code(s.BusinessSeatStatus)]];
     }
   }
   if (!Object.keys(seat).length) throw new Error("無餘票資料");
