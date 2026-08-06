@@ -439,6 +439,10 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .seat-chip.none { color: var(--red); border-color: var(--red); opacity: 0.85; }
 .b-time.arr-t { color: var(--green); }
 .flight-row.has-route { cursor: pointer; }
+.jc-badge.sm { font-size: 10.5px; padding: 1px 6px; letter-spacing: 0.06em; }
+.fl-tag.fast { color: var(--purple); border-color: var(--purple-deep); font-weight: 700; }
+.later-hint { font-size: 11.5px; color: var(--amber); opacity: 0.85; }
+.map-toggle.on { color: var(--amber); border-color: var(--amber); }
 .sr-toggle { font-size: 11.5px; color: var(--text-dim); margin-left: auto; }
 .seat-route {
   display: flex; flex-wrap: wrap; gap: 6px 14px;
