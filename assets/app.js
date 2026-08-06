@@ -1296,9 +1296,12 @@ if (pendingFlightSearch) { $("flight-search").value = pendingFlightSearch; setVi
 else if (pendingView) setView(pendingView);
 tick();
 
-// 定位預選最近車站：首次造訪主動請求一次權限，之後同意過就每次靜默套用
-if (!hashHadFrom && !pendingFlightSearch && geo && navigator.geolocation) {
+// 定位預選最近車站：權限未拒絕就每次開站嘗試（已授權→靜默、未決定→跳詢問）。
+// 僅「帶時間的分享連結」與「航班深連結」尊重連結不覆蓋；使用者手動改過站也不覆蓋。
+if (!pendingFlightSearch && !(hashHadFrom && state.custom) && geo && navigator.geolocation) {
+  const bootFrom = state.from;
   const applyNearest = (pos) => {
+    if (state.from !== bootFrom) return; // 使用者已自行選站
     const here = [pos.coords.longitude, pos.coords.latitude];
     let best = null, bestKm = Infinity;
     for (const s of stations) {
@@ -1312,13 +1315,11 @@ if (!hashHadFrom && !pendingFlightSearch && geo && navigator.geolocation) {
     }
   };
   const locate = () => navigator.geolocation.getCurrentPosition(applyNearest, () => {}, { timeout: 8000, maximumAge: 300000 });
-  if (!localStorage.getItem("tymf-geo-asked")) {
-    // 首次：直接請求（瀏覽器跳權限視窗），之後不再主動打擾
-    localStorage.setItem("tymf-geo-asked", "1");
-    locate();
-  } else if (navigator.permissions?.query) {
+  if (navigator.permissions?.query) {
     navigator.permissions.query({ name: "geolocation" })
-      .then((p) => { if (p.state === "granted") locate(); })
-      .catch(() => {});
+      .then((p) => { if (p.state !== "denied") locate(); })
+      .catch(locate);
+  } else {
+    locate();
   }
 }
