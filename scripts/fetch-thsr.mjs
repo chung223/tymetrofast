@@ -103,7 +103,7 @@ try {
   const seat = {};
   let logged = false;
   for (const sid of ids) {
-    await sleep(1200);
+    await sleep(5000); // 12 站連續呼叫會撞 TDX 突發限流（罰 65 秒），拉開間隔更省時
     let raw;
     try { raw = await get(`${BASE}/THSR/AvailableSeatStatusList/Station/${sid}?%24format=JSON`); }
     catch { raw = await get(`${BASE}/THSR/AvailableSeatStatusList/${sid}?%24format=JSON`); }
