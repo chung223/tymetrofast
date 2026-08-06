@@ -1,4 +1,4 @@
-name: 更新機場航班看板（FIDS）
+name: 更新機場航班看板與高鐵動態
 
 on:
   schedule:
@@ -31,6 +31,13 @@ jobs:
           TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
           TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
         run: node scripts/fetch-fids.mjs
+
+      - name: 抓取高鐵時刻／票價／餘票／警示
+        continue-on-error: true
+        env:
+          TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
+          TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
+        run: node scripts/fetch-thsr.mjs
 
       - name: 組裝網站
         run: |

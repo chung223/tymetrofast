@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#120f0a">
-<meta name="description" content="桃園機場捷運快速轉乘計算器：比較直達車＋轉乘與普通車直達，依出發或抵達時間找出最快搭法。">
-<title>機捷快轉｜桃園機場捷運快速轉乘計算器</title>
+<meta name="description" content="快轉：高鐵 × 機捷 × 桃園機場的快速轉乘規劃。逐班時刻、高鐵餘票、航班報到櫃台、接送機與出差行程一次搞定。">
+<title>快轉｜高鐵 × 機捷 × 桃園機場 轉乘規劃</title>
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="機捷快轉">
-<meta property="og:title" content="機捷快轉｜桃園機場捷運快速轉乘計算器">
-<meta property="og:description" content="直達車＋轉乘逐班計算、航班報到櫃台、接送機與趕高鐵規劃、列車位置模擬。">
+<meta property="og:site_name" content="快轉">
+<meta property="og:title" content="快轉｜高鐵 × 機捷 × 桃園機場 轉乘規劃">
+<meta property="og:description" content="高鐵任意起訖與餘票、機捷直達車轉乘逐班計算、航班報到櫃台、接送機與趕高鐵規劃。">
 <meta property="og:image" content="https://chung223.github.io/tymetrofast/icons/og.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
@@ -27,8 +27,8 @@
   <div class="sign-inner">
     <span class="line-roundel" aria-hidden="true">A</span>
     <div class="sign-title">
-      <h1>機捷快轉</h1>
-      <p class="sign-sub">TAOYUAN AIRPORT MRT · FAST TRANSFER PLANNER</p>
+      <h1>快轉</h1>
+      <p class="sign-sub">TAIWAN HSR × AIRPORT MRT · FAST TRANSFER</p>
     </div>
     <button id="theme-btn" class="theme-btn" title="深淺模式" aria-label="深淺模式">◐</button>
     <select id="lang-sel" class="lang-sel" aria-label="Language">
@@ -38,6 +38,8 @@
   </div>
   <div class="sign-stripe" aria-hidden="true"></div>
 </header>
+
+<div class="alert-strip" id="alert-strip" hidden></div>
 
 <main>
   <nav class="view-tabs" role="tablist">
@@ -127,7 +129,22 @@
 
   <div id="hsr-wrap" hidden>
     <section class="panel flight-panel">
-      <div class="seg-control fl-dir" role="tablist">
+      <div id="thsr-full" hidden>
+        <div class="od-row thsr-od">
+          <select id="thsr-from" class="dt-input" aria-label="出發高鐵站"></select>
+          <button class="swap-btn" id="thsr-swap" aria-label="⇅">⇅</button>
+          <select id="thsr-to" class="dt-input" aria-label="到達高鐵站"></select>
+        </div>
+        <div class="time-row">
+          <div class="seg-control" role="tablist">
+            <button class="seg on" id="thsr-d0" role="tab">今日</button>
+            <button class="seg" id="thsr-d1" role="tab">明日</button>
+          </div>
+          <button class="map-toggle thsr-locate" id="thsr-locate">📍</button>
+          <span class="daytype-chip" id="thsr-fare-chip" hidden></span>
+        </div>
+      </div>
+      <div class="seg-control fl-dir" id="hsr-legacy-dir" role="tablist">
         <button class="seg on" id="hsr-dir-n" role="tab">北上</button>
         <button class="seg" id="hsr-dir-s" role="tab">南下</button>
       </div>

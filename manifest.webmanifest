@@ -1,7 +1,7 @@
 {
-  "name": "機捷快轉｜桃園機場捷運快速轉乘",
-  "short_name": "機捷快轉",
-  "description": "桃園機場捷運快速轉乘計算器",
+  "name": "快轉｜高鐵 × 機捷 × 桃園機場",
+  "short_name": "快轉",
+  "description": "高鐵 × 機捷 × 桃園機場的快速轉乘規劃",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
