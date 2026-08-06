@@ -76,6 +76,7 @@ function norm(rows, kind) {
 }
 
 const data = { updated_at: nowTW.toISOString().slice(0, 16).replace("T", " "), airports: { TPE: {} } };
+const rawRows = { dep: [], arr: [] };
 for (const [kind, path] of [["dep", "Departure"], ["arr", "Arrival"]]) {
   if (kind === "arr") await new Promise((r) => setTimeout(r, 1500));
   // 不帶 $top：FIDS 依時間升冪，$top 會截到最舊（昨日）的班次
@@ -83,6 +84,7 @@ for (const [kind, path] of [["dep", "Departure"], ["arr", "Arrival"]]) {
   if (!res.ok) { console.error(`${path} 失敗 ${res.status}`); process.exit(1); }
   const raw = await res.json();
   const rows = Array.isArray(raw) ? raw : raw?.FIDSAirports ?? raw?.data ?? [];
+  rawRows[kind] = rows;
   data.airports.TPE[kind] = norm(rows, kind);
   console.log(`${kind}: raw ${rows.length} → ${data.airports.TPE[kind].length} 班`);
   if (!data.airports.TPE[kind].length) {
@@ -95,48 +97,37 @@ if ((data.airports.TPE.dep?.length ?? 0) < 3) { console.error("出發班次過�
 writeFileSync(join(root, "data/fids.json"), JSON.stringify(data));
 console.log("已寫入 data/fids.json");
 
-/* ── 定期航班時刻表（供搜尋明日／後天班次）：失敗僅警告，不影響看板 ── */
-try {
-  await new Promise((r) => setTimeout(r, 1500));
-  const candidates = [
-    "https://tdx.transportdata.tw/api/basic/v2/Air/FlightSchedule?%24format=JSON",
-    "https://tdx.transportdata.tw/api/basic/v2/Air/Schedule?%24format=JSON",
-    "https://tdx.transportdata.tw/api/basic/v2/Air/GeneralSchedule?%24format=JSON",
-  ];
-  let rows = null, used = "";
-  for (const url of candidates) {
-    const r = await fetchRetry(url);
-    if (!r?.ok) { console.log(`（時刻表端點 ${url.split("/v2/")[1].split("?")[0]}：HTTP ${r?.status}）`); continue; }
-    const raw = await r.json();
-    const arr = Array.isArray(raw) ? raw : raw?.data ?? null;
-    if (arr?.length) { rows = arr; used = url; break; }
-  }
-  if (!rows) throw new Error("無可用時刻表端點");
-  console.log(`時刻表端點：${used.split("/v2/")[1].split("?")[0]}，原始 ${rows.length} 筆`);
-  console.log("首筆欄位:", Object.keys(rows[0]).join(","));
-  const days = (r) => ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    .map((d) => (r[d] === true || r[d] === 1 ? 1 : 0));
-  const flights = [];
+/* ── 未來 48 小時班次（同一份 FIDS 原始資料的第二個窗口，供搜尋明日／後天班次）── */
+const hi2 = new Date(nowTW.getTime() + 48 * 3600000);
+function normFuture(rows, kind) {
+  const p = kind === "dep" ? "Departure" : "Arrival";
+  const groups = new Map();
   for (const r of rows) {
     if (r.IsCargo) continue;
-    const depApt = r.DepartureAirportID ?? r.DepartureAirport ?? "";
-    const arrApt = r.ArrivalAirportID ?? r.ArrivalAirport ?? "";
-    const kind = depApt === "TPE" ? "dep" : arrApt === "TPE" ? "arr" : null;
-    if (!kind) continue;
-    const t = kind === "dep" ? (r.DepartureTime ?? "") : (r.ArrivalTime ?? "");
-    if (!/^\d{2}:\d{2}/.test(t)) continue;
-    flights.push({
-      f: `${r.AirlineID ?? ""}${r.FlightNumber ?? ""}`,
-      kind,
-      o: kind === "dep" ? arrApt : depApt,
-      t: t.slice(0, 5),
-      term: String(r.Terminal ?? "").trim(),
-      days: days(r),
+    const st = r[`Schedule${p}Time`];
+    if (!st) continue;
+    const tt = new Date(st.slice(0, 19));
+    if (Number.isNaN(+tt) || tt <= hi || tt > hi2) continue; // 銜接看板窗口之後
+    const other = (kind === "dep" ? r.ArrivalAirportID : r.DepartureAirportID) || "";
+    const fno = `${r.AirlineID ?? ""}${r.FlightNumber ?? ""}`;
+    const key = `${st}|${other}`;
+    const g = groups.get(key);
+    if (g) {
+      if (r.AcType && !g._ac) { g.cs.push(g.f); g.f = fno; g._ac = true; }
+      else g.cs.push(fno);
+      continue;
+    }
+    groups.set(key, {
+      f: fno, cs: [], o: other,
+      date: st.slice(0, 10), t: hm(st),
+      term: (r.Terminal ?? "").trim(),
+      _t: st, _ac: !!r.AcType,
     });
   }
-  if (flights.length < 100) throw new Error(`TPE 班次僅 ${flights.length} 筆，疑似欄位不符`);
-  writeFileSync(join(root, "data/flight-schedule.json"), JSON.stringify({ updated: data.updated_at, flights }));
-  console.log(`已寫入 data/flight-schedule.json（TPE ${flights.length} 筆定期班次）`);
-} catch (e) {
-  console.log(`::warning::定期時刻表未更新：${e.message}`);
+  const out = [...groups.values()].sort((a, b) => a._t.localeCompare(b._t)).slice(0, 400);
+  for (const x of out) { delete x._t; delete x._ac; }
+  return out;
 }
+const future = { updated_at: data.updated_at, airports: { TPE: { dep: normFuture(rawRows.dep, "dep"), arr: normFuture(rawRows.arr, "arr") } } };
+writeFileSync(join(root, "data/fids-future.json"), JSON.stringify(future));
+console.log(`已寫入 data/fids-future.json（未來 48h：dep ${future.airports.TPE.dep.length}、arr ${future.airports.TPE.arr.length} 班）`);

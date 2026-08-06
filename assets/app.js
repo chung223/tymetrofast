@@ -17,7 +17,7 @@ const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile, pa
   tryJson("data/passes.json"),
   tryJson("data/itci.json"),
   tryJson("data/facilities.json"),
-  tryJson("data/flight-schedule.json"),
+  tryJson("data/fids-future.json"),
   tryJson("data/terminals.json"),
 ]);
 const holidays = new Set(holidaysFile.holidays);
@@ -28,7 +28,7 @@ const hsr = hsrFile?.trains?.length ? hsrFile.trains : null;
 const passes = passesFile?.passes?.length ? passesFile.passes : null;
 const itci = itciFile?.airlines?.length ? itciFile : null;
 const facilities = facFile?.stations ?? null;
-const schedule = schedFile?.flights?.length ? schedFile.flights : null;
+const fidsFuture = schedFile?.airports?.TPE ?? null;
 const terminals = termFile?.terminals ?? null;
 const SITE_URL = "https://chung223.github.io/tymetrofast/";
 const hm2min = (s) => Number(s.slice(0, 2)) * 60 + Number(s.slice(3));
@@ -1023,19 +1023,19 @@ async function renderFlight() {
   ).sort((a, b) => favsF.includes(b.f) - favsF.includes(a.f)) // 收藏置頂（穩定排序保留時間序）
    .slice(0, 30);
   $("fids-note").textContent = `${t("fidsNote")} · ${t("fidsUpdated")} ${data.updated_at ?? ""}`;
-  // 明日／後天定期班次（搜尋時才找；FIDS 看板僅涵蓋今日）
+  // 明日／後天班次（搜尋時才找；來源為 FIDS 未來 48 小時窗口）
   let futureHtml = "";
-  if (q && schedule) {
+  if (q && fidsFuture) {
     const nowS = taipeiNow();
-    for (const off of [1, 2]) {
+    for (const off of [0, 1, 2]) {
       const date = shiftDate(nowS.date, off);
-      const dowIdx = (dowOf(date) + 6) % 7;
-      const hits = schedule
-        .filter((r) => r.kind === state.flightDir && r.days[dowIdx] && (r.f.includes(q) || r.o.includes(q)))
+      const hits = (fidsFuture[state.flightDir] ?? [])
+        .filter((r) => r.date === date && (r.f.includes(q) || (r.cs ?? []).some((c) => c.includes(q)) || r.o.includes(q)))
         .sort((a, b) => a.t.localeCompare(b.t))
         .slice(0, 6);
       if (!hits.length) continue;
-      futureHtml += `<li class="board-row sched-head">${t(off === 1 ? "schedTomorrow" : "schedDayAfter", date.slice(5).replace("-", "/"))}</li>`;
+      const label = off === 0 ? "schedLater" : off === 1 ? "schedTomorrow" : "schedDayAfter";
+      futureHtml += `<li class="board-row sched-head">${t(label, date.slice(5).replace("-", "/"))}</li>`;
       futureHtml += hits.map((r) => `
         <li class="flight-row">
           <div class="fl-main">
@@ -1073,16 +1073,17 @@ async function renderFlight() {
       </li>`).join("")
     : futureHtml ? "" : `<li class="board-row empty">${t("noneFound")}</li>`) + futureHtml;
 
-  // 未來日期定期班次 → 以該日反推規劃（報到櫃台當日才公布）
+  // 未來日期班次 → 以該日反推規劃（報到櫃台當日才公布）
   list.querySelectorAll("[data-sched]").forEach((btn) => (btn.onclick = () => {
     const r = JSON.parse(btn.dataset.sched);
     const stM = hm2min(r.t);
-    const target = r.kind === "arr" ? stM : Math.max(stM - 150, 0);
+    const kind = r.kind ?? state.flightDir;
+    const target = kind === "arr" ? stM : Math.max(stM - 150, 0);
     state.to = termToStation(r.term);
     state.mode = "arrive";
     state.custom = `${r.date}T${fmtTime(target)}`;
     state.hsrCtx = null;
-    state.flightCtx = { kind: r.kind, f: r.f, o: r.o, st: r.t, et: "", term: r.term, ck: "", gate: "", belt: "", date: r.date, sched: true };
+    state.flightCtx = { kind, f: r.f, o: r.o, st: r.t, et: "", term: r.term, ck: "", gate: "", belt: "", date: r.date, sched: true };
     $("custom-time").value = state.custom;
     refreshOD(); renderFavs(); syncHash();
     setView("plan");
