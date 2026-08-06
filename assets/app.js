@@ -1,4 +1,4 @@
-/* 機捷快轉 · 前端主程式 */
+/* 快轉 · 前端主程式 */
 import { buildIndex, planDirect, planOptions, planJourney, planArriveBy, fmtTime } from "./planner.js";
 import { LANGS, LANG_LABEL, makeT } from "./i18n.js";
 
@@ -6,7 +6,7 @@ const $ = (id) => document.getElementById(id);
 const loadJson = (u) => fetch(u).then((r) => (r.ok ? r.json() : Promise.reject(u)));
 const tryJson = (u) => loadJson(u).catch(() => null);
 
-const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile, passesFile, itciFile, facFile, schedFile, termFile] = await Promise.all([
+const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile, passesFile, itciFile, facFile, schedFile, termFile, thsrStFile, thsrTTFile, thsrFareFile, thsrLiveFile, alertsFile] = await Promise.all([
   loadJson("data/network.json"),
   loadJson("data/timetable.json"),
   loadJson("data/holidays.json"),
@@ -19,6 +19,11 @@ const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile, pa
   tryJson("data/facilities.json"),
   tryJson("data/fids-future.json"),
   tryJson("data/terminals.json"),
+  tryJson("data/thsr-stations.json"),
+  tryJson("data/thsr-timetable.json"),
+  tryJson("data/thsr-fares.json"),
+  tryJson("data/thsr-live.json"),
+  tryJson("data/alerts.json"),
 ]);
 const holidays = new Set(holidaysFile.holidays);
 const stations = network.stations;
@@ -30,6 +35,12 @@ const itci = itciFile?.airlines?.length ? itciFile : null;
 const facilities = facFile?.stations ?? null;
 const fidsFuture = schedFile?.airports?.TPE ?? null;
 const terminals = termFile?.terminals ?? null;
+const thsrStations = thsrStFile?.stations?.length >= 10 ? thsrStFile.stations : null;
+const thsrTT = thsrTTFile?.days ?? null;
+const thsrFares = thsrFareFile?.pairs ?? null;
+const thsrSeat = thsrLiveFile?.seat ?? null;
+const sysAlerts = alertsFile?.alerts ?? [];
+const TY = "1020"; // 高鐵桃園站
 const SITE_URL = "https://chung223.github.io/tymetrofast/";
 const hm2min = (s) => Number(s.slice(0, 2)) * 60 + Number(s.slice(3));
 const indexCache = new Map();
@@ -66,7 +77,12 @@ function dayTypeOf(dateStr) {
 }
 
 /* ---------- 狀態 ---------- */
-const state = { view: "plan", from: "A1", to: "A16", boardStation: "A1", mode: "now", custom: null, flightCtx: null, flightDir: "dep", hsrCtx: null, hsrDir: 1 };
+const state = {
+  view: "plan", from: "A1", to: "A16", boardStation: "A1", mode: "now", custom: null,
+  flightCtx: null, flightDir: "dep", hsrCtx: null, hsrDir: 1,
+  thsrFrom: localStorage.getItem("trav-hsr-from") ?? "1000", thsrTo: "1070", thsrDay: 0,
+};
+if (state.thsrFrom === state.thsrTo) state.thsrTo = state.thsrFrom === "1000" ? "1070" : "1000";
 let hashHadFrom = false, pendingFlightSearch = null, pendingView = null;
 (function initFromHash() {
   const p = new URLSearchParams(location.hash.slice(1));
@@ -304,9 +320,9 @@ function renderResults({ options = [], direct, nextDay, error, arriveMode, cantM
       ? `<span class="fl-tag bag warn">${t(dMin > 0 ? "flightDelayed" : "flightEarly", Math.abs(dMin))}</span>` +
         (fc.replanned ? "" : `<button class="fl-go" id="btn-replan">${t("replanBtn")}</button>`)
       : "";
-    // A1 市區預辦登機判斷（依 data/itci.json 支援航空與時段）
+    // A1 市區預辦登機判斷（依 data/itci.json 支援航空與時段；僅從 A1 出發時相關）
     let itciHtml = "";
-    if (isDep && itci) {
+    if (isDep && itci && state.from === "A1") {
       if (!itci.airlines.includes(fc.f.slice(0, 2))) itciHtml = `<span class="fl-tag">${t("itciNo")}</span>`;
       else {
         const now = taipeiNow();
@@ -329,6 +345,48 @@ function renderResults({ options = [], direct, nextDay, error, arriveMode, cantM
       <a class="fl-tag mile-link" href="https://chung223.github.io/as-jx/#flight=${encodeURIComponent(fc.f)}" target="_blank" rel="noopener">${t("mileTools")}</a>
       ${isDep && fc.ck ? counterMapSvg(fc.term, fc.ck) : ""}
       <span class="fl-note">${t(isDep ? "flightPlanNote" : "pickupNote")}</span>
+    </aside>`;
+  }
+  // 🚄 聯程反推：搭高鐵到桃園轉機捷趕飛機（出發站可選、記住偏好）
+  lastEb = null;
+  if (fc && fc.kind !== "arr" && state.from === "A18" && thsrStations) {
+    const mrtDepMin = best.dep % 1440;
+    const dateKey = fc.date ?? ctx?.date ?? taipeiNow().date;
+    const origin = state.thsrFrom !== TY ? state.thsrFrom : "1000";
+    const opts = thsrStations.filter((s) => s.id !== TY).map((s) =>
+      `<option value="${s.id}" ${s.id === origin ? "selected" : ""}>${lang === "zh" ? s.zh : s.en || s.zh}</option>`).join("");
+    let body = "";
+    if (thsrTT?.[dateKey]) {
+      const feed = thsrTrips(dateKey, origin, TY)
+        .filter((x) => hm2min(x.arr) <= mrtDepMin - 10)
+        .slice(-2)
+        .reverse();
+      const hsrFare = thsrFares?.[`${origin}|${TY}`];
+      body = feed.length
+        ? feed.map((x, i) => {
+            const seats = thsrSeat?.[origin]?.[x.no];
+            return `<div class="feeder-row ${i === 0 ? "best" : ""}">
+              <span class="b-time">${x.dep}</span><span class="jc-arrow">▶</span><span class="b-time arr-t">${x.arr}</span>
+              <span class="fl-dest">${t("trainNoL", x.no)}</span>
+              ${dateKey === taipeiNow().date ? seatChip(seats?.[0], t("seatStd")) + seatChip(seats?.[1], t("seatBiz")) : ""}
+              ${i === 0 && hsrFare && fare ? `<span class="fare-chip">${t("totalFare", hsrFare + fare)}</span>` : ""}
+            </div>`;
+          }).join("")
+        : `<div class="feeder-row none">${t("feederNone")}</div>`;
+    } else {
+      body = `<div class="feeder-row none">${t("feederFuture")}</div>`;
+    }
+    const eb = earlyBirdInfo(dateKey);
+    if (eb) {
+      lastEb = eb.opens ? { opens: eb.opens, travel: dateKey } : null;
+      body += `<div class="feeder-row eb">${eb.open ? t("earlyBirdOpen") : t("earlyBird", eb.opens)}${eb.opens ? `<button class="cal-btn" id="btn-eb" title="${t("addCal")}">⏰</button>` : ""}</div>`;
+    }
+    html += `
+    <aside class="panel flight-banner feeder-panel">
+      <span class="fl-no">${t("hsrFeederTitle")}</span>
+      <select id="feeder-from" class="dt-input sm">${opts}</select>
+      <div class="feeder-body">${body}</div>
+      <span class="fl-note">${t("feederNote")}</span>
     </aside>`;
   }
   // 🚄 趕高鐵情境橫幅
@@ -378,6 +436,18 @@ function renderResults({ options = [], direct, nextDay, error, arriveMode, cantM
   renderLineMap(best);
   const calBtn = $("btn-cal");
   if (calBtn) calBtn.onclick = () => addReminder(best, ctx, calBtn);
+  const feederSel = $("feeder-from");
+  if (feederSel) feederSel.onchange = () => {
+    state.thsrFrom = feederSel.value;
+    localStorage.setItem("trav-hsr-from", state.thsrFrom);
+    runQuery();
+  };
+  const ebBtn = $("btn-eb");
+  if (ebBtn && lastEb) ebBtn.onclick = () => {
+    earlyBirdIcs(lastEb.opens, lastEb.travel);
+    ebBtn.textContent = "✓";
+    setTimeout(() => (ebBtn.textContent = "⏰"), 2500);
+  };
   const shareBtn = $("btn-share");
   if (shareBtn) shareBtn.onclick = () => shareCard(best, ctx, fare, shareBtn);
   const replanBtn = $("btn-replan");
@@ -391,6 +461,41 @@ function renderResults({ options = [], direct, nextDay, error, arriveMode, cantM
     setMode("arrive");
   };
   if (fc && !fc.replanned) refreshFlightEt(fc);
+}
+
+/* ---------- 🚨 營運異常警示（高鐵／機捷，正常時隱藏） ---------- */
+function renderAlerts() {
+  const el = $("alert-strip");
+  if (!sysAlerts.length) { el.hidden = true; return; }
+  el.innerHTML = sysAlerts.slice(0, 3).map((a) =>
+    `<span class="al-item">⚠ <b>${t("alertL")[a.sys] ?? a.sys}</b> ${a.title}</span>`
+  ).join("");
+  el.hidden = false;
+}
+
+/* ---------- 🎫 高鐵早鳥開賣提醒（出發前 28 天開賣） ---------- */
+function earlyBirdInfo(travelDate) {
+  const today = taipeiNow().date;
+  if (!travelDate || travelDate <= today) return null;
+  const opens = shiftDate(travelDate, -28);
+  return opens > today ? { opens } : { open: true };
+}
+function earlyBirdIcs(opens, travelDate) {
+  const d = opens.replaceAll("-", "");
+  const ics = [
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//tymetrofast//TW", "BEGIN:VEVENT",
+    `UID:tymf-eb-${d}@tymetrofast`,
+    `DTSTART;TZID=Asia/Taipei:${d}T000000`, `DTEND;TZID=Asia/Taipei:${d}T003000`,
+    `SUMMARY:🎫 高鐵早鳥開賣（${travelDate} 行程）`,
+    `DESCRIPTION:出發日 ${travelDate} 的高鐵早鳥票今日 00:00 開賣（最低 65 折、售完為止）`,
+    "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:🎫 高鐵早鳥開賣", "TRIGGER:PT9H", "END:VALARM",
+    "END:VEVENT", "END:VCALENDAR",
+  ].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+  a.download = `hsr-earlybird-${opens}.ics`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 /* ---------- 🧭 報到櫃台分區示意（data/terminals.json 可編輯） ---------- */
@@ -436,7 +541,7 @@ async function refreshFlightEt(fc) {
 }
 
 /* ---------- 📤 行程分享卡（canvas → PNG） ---------- */
-let qrMod = null;
+let qrMod = null, lastEb = null;
 async function shareCard(j, ctx, fare, btn) {
   try { await Promise.all(["400 40px DotGothic16", "700 17px 'Noto Sans TC'", "900 21px 'Noto Serif TC'"].map((f) => document.fonts.load(f))); } catch { /* 字型未載入時退回系統字 */ }
   const W = 420, X = 28;
@@ -459,7 +564,7 @@ async function shareCard(j, ctx, fare, btn) {
   c.strokeStyle = "rgba(212,175,110,.35)"; c.lineWidth = 1.5;
   c.strokeRect(8, 14, W - 16, H - 22);
   c.fillStyle = "#d4af6e"; c.font = "900 21px 'Noto Serif TC', 'Noto Sans TC', serif";
-  c.fillText("機捷快轉", X, 48);
+  c.fillText("快轉", X, 48);
   c.fillStyle = "#a29377"; c.font = "600 9px 'Chakra Petch', sans-serif";
   c.fillText(`${t("shareTicket")} · TAOYUAN AIRPORT MRT`, X, 62);
   c.textAlign = "right"; c.font = "600 12px 'Chakra Petch', sans-serif";
@@ -532,7 +637,7 @@ async function shareCard(j, ctx, fare, btn) {
     if (!blob) return;
     const file = new File([blob], `mrt-${fmtTime(j.dep).replace(":", "")}.png`, { type: "image/png" });
     if (navigator.canShare?.({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: "機捷快轉", url: link }); return; }
+      try { await navigator.share({ files: [file], title: "快轉", url: link }); return; }
       catch (e) { if (e?.name === "AbortError") return; /* 其他失敗改走下載 */ }
     }
     const a = document.createElement("a");
@@ -1107,7 +1212,7 @@ async function renderFlight() {
     const text = `✈ ${r.f} ${r.st} ${isDep ? "→" : "←"} ${r.o}${r.term ? ` · T${r.term}` : ""}`;
     let shared = false;
     if (navigator.share) {
-      try { await navigator.share({ title: "機捷快轉", text, url }); shared = true; }
+      try { await navigator.share({ title: "快轉", text, url }); shared = true; }
       catch (e) { if (e?.name === "AbortError") return; }
     }
     if (!shared) {
@@ -1147,8 +1252,95 @@ $("flight-search").addEventListener("input", () => renderFlight());
 $("fl-dir-dep").addEventListener("click", () => { state.flightDir = "dep"; renderFlight(); });
 $("fl-dir-arr").addEventListener("click", () => { state.flightDir = "arr"; renderFlight(); });
 
-/* ---------- 🚄 趕高鐵（A18 高鐵桃園站定期時刻） ---------- */
+/* ---------- 🚄 高鐵：任意起訖規劃（含餘票／票價／轉機捷），無資料時退回 A18 接駁清單 ---------- */
+const thsrName = (sid) => {
+  const s = thsrStations?.find((x) => x.id === sid);
+  return s ? (lang === "zh" ? s.zh : s.en || s.zh) : sid;
+};
+const seatChip = (v, label) => {
+  if (!v) return "";
+  const cls = /full|售完|満|매진/i.test(v) ? "none" : /limit|有限|残|부족/i.test(v) ? "few" : "ok";
+  const txt = cls === "none" ? t("seatNone") : cls === "few" ? t("seatFew") : t("seatOk");
+  return `<span class="seat-chip ${cls}">${label} ${txt}</span>`;
+};
+/** 高鐵某日 O→D 班次（依出發時刻排序） */
+function thsrTrips(dateKey, from, to) {
+  const trips = [];
+  for (const tr of thsrTT?.[dateKey] ?? []) {
+    const iF = tr.stops.findIndex(([sid]) => sid === from);
+    const iT = tr.stops.findIndex(([sid]) => sid === to);
+    if (iF < 0 || iT < 0 || iF >= iT) continue;
+    trips.push({ no: tr.no, dep: tr.stops[iF][1], arr: tr.stops[iT][2] });
+  }
+  return trips.sort((a, b) => a.dep.localeCompare(b.dep));
+}
+
+function renderThsrFull() {
+  $("thsr-full").hidden = false;
+  $("hsr-legacy-dir").hidden = true;
+  const selF = $("thsr-from"), selT = $("thsr-to");
+  if (!selF.options.length) {
+    const opts = thsrStations.map((s) => `<option value="${s.id}">${lang === "zh" ? s.zh : s.en || s.zh}</option>`).join("");
+    selF.innerHTML = opts;
+    selT.innerHTML = opts;
+    selF.value = state.thsrFrom;
+    selT.value = state.thsrTo;
+  }
+  $("thsr-d0").textContent = t("thsrToday");
+  $("thsr-d1").textContent = t("thsrTomorrow");
+  $("thsr-d0").classList.toggle("on", state.thsrDay === 0);
+  $("thsr-d1").classList.toggle("on", state.thsrDay === 1);
+  const now = taipeiNow();
+  const dateKey = shiftDate(now.date, state.thsrDay);
+  const from = state.thsrFrom, to = state.thsrTo;
+  const fare = thsrFares?.[`${from}|${to}`];
+  const fareChip = $("thsr-fare-chip");
+  fareChip.hidden = !fare;
+  if (fare) fareChip.textContent = t("fare", fare);
+  const list = $("hsr-list");
+  if (from === to) { list.innerHTML = `<li class="board-row empty">${t("sameStation")}</li>`; return; }
+  if (!thsrTT[dateKey]) { list.innerHTML = `<li class="board-row empty">${t("noneFound")}</li>`; return; }
+  const trips = thsrTrips(dateKey, from, to)
+    .filter((x) => state.thsrDay > 0 || hm2min(x.dep) >= now.min)
+    .slice(0, 15);
+  list.innerHTML = trips.length
+    ? trips.map((x) => {
+        const seats = thsrSeat?.[from]?.[x.no];
+        const mins = Math.round((hm2min(x.arr) - hm2min(x.dep) + 1440) % 1440);
+        return `
+        <li class="flight-row">
+          <div class="fl-main">
+            <span class="b-time">${x.dep}</span><span class="jc-arrow">▶</span><span class="b-time arr-t">${x.arr}</span>
+            <span class="fl-dest">${t("trainNoL", x.no)} · ${t("rideN", mins)}</span>
+            ${to === TY ? `<button class="fl-go" data-cmrt="${x.arr}" data-cdate="${dateKey}">${t("connectMrt")}</button>` : ""}
+          </div>
+          <div class="fl-sub">
+            ${state.thsrDay === 0 ? seatChip(seats?.[0], t("seatStd")) + seatChip(seats?.[1], t("seatBiz")) : `<span class="fl-tag">${t("schedTag")}</span>`}
+          </div>
+        </li>`;
+      }).join("")
+    : `<li class="board-row empty">${t("noneFound")}</li>`;
+  $("hsr-note").textContent = `${t("thsrFullNote")} · ${t("fidsUpdated")} ${thsrLiveFile?.updated ?? thsrTTFile?.updated ?? ""}`;
+  // 抵達桃園 → 一鍵接機捷（抵達 +10 分從 A18 出發）
+  list.querySelectorAll("[data-cmrt]").forEach((btn) => (btn.onclick = () => {
+    const dep = Math.min(hm2min(btn.dataset.cmrt) + 10, 1439);
+    state.from = "A18";
+    if (state.to === "A18") state.to = "A13";
+    state.mode = "depart";
+    state.custom = `${btn.dataset.cdate}T${fmtTime(dep)}`;
+    state.flightCtx = null;
+    state.hsrCtx = null;
+    $("custom-time").value = state.custom;
+    refreshOD(); renderFavs(); syncHash();
+    setView("plan");
+    setMode("depart");
+  }));
+}
+
 function renderHsr() {
+  if (thsrTT && thsrStations) { renderThsrFull(); return; }
+  $("thsr-full")?.setAttribute("hidden", "");
+  $("hsr-legacy-dir").hidden = false;
   $("hsr-dir-n").textContent = t("hsrNorth");
   $("hsr-dir-s").textContent = t("hsrSouth");
   $("hsr-dir-n").classList.toggle("on", state.hsrDir === 1);
@@ -1192,6 +1384,36 @@ function renderHsr() {
 }
 $("hsr-dir-n").addEventListener("click", () => { state.hsrDir = 1; renderHsr(); });
 $("hsr-dir-s").addEventListener("click", () => { state.hsrDir = 0; renderHsr(); });
+$("thsr-from").addEventListener("change", (e) => { state.thsrFrom = e.target.value; localStorage.setItem("trav-hsr-from", state.thsrFrom); renderHsr(); });
+$("thsr-to").addEventListener("change", (e) => { state.thsrTo = e.target.value; renderHsr(); });
+$("thsr-swap").addEventListener("click", () => {
+  [state.thsrFrom, state.thsrTo] = [state.thsrTo, state.thsrFrom];
+  $("thsr-from").value = state.thsrFrom;
+  $("thsr-to").value = state.thsrTo;
+  renderHsr();
+});
+$("thsr-d0").addEventListener("click", () => { state.thsrDay = 0; renderHsr(); });
+$("thsr-d1").addEventListener("click", () => { state.thsrDay = 1; renderHsr(); });
+$("thsr-locate").addEventListener("click", () => {
+  if (!thsrStations || !navigator.geolocation) return;
+  const btn = $("thsr-locate");
+  btn.textContent = "…";
+  navigator.geolocation.getCurrentPosition((pos) => {
+    let best = null, bestKm = Infinity;
+    for (const s of thsrStations) {
+      if (s.lat == null) continue;
+      const km = haversineKm([pos.coords.longitude, pos.coords.latitude], [s.lon, s.lat]);
+      if (km < bestKm) { bestKm = km; best = s.id; }
+    }
+    btn.textContent = "📍";
+    if (best) {
+      state.thsrFrom = best;
+      localStorage.setItem("trav-hsr-from", best);
+      $("thsr-from").value = best;
+      renderHsr();
+    }
+  }, () => { btn.textContent = "📍"; }, { timeout: 8000, maximumAge: 300000 });
+});
 
 /* ---------- 選站面板 ---------- */
 let picking = null;
@@ -1228,7 +1450,11 @@ $("station-list").addEventListener("click", (e) => {
   const btn = e.target.closest("[data-id]");
   if (!btn || !picking) return;
   if (picking === "board") state.boardStation = btn.dataset.id;
-  else { state[picking] = btn.dataset.id; state.flightCtx = null; state.hsrCtx = null; }
+  else {
+    state[picking] = btn.dataset.id;
+    // 目的地由航班／高鐵情境決定，改了才清除；改出發站保留（例如改成 A18 接高鐵）
+    if (picking === "to") { state.flightCtx = null; state.hsrCtx = null; }
+  }
   closeSheet();
   refreshOD(); renderFavs(); syncHash();
   state.view === "board" ? renderBoard() : runQuery();
@@ -1312,7 +1538,7 @@ $("lang-sel").addEventListener("change", (e) => {
   localStorage.setItem("tymf-lang", lang);
   t = makeT(lang);
   document.documentElement.lang = lang === "zh" ? "zh-Hant-TW" : lang;
-  applyStatic(); refreshOD(); renderFavs();
+  applyStatic(); refreshOD(); renderFavs(); renderAlerts();
   state.view === "board" ? renderBoard() : runQuery();
 });
 
@@ -1362,6 +1588,7 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catc
 /* ---------- 啟動 ---------- */
 document.documentElement.lang = lang === "zh" ? "zh-Hant-TW" : lang;
 applyStatic();
+renderAlerts();
 refreshOD();
 renderFavs();
 if (state.mode !== "now") { $("custom-time").value = state.custom; setMode(state.mode); }

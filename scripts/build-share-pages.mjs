@@ -25,7 +25,7 @@ for (const a of network.stations) {
   for (const b of network.stations) {
     if (a.id === b.id) continue;
     const fare = fares?.[`${a.id}|${b.id}`] ?? fares?.[`${b.id}|${a.id}`];
-    const title = `${a.id} ${a.name} → ${b.id} ${b.name}｜機捷快轉`;
+    const title = `${a.id} ${a.name} → ${b.id} ${b.name}｜快轉`;
     const desc = `桃園機場捷運最快搭法：直達車＋轉乘逐班計算${fare ? `，單程票價 NT$${fare}` : ""}。點開看目前最快班次與月台指引。`;
     const target = `${SITE}#from=${a.id}&to=${b.id}`;
     writeFileSync(join(outDir, `${a.id}-${b.id}.html`), `<!DOCTYPE html>
@@ -34,7 +34,7 @@ for (const a of network.stations) {
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="機捷快轉">
+<meta property="og:site_name" content="快轉">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:image" content="${SITE}icons/og.png">
@@ -44,7 +44,7 @@ for (const a of network.stations) {
 <link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
 <style>body{background:#16120c;color:#a29377;font-family:sans-serif;display:grid;place-items:center;min-height:100dvh;margin:0}a{color:#d4af6e}</style>
 </head><body>
-<p><a href="${target}" id="go">${esc(title)} — 開啟機捷快轉 ▶</a></p>
+<p><a href="${target}" id="go">${esc(title)} — 開啟快轉 ▶</a></p>
 <script>
 const q = new URLSearchParams(location.search);
 const parts = ["from=${a.id}", "to=${b.id}"];
