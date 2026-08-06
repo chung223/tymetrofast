@@ -364,7 +364,7 @@ function renderResults({ options = [], direct, nextDay, error, arriveMode, cantM
       const hsrFare = thsrFares?.[`${origin}|${TY}`];
       body = feed.length
         ? feed.map((x, i) => {
-            const seats = thsrSeat?.[origin]?.[x.no];
+            const seats = seatFor(origin, x.no, TY);
             return `<div class="feeder-row ${i === 0 ? "best" : ""}">
               <span class="b-time">${x.dep}</span><span class="jc-arrow">▶</span><span class="b-time arr-t">${x.arr}</span>
               <span class="fl-dest">${t("trainNoL", x.no)}</span>
@@ -1257,12 +1257,32 @@ const thsrName = (sid) => {
   const s = thsrStations?.find((x) => x.id === sid);
   return s ? (lang === "zh" ? s.zh : s.en || s.zh) : sid;
 };
-const seatChip = (v, label) => {
+const seatCls = (v) => {
   if (!v) return "";
-  const cls = /full|售完|満|매진/i.test(v) ? "none" : /limit|有限|残|부족/i.test(v) ? "few" : "ok";
+  if (v === "X" || /full|售完/i.test(v)) return "none";
+  if (v === "L" || /limit/i.test(v)) return "few";
+  if (v === "O" || /avail/i.test(v)) return "ok";
+  return "";
+};
+const seatChip = (v, label) => {
+  const cls = seatCls(v);
+  if (!cls) return "";
   const txt = cls === "none" ? t("seatNone") : cls === "few" ? t("seatFew") : t("seatOk");
   return `<span class="seat-chip ${cls}">${label} ${txt}</span>`;
 };
+/** 某站搭某班車「到指定站」的餘票 [標準, 商務]；相容舊版單一狀態格式 */
+function seatFor(from, no, to) {
+  const ent = thsrSeat?.[from]?.[no];
+  if (!ent?.length) return null;
+  if (!Array.isArray(ent[0])) return ent; // 舊格式 [std, biz]
+  const hit = ent.find((e) => e[0] === to) ?? ent.find((e) => e[0] === "*") ?? ent[ent.length - 1];
+  return hit ? [hit[1], hit[2]] : null;
+}
+/** 逐站餘票明細（新格式才有） */
+function seatRoute(from, no) {
+  const ent = thsrSeat?.[from]?.[no];
+  return Array.isArray(ent?.[0]) && ent[0][0] !== "*" ? ent : null;
+}
 /** 高鐵某日 O→D 班次（依出發時刻排序） */
 function thsrTrips(dateKey, from, to) {
   const trips = [];
@@ -1305,10 +1325,11 @@ function renderThsrFull() {
     .slice(0, 15);
   list.innerHTML = trips.length
     ? trips.map((x) => {
-        const seats = thsrSeat?.[from]?.[x.no];
+        const seats = state.thsrDay === 0 ? seatFor(from, x.no, to) : null;
+        const route = state.thsrDay === 0 ? seatRoute(from, x.no) : null;
         const mins = Math.round((hm2min(x.arr) - hm2min(x.dep) + 1440) % 1440);
         return `
-        <li class="flight-row">
+        <li class="flight-row ${route ? "has-route" : ""}">
           <div class="fl-main">
             <span class="b-time">${x.dep}</span><span class="jc-arrow">▶</span><span class="b-time arr-t">${x.arr}</span>
             <span class="fl-dest">${t("trainNoL", x.no)} · ${t("rideN", mins)}</span>
@@ -1316,10 +1337,21 @@ function renderThsrFull() {
           </div>
           <div class="fl-sub">
             ${state.thsrDay === 0 ? seatChip(seats?.[0], t("seatStd")) + seatChip(seats?.[1], t("seatBiz")) : `<span class="fl-tag">${t("schedTag")}</span>`}
+            ${route ? `<span class="sr-toggle">${t("seatRouteHint")} ▾</span>` : ""}
           </div>
+          ${route ? `<div class="seat-route" hidden>${route.map(([sid2, st2, bz2]) =>
+            `<span class="sr-stop"><b>${thsrName(sid2)}</b>${seatChip(st2, t("seatStd"))}${seatChip(bz2, t("seatBiz"))}</span>`).join("")}</div>` : ""}
         </li>`;
       }).join("")
     : `<li class="board-row empty">${t("noneFound")}</li>`;
+  // 點班次展開各站餘票
+  list.querySelectorAll(".has-route").forEach((row) => row.addEventListener("click", (e) => {
+    if (e.target.closest("button")) return;
+    const d = row.querySelector(".seat-route");
+    d.hidden = !d.hidden;
+    const tg = row.querySelector(".sr-toggle");
+    if (tg) tg.textContent = `${t("seatRouteHint")} ${d.hidden ? "▾" : "▴"}`;
+  }));
   $("hsr-note").textContent = `${t("thsrFullNote")} · ${t("fidsUpdated")} ${thsrLiveFile?.updated ?? thsrTTFile?.updated ?? ""}`;
   // 抵達桃園 → 一鍵接機捷（抵達 +10 分從 A18 出發）
   list.querySelectorAll("[data-cmrt]").forEach((btn) => (btn.onclick = () => {
