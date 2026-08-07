@@ -17,19 +17,19 @@
   },
   "OperationTime": {
    "StartTime": "05:30",
-   "EndTime": "00:29"
+   "EndTime": "00:28"
   },
   "Headways": [
    {
     "PeakFlag": "1",
     "StartTime": "05:30",
-    "EndTime": "00:29",
+    "EndTime": "00:28",
     "MinHeadwayMins": 15,
     "MaxHeadwayMins": 15
    }
   ],
-  "SrcUpdateTime": "2026-08-05T03:38:19+08:00",
-  "UpdateTime": "2026-08-05T08:38:21+08:00",
-  "VersionID": 1011
+  "SrcUpdateTime": "2026-08-07T03:38:20+08:00",
+  "UpdateTime": "2026-08-07T20:38:21+08:00",
+  "VersionID": 1018
  }
 ]
