@@ -27,7 +27,7 @@ jobs:
       # 排程產生、不進版控的資料：部署前抓回線上版避免被洗掉
       - name: 保留線上動態資料
         run: |
-          for f in fids.json fids-future.json thsr-stations.json thsr-timetable.json thsr-fares.json thsr-live.json alerts.json; do
+          for f in fids.json fids-future.json thsr-stations.json thsr-timetable.json thsr-fares.json thsr-live.json alerts.json trtc.json trtc-fares.json; do
             curl -sf "https://chung223.github.io/tymetrofast/data/$f" -o "data/$f" || true
           done
 

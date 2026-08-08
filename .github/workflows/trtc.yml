@@ -1,9 +1,10 @@
-name: 更新機場航班看板與高鐵動態
+name: 更新台北捷運資料
 
 on:
-  schedule:
-    - cron: "*/30 * * * *"
   workflow_dispatch:
+  schedule:
+    # 每週日 05:30（台灣時間）；北捷為班距制，全部資料屬靜態，週更足矣
+    - cron: "30 21 * * 6"
 
 permissions:
   contents: read
@@ -15,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  fids-deploy:
+  trtc-deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     environment:
@@ -23,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 排程產生、不進版控的資料：先抓回線上版，避免某一步失敗時部署把它洗掉
+      # 排程產生、不進版控的資料：先抓回線上版，避免部署洗掉
       - name: 保留線上動態資料
         run: |
           for f in fids.json fids-future.json thsr-stations.json thsr-timetable.json thsr-fares.json thsr-live.json alerts.json trtc.json trtc-fares.json; do
@@ -34,18 +35,11 @@ jobs:
         with:
           node-version: 22
 
-      - name: 抓取 TDX FIDS 看板
+      - name: 抓取台北捷運靜態資料
         env:
           TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
           TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
-        run: node scripts/fetch-fids.mjs
-
-      - name: 抓取高鐵時刻／票價／餘票／警示
-        continue-on-error: true
-        env:
-          TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
-          TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
-        run: node scripts/fetch-thsr.mjs
+        run: node scripts/fetch-trtc.mjs
 
       - name: 組裝網站
         run: |

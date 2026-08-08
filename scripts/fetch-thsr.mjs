@@ -167,7 +167,7 @@ try {
 try {
   await nap();
   const alerts = [];
-  for (const [sys, url] of [["THSR", `${BASE}/THSR/AlertInfo?%24format=JSON`], ["TYMC", `${BASE}/Metro/Alert/TYMC?%24format=JSON`]]) {
+  for (const [sys, url] of [["THSR", `${BASE}/THSR/AlertInfo?%24format=JSON`], ["TYMC", `${BASE}/Metro/Alert/TYMC?%24format=JSON`], ["TRTC", `${BASE}/Metro/Alert/TRTC?%24format=JSON`]]) {
     try {
       const raw = await get(url);
       const list = Array.isArray(raw) ? raw : raw?.Alerts ?? [];
