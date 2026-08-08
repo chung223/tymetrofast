@@ -398,6 +398,9 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .board-row.express .train-chip { background: var(--purple-deep); }
 .board-row .b-dest { color: var(--text-dim); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .board-row.empty { color: var(--text-dim); justify-content: center; }
+.board-row.live .b-count { min-width: 84px; font-size: 16px; color: var(--amber); text-shadow: 0 0 8px rgba(212, 175, 110, 0.4); font-family: var(--font-led); font-weight: 400; }
+.board-row.live-note { font-size: 11px; color: var(--green); justify-content: flex-start; border-bottom: 0; }
+.firstlast .fl-cell .line-chip { margin-right: 2px; }
 
 /* ---------- ✈ 航班 ---------- */
 .flight-panel { padding-top: 12px; }

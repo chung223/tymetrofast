@@ -1,0 +1,82 @@
+name: 部署即時資料中繼站（Cloudflare Worker）
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["worker/**"]
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: worker
+  cancel-in-progress: false
+
+jobs:
+  deploy-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 設定 Worker 金鑰（TDX，先於部署以免空窗）
+        working-directory: worker
+        continue-on-error: true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
+          TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
+        run: |
+          printf '%s' "$TDX_CLIENT_ID" | npx -y wrangler@4 secret put TDX_CLIENT_ID || echo "（首次部署前無法先放 secret，部署後補）"
+          printf '%s' "$TDX_CLIENT_SECRET" | npx -y wrangler@4 secret put TDX_CLIENT_SECRET || true
+
+      - name: 部署 Worker
+        working-directory: worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: npx -y wrangler@4 deploy | tee /tmp/deploy.log
+
+      - name: 補設金鑰（首次部署後）並確認
+        working-directory: worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
+          TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
+        run: |
+          printf '%s' "$TDX_CLIENT_ID" | npx -y wrangler@4 secret put TDX_CLIENT_ID
+          printf '%s' "$TDX_CLIENT_SECRET" | npx -y wrangler@4 secret put TDX_CLIENT_SECRET
+          npx -y wrangler@4 secret list
+
+      - name: 驗證並記錄 Worker 網址
+        run: |
+          URL=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' /tmp/deploy.log | head -1)
+          echo "Worker 網址：$URL"
+          [ -n "$URL" ] || { echo "::error::部署輸出找不到 workers.dev 網址"; exit 1; }
+          sleep 8
+          echo "--- /trtc-live?stn=BL12 樣本 ---"
+          curl -sf "$URL/trtc-live?stn=BL12" | head -c 700 || echo "（首測失敗——秘鑰生效可能需數十秒，稍後由前端重試）"
+          echo
+          printf '{"updated":"%s","url":"%s"}\n' "$(date -u +%FT%TZ)" "$URL" > data/worker.json
+
+      - name: 提交 Worker 網址供前端讀取
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/worker.json
+          git diff --cached --quiet || { git commit -m "chore: 更新即時中繼站網址"; git push; }
+
+      # GITHUB_TOKEN 的 push 不會觸發其他 workflow，須主動觸發部署
+      - name: 觸發網站重新部署
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main
