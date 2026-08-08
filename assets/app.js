@@ -1058,16 +1058,72 @@ $("map-toggle").addEventListener("click", () => {
 
 /* ---------- 🚇 北捷即時到站看板（Worker 中繼；失敗退回班距推估） ---------- */
 let trtcBoardAt = 0;
-function trtcHeadwayRows(sid) {
+function trtcHeadwayRows(sid, note) {
   const holiday = dayTypeOf(taipeiNow().date) === "holiday";
   const lines = [...(trtcGraph?.linesAt.get(sid) ?? [])];
-  return (liveApi ? `<li class="board-row empty">${t("liveFail")}</li>` : "") + (lines.length
+  return (note ? `<li class="board-row empty">${note}</li>` : "") + (lines.length
     ? lines.map((l) => `
       <li class="board-row">
         ${lineChip(l)}
         <span class="b-dest">${t("headwayAbout", Math.round(headwayOf(trtc, l, taipeiNow().min, holiday)))}</span>
       </li>`).join("")
     : `<li class="board-row empty">${t("noneFound")}</li>`);
+}
+// 北捷 LiveBoard 為事件式資料：只列「正在進站」的列車（EstimateTime 恆為 0），
+// 無逐站倒數。因此取全網列車位置，沿線用站間行駛時間（含停站）推進，
+// 推算查詢站還有幾分鐘到——路線為樹狀（中和新蘆有 Y 岔），以相鄰站尋路避免走錯支線。
+const trtcAdjCache = new Map();
+function trtcAdj(lineId) {
+  if (!trtcAdjCache.has(lineId)) {
+    const adj = new Map();
+    for (const [a, b, m] of trtc.lines?.[lineId]?.s2s ?? []) {
+      if (!adj.has(a)) adj.set(a, []);
+      if (!adj.has(b)) adj.set(b, []);
+      adj.get(a).push([b, m]);
+      adj.get(b).push([a, m]);
+    }
+    trtcAdjCache.set(lineId, adj);
+  }
+  return trtcAdjCache.get(lineId);
+}
+/** 列車自 from 開往 dest 的唯一路徑若經過 sid，回傳 from→sid 行駛分鐘；否則 null */
+function trtcMinAlong(lineId, from, dest, sid) {
+  const adj = trtcAdj(lineId);
+  if (!adj.has(from) || !adj.has(dest)) return null;
+  const prev = new Map([[from, null]]);
+  const q = [from];
+  while (q.length) {
+    const cur = q.shift();
+    if (cur === dest) break;
+    for (const [nx] of adj.get(cur) ?? []) if (!prev.has(nx)) { prev.set(nx, cur); q.push(nx); }
+  }
+  if (!prev.has(dest)) return null;
+  const path = [];
+  for (let c = dest; c != null; c = prev.get(c)) path.unshift(c);
+  const i = path.indexOf(sid);
+  if (i <= 0) return null;
+  let min = 0;
+  for (let k = 0; k < i; k++) min += (adj.get(path[k]) ?? []).find(([s]) => s === path[k + 1])?.[1] ?? 2;
+  return min;
+}
+/** 全網即時列 → 查詢站的到站推估（分）；容錯秒制營運商（任一值 >100 視為秒） */
+function trtcLiveEta(sid, arr) {
+  const isSec = arr.some((x) => x.EstimateTime > 100);
+  const toMin = (v) => (v == null ? 0 : isSec ? v / 60 : v);
+  const items = [];
+  for (const x of arr) {
+    const at = x.StationID ?? "";
+    const line = String(x.LineID ?? trtcLineOf(at));
+    const dest = x.DestinationStationID ?? x.DestinationStaionID ?? "";
+    const destName = (lang === "zh" ? x.DestinationStationName?.Zh_tw : x.DestinationStationName?.En)
+      ?? x.TripHeadSign ?? dest;
+    if (at === sid) { items.push({ line, dest: destName, min: Math.floor(toMin(x.EstimateTime)) }); continue; }
+    const ride = trtcMinAlong(line, at, dest, sid);
+    if (ride == null) continue;
+    const min = Math.round(toMin(x.EstimateTime) + ride);
+    if (min <= 25) items.push({ line, dest: destName, min }); // 推得越遠越不準，超過即交給班距推估
+  }
+  return items.sort((a, b) => a.min - b.min).slice(0, 8);
 }
 async function renderTrtcBoard(sid) {
   $("board-code").textContent = sid;
@@ -1084,37 +1140,21 @@ async function renderTrtcBoard(sid) {
   if (!liveApi) { list.innerHTML = trtcHeadwayRows(sid); return; }
   trtcBoardAt = Date.now();
   try {
-    const r = await fetch(`${liveApi}/trtc-live?stn=${encodeURIComponent(sid)}`, { cache: "no-store" });
+    const r = await fetch(`${liveApi}/trtc-live`, { cache: "no-store" });
     if (!r.ok) throw 0;
     const raw = await r.json();
     if (sid !== state.boardStation || state.view !== "board") return; // 使用者已換站
-    const arr = Array.isArray(raw) ? raw : [];
-    // TRTC EstimateTime 為秒制；以資料集層級判斷單位（任一值 >100 即為秒），容錯分制營運商
-    const ests = arr.map((x) => x.EstimateTime).filter((v) => v != null);
-    const isSec = !ests.length || ests.some((v) => v > 100);
-    const items = arr
-      .map((x) => {
-        const est = x.EstimateTime;
-        const min = est == null ? null : Math.floor(isSec ? est / 60 : est);
-        return {
-          line: x.LineID ?? trtcLineOf(sid),
-          dest: (lang === "zh" ? x.DestinationStationName?.Zh_tw : x.DestinationStationName?.En)
-            ?? x.TripHeadSign ?? x.DestinationStaionID ?? "",
-          min,
-        };
-      })
-      .sort((a, b) => (a.min ?? 999) - (b.min ?? 999))
-      .slice(0, 8);
+    const items = trtcLiveEta(sid, Array.isArray(raw) ? raw : []);
     list.innerHTML = items.length
       ? items.map((it) => `
         <li class="board-row live">
-          <span class="b-count">${it.min == null ? "--" : it.min < 1 ? t("now") : t("inMin", it.min)}</span>
+          <span class="b-count">${it.min < 1 ? t("now") : t("inMin", it.min)}</span>
           ${lineChip(trtcLineOf(String(it.line)))}
           <span class="b-dest">→ ${it.dest}</span>
         </li>`).join("") + `<li class="board-row empty live-note">● ${t("liveNote2")}</li>`
-      : trtcHeadwayRows(sid);
+      : trtcHeadwayRows(sid, t("liveNone"));
   } catch {
-    if (sid === state.boardStation) list.innerHTML = trtcHeadwayRows(sid);
+    if (sid === state.boardStation) list.innerHTML = trtcHeadwayRows(sid, t("liveFail"));
   }
 }
 
