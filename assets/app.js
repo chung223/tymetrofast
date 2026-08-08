@@ -7,7 +7,7 @@ const $ = (id) => document.getElementById(id);
 const loadJson = (u) => fetch(u).then((r) => (r.ok ? r.json() : Promise.reject(u)));
 const tryJson = (u) => loadJson(u).catch(() => null);
 
-const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile, passesFile, itciFile, facFile, schedFile, termFile, thsrStFile, thsrTTFile, thsrFareFile, thsrLiveFile, alertsFile, trtcFile, trtcFareFile, linksFile] = await Promise.all([
+const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile, passesFile, itciFile, facFile, schedFile, termFile, thsrStFile, thsrTTFile, thsrFareFile, thsrLiveFile, alertsFile, trtcFile, trtcFareFile, linksFile, workerFile] = await Promise.all([
   loadJson("data/network.json"),
   loadJson("data/timetable.json"),
   loadJson("data/holidays.json"),
@@ -28,6 +28,7 @@ const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile, pa
   tryJson("data/trtc.json"),
   tryJson("data/trtc-fares.json"),
   tryJson("data/links.json"),
+  tryJson("data/worker.json"),
 ]);
 const holidays = new Set(holidaysFile.holidays);
 const stations = network.stations;
@@ -59,6 +60,8 @@ const trtcStnName = (id) => {
   const s = trtc?.stations?.[id];
   return s ? (lang === "zh" ? s.zh : s.en || s.zh) : id;
 };
+// 即時中繼站（Cloudflare Worker；無設定時北捷看板退回班距推估）
+const liveApi = /^https:\/\//.test(workerFile?.url ?? "") ? workerFile.url.replace(/\/$/, "") : null;
 // 機捷×北捷連結點：站名 → 北捷站碼（多線站全對應）
 const mrtLinks = (linksFile?.links ?? []).map((L) => ({
   ...L,
@@ -1053,10 +1056,73 @@ $("map-toggle").addEventListener("click", () => {
   renderLineMap(lastJourney);
 });
 
+/* ---------- 🚇 北捷即時到站看板（Worker 中繼；失敗退回班距推估） ---------- */
+let trtcBoardAt = 0;
+function trtcHeadwayRows(sid) {
+  const holiday = dayTypeOf(taipeiNow().date) === "holiday";
+  const lines = [...(trtcGraph?.linesAt.get(sid) ?? [])];
+  return (liveApi ? `<li class="board-row empty">${t("liveFail")}</li>` : "") + (lines.length
+    ? lines.map((l) => `
+      <li class="board-row">
+        ${lineChip(l)}
+        <span class="b-dest">${t("headwayAbout", Math.round(headwayOf(trtc, l, taipeiNow().min, holiday)))}</span>
+      </li>`).join("")
+    : `<li class="board-row empty">${t("noneFound")}</li>`);
+}
+async function renderTrtcBoard(sid) {
+  $("board-code").textContent = sid;
+  $("board-name").textContent = trtcStnName(sid);
+  $("fac-card").hidden = true;
+  const holiday = dayTypeOf(taipeiNow().date) === "holiday";
+  const fl = (trtc.firstLast?.[sid] ?? []).filter(([, , , , days]) => days[holiday ? 6 : 2] === "1").slice(0, 4);
+  $("board-firstlast").innerHTML = fl.map(([line, dest, first, last]) => `
+    <span class="fl-cell">${lineChip(trtcLineOf(line))}<b>${dest}</b>
+      <span class="flc">${t("firstChip")} <span class="b-time sm">${first}</span></span>
+      <span class="flc">${t("lastChip")} <span class="b-time sm">${last}</span></span>
+    </span>`).join("");
+  const list = $("board-list");
+  if (!liveApi) { list.innerHTML = trtcHeadwayRows(sid); return; }
+  trtcBoardAt = Date.now();
+  try {
+    const r = await fetch(`${liveApi}/trtc-live?stn=${encodeURIComponent(sid)}`, { cache: "no-store" });
+    if (!r.ok) throw 0;
+    const raw = await r.json();
+    if (sid !== state.boardStation || state.view !== "board") return; // 使用者已換站
+    const arr = Array.isArray(raw) ? raw : [];
+    // TRTC EstimateTime 為秒制；以資料集層級判斷單位（任一值 >100 即為秒），容錯分制營運商
+    const ests = arr.map((x) => x.EstimateTime).filter((v) => v != null);
+    const isSec = !ests.length || ests.some((v) => v > 100);
+    const items = arr
+      .map((x) => {
+        const est = x.EstimateTime;
+        const min = est == null ? null : Math.floor(isSec ? est / 60 : est);
+        return {
+          line: x.LineID ?? trtcLineOf(sid),
+          dest: (lang === "zh" ? x.DestinationStationName?.Zh_tw : x.DestinationStationName?.En)
+            ?? x.TripHeadSign ?? x.DestinationStaionID ?? "",
+          min,
+        };
+      })
+      .sort((a, b) => (a.min ?? 999) - (b.min ?? 999))
+      .slice(0, 8);
+    list.innerHTML = items.length
+      ? items.map((it) => `
+        <li class="board-row live">
+          <span class="b-count">${it.min == null ? "--" : it.min < 1 ? t("now") : t("inMin", it.min)}</span>
+          ${lineChip(trtcLineOf(String(it.line)))}
+          <span class="b-dest">→ ${it.dest}</span>
+        </li>`).join("") + `<li class="board-row empty live-note">● ${t("liveNote2")}</li>`
+      : trtcHeadwayRows(sid);
+  } catch {
+    if (sid === state.boardStation) list.innerHTML = trtcHeadwayRows(sid);
+  }
+}
+
 /* ---------- 車站看板 ---------- */
 function renderBoard() {
   const now = taipeiNow();
   const sid = state.boardStation;
+  if (isTrtc(sid)) { renderTrtcBoard(sid); return; }
   $("board-code").textContent = sid;
   $("board-name").textContent = stnName(sid);
   const rows = [];
@@ -1646,9 +1712,9 @@ function openSheet(which) {
         <span><span class="pick-name">${stnName(s.id)}</span><span class="pick-en">${lang === "zh" ? stationById.get(s.id).nameEn : stationById.get(s.id).name}</span></span>
         ${s.express ? `<span class="pick-tag">${t("expressTag")}</span>` : ""}
       </button></li>`).join("");
-  // 北捷分線清單（看板選站僅限機捷）
+  // 北捷分線清單（看板選站也開放：即時到站／班距推估）
   let trtcHtml = "";
-  if (trtc && which !== "board") {
+  if (trtc) {
     trtcHtml = `<li class="sheet-sec">🚇 ${t("trtcSection")}</li>` +
       Object.entries(trtc.lines ?? {}).filter(([, l]) => l.stations?.length).map(([lid, l]) =>
         `<li class="sheet-line"><span class="line-chip" style="--lc:${TRTC_COLORS[lid] ?? "#888"}">${lid}</span></li>` +
@@ -1822,6 +1888,10 @@ function tick() {
   if (state.view === "plan" && mapCtx) {
     const layer = $("train-dots");
     if (layer) layer.innerHTML = trainDotsSvg(mapCtx);
+  }
+  // 北捷即時看板每 20 秒刷新
+  if (state.view === "board" && isTrtc(state.boardStation) && liveApi && Date.now() - trtcBoardAt > 20000) {
+    renderTrtcBoard(state.boardStation);
   }
 }
 setInterval(tick, 5000);
