@@ -80,15 +80,23 @@ try {
   await nap();
   const raw = await get("S2STravelTime/TRTC");
   sample("站間", raw);
+  // 回應按「線×路線」分列（BL-1、BL-2…），須合併去重而非覆蓋
   for (const l of raw) {
     const line = data.lines[l.LineID] ?? (data.lines[l.LineID] = { stations: [] });
-    line.s2s = (l.TravelTimes ?? []).map((x) => [
-      x.FromStationID, x.ToStationID,
-      Math.round(((x.RunTime ?? 0) + (x.StopTime ?? 0)) / 6) / 10, // 分鐘（一位小數）
-    ]);
+    line.s2s ??= [];
+    const seen = new Set(line.s2s.map(([a, b]) => `${a}|${b}`));
+    for (const x of l.TravelTimes ?? []) {
+      const key = `${x.FromStationID}|${x.ToStationID}`;
+      if (seen.has(key) || seen.has(`${x.ToStationID}|${x.FromStationID}`)) continue;
+      seen.add(key);
+      line.s2s.push([
+        x.FromStationID, x.ToStationID,
+        Math.round(((x.RunTime ?? 0) + (x.StopTime ?? 0)) / 6) / 10, // 分鐘（一位小數）
+      ]);
+    }
   }
   const segs = Object.values(data.lines).reduce((n, l) => n + (l.s2s?.length ?? 0), 0);
-  if (segs < 80) throw new Error(`僅 ${segs} 段`);
+  if (segs < 100) throw new Error(`僅 ${segs} 段`);
   console.log(`✓ 站間 ${segs} 段`);
   ok++;
 } catch (e) { console.log(`::warning::TRTC 站間時間失敗：${e.message}`); }
