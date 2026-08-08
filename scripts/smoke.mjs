@@ -65,7 +65,8 @@ try {
 
   // 4. 航班頁（無 fids.json 時允許顯示無法載入訊息）
   await page.click("#tab-flight");
-  await page.waitForSelector(".flight-row, .board-row.empty", { timeout: 10000 }).catch(() => fail("航班頁沒有內容"));
+  // 選擇器須限定容器：waitForSelector 只等 DOM 第一個符合者，深夜看板的隱藏空列會搶走匹配
+  await page.waitForSelector("#flight-list .flight-row, #flight-list .board-row.empty", { timeout: 10000 }).catch(() => fail("航班頁沒有內容"));
   console.log("✓ 航班頁");
 
   // 5. 高鐵頁（深夜無班次時允許空清單）
