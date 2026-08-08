@@ -3,7 +3,8 @@
  * - TDX 金鑰只存在 Worker Secrets，前端永遠拿不到
  * - 記憶體快取 30 秒：所有使用者共用一次 TDX 呼叫（TDX 免費層每分鐘約 5 次）
  * - 上游失敗（429 等）時回傳最近一次成功資料（stale）
- * - ?stn=BL12 伺服端過濾，前端只收該站的到站列
+ * - ?stn=BL12 伺服端過濾（備用）。北捷 LiveBoard 為事件式（只列正在進站的列車、
+ *   EstimateTime 恆為 0），前端改抓全網再沿線推算，故通常不帶 stn
  */
 const TDX = "https://tdx.transportdata.tw/api/basic/v2";
 const PATHS = {

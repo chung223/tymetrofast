@@ -84,7 +84,12 @@ jobs:
           echo "--- /trtc-live?stn=BL12 ---"
           curl -sf "$URL/trtc-live?stn=BL12" | head -c 400
           echo
-          printf '{"updated":"%s","url":"%s"}\n' "$(date -u +%FT%TZ)" "$URL" > data/worker.json
+          OLD=$(python3 -c 'import json;print(json.load(open("data/worker.json")).get("url",""))' 2>/dev/null || echo "")
+          if [ "$OLD" != "$URL" ]; then
+            printf '{"updated":"%s","url":"%s"}\n' "$(date -u +%FT%TZ)" "$URL" > data/worker.json
+          else
+            echo "網址未變，不重寫 data/worker.json（避免無謂 commit 與重佈署）"
+          fi
 
       - name: 提交 Worker 網址供前端讀取
         run: |
