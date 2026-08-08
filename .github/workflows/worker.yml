@@ -62,8 +62,27 @@ jobs:
           echo "Worker 網址：$URL"
           [ -n "$URL" ] || { echo "::error::部署輸出找不到 workers.dev 網址"; exit 1; }
           sleep 8
-          echo "--- /trtc-live?stn=BL12 樣本 ---"
-          curl -sf "$URL/trtc-live?stn=BL12" | head -c 700 || echo "（首測失敗——秘鑰生效可能需數十秒，稍後由前端重試）"
+          echo "--- /trtc-live 原始統計 ---"
+          curl -sf "$URL/trtc-live" -o /tmp/live.json || echo "（首測失敗——秘鑰生效可能需數十秒）"
+          python3 - <<'EOF' || true
+          import json
+          try:
+              d = json.load(open("/tmp/live.json"))
+          except Exception as e:
+              print("解析失敗:", e); raise SystemExit
+          if not isinstance(d, list):
+              print("非陣列:", str(d)[:300]); raise SystemExit
+          print("筆數:", len(d))
+          if d:
+              print("首筆:", json.dumps(d[0], ensure_ascii=False)[:400])
+              ids = sorted({str(x.get("StationID", ""))[:2] for x in d})
+              print("StationID 前綴:", ids)
+              ests = [x.get("EstimateTime") for x in d if x.get("EstimateTime") is not None]
+              if ests: print("EstimateTime 範圍:", min(ests), "~", max(ests))
+              else: print("無 EstimateTime 欄位；首筆鍵:", list(d[0].keys()))
+          EOF
+          echo "--- /trtc-live?stn=BL12 ---"
+          curl -sf "$URL/trtc-live?stn=BL12" | head -c 400
           echo
           printf '{"updated":"%s","url":"%s"}\n' "$(date -u +%FT%TZ)" "$URL" > data/worker.json
 
