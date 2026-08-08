@@ -12,7 +12,7 @@ import { chromium } from "playwright";
 
 const root = process.argv[2] ?? "_site";
 const MIME = {
-  ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css",
+  ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css",
   ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png",
   ".webmanifest": "application/manifest+json",
 };

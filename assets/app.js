@@ -1,12 +1,13 @@
 /* 快轉 · 前端主程式 */
 import { buildIndex, planDirect, planOptions, planJourney, planArriveBy, fmtTime } from "./planner.js";
+import { buildTrtcGraph, planTrtc, headwayOf } from "./trtc-engine.mjs";
 import { LANGS, LANG_LABEL, makeT } from "./i18n.js";
 
 const $ = (id) => document.getElementById(id);
 const loadJson = (u) => fetch(u).then((r) => (r.ok ? r.json() : Promise.reject(u)));
 const tryJson = (u) => loadJson(u).catch(() => null);
 
-const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile, passesFile, itciFile, facFile, schedFile, termFile, thsrStFile, thsrTTFile, thsrFareFile, thsrLiveFile, alertsFile] = await Promise.all([
+const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile, passesFile, itciFile, facFile, schedFile, termFile, thsrStFile, thsrTTFile, thsrFareFile, thsrLiveFile, alertsFile, trtcFile, trtcFareFile, linksFile] = await Promise.all([
   loadJson("data/network.json"),
   loadJson("data/timetable.json"),
   loadJson("data/holidays.json"),
@@ -24,6 +25,9 @@ const [network, timetable, holidaysFile, extraNames, geo, faresFile, hsrFile, pa
   tryJson("data/thsr-fares.json"),
   tryJson("data/thsr-live.json"),
   tryJson("data/alerts.json"),
+  tryJson("data/trtc.json"),
+  tryJson("data/trtc-fares.json"),
+  tryJson("data/links.json"),
 ]);
 const holidays = new Set(holidaysFile.holidays);
 const stations = network.stations;
@@ -42,6 +46,26 @@ const thsrSeat = thsrLiveFile?.seat ?? null;
 const sysAlerts = alertsFile?.alerts ?? [];
 const TY = "1020"; // 高鐵桃園站
 const SITE_URL = "https://chung223.github.io/tymetrofast/";
+
+/* ---------- 🚇 台北捷運（班距制） ---------- */
+// 抓取端已驗證完整性（<100 站不寫檔），此處僅防空殼
+const trtc = trtcFile?.stations && Object.keys(trtcFile.stations).length >= 10 ? trtcFile : null;
+const trtcFares = trtcFareFile?.pairs ?? null;
+const trtcGraph = trtc ? buildTrtcGraph(trtc) : null;
+const TRTC_COLORS = { BR: "#c48c31", R: "#e3002c", G: "#008659", O: "#f8b61c", BL: "#0070bd" };
+const trtcLineOf = (id) => id.match(/^[A-Z]+/)?.[0] ?? "";
+const isTrtc = (id) => !!trtc?.stations?.[id];
+const trtcStnName = (id) => {
+  const s = trtc?.stations?.[id];
+  return s ? (lang === "zh" ? s.zh : s.en || s.zh) : id;
+};
+// 機捷×北捷連結點：站名 → 北捷站碼（多線站全對應）
+const mrtLinks = (linksFile?.links ?? []).map((L) => ({
+  ...L,
+  trtcIds: trtc
+    ? Object.entries(trtc.stations).filter(([, s]) => L.trtcNames.includes(s.zh)).map(([sid]) => sid)
+    : [],
+})).filter((L) => L.trtcIds.length);
 const hm2min = (s) => Number(s.slice(0, 2)) * 60 + Number(s.slice(3));
 const indexCache = new Map();
 const getIndex = (dayType) => {
@@ -55,7 +79,10 @@ const navLang = (navigator.language || "zh").toLowerCase();
 let lang = savedLang && LANGS.includes(savedLang) ? savedLang
   : navLang.startsWith("zh") ? "zh" : navLang.startsWith("ja") ? "ja" : navLang.startsWith("ko") ? "ko" : LANGS.includes(navLang.slice(0, 2)) ? navLang.slice(0, 2) : "en";
 let t = makeT(lang);
-const stnName = (id) => (lang === "zh" ? stationById.get(id).name : extraNames?.[id]?.[lang] || stationById.get(id).nameEn);
+const stnName = (id) => {
+  if (!stationById.has(id)) return trtcStnName(id);
+  return lang === "zh" ? stationById.get(id).name : extraNames?.[id]?.[lang] || stationById.get(id).nameEn;
+};
 const stnLabel = (id) => `${id} ${stnName(id)}`;
 
 /* ---------- 台灣時間 ---------- */
@@ -86,8 +113,9 @@ if (state.thsrFrom === state.thsrTo) state.thsrTo = state.thsrFrom === "1000" ? 
 let hashHadFrom = false, pendingFlightSearch = null, pendingView = null;
 (function initFromHash() {
   const p = new URLSearchParams(location.hash.slice(1));
-  if (stationById.has(p.get("from"))) { state.from = p.get("from"); hashHadFrom = true; }
-  if (stationById.has(p.get("to"))) state.to = p.get("to");
+  const validStn = (x) => stationById.has(x) || isTrtc(x);
+  if (validStn(p.get("from"))) { state.from = p.get("from"); hashHadFrom = true; }
+  if (validStn(p.get("to"))) state.to = p.get("to");
   const m = p.get("m");
   if (m === "arrive" || m === "depart") state.mode = m;
   if (p.get("t") && p.get("t") !== "now") state.custom = p.get("t");
@@ -170,6 +198,8 @@ function runQuery() {
   $("daytype-chip").textContent = `${ctx.date.slice(5).replace("-", "/")} ${t(dayType === "weekday" ? "weekdaySched" : "holidaySched")}`;
 
   if (from === to) { renderResults({ error: t("sameStation") }); return; }
+  // 北捷起訖 → 班距制／跨系統聯程引擎
+  if (isTrtc(from) || isTrtc(to)) { renderHybrid(from, to, ctx); return; }
 
   if (state.mode === "arrive") {
     const results = [];
@@ -203,6 +233,137 @@ function runQuery() {
     options = r.options; direct = r.direct; nextDay = d1;
   }
   renderResults({ options, direct, nextDay, ctx });
+}
+
+/* ---------- 🚇 北捷／跨系統聯程呈現 ---------- */
+const lineChip = (lid) => `<span class="line-chip" style="--lc:${TRTC_COLORS[trtcLineOf(lid)] ?? "#888"}">${lid}</span>`;
+
+function trtcLegsHtml(r, startMin) {
+  let cur = startMin;
+  return r.legs.map((l) => {
+    const parts = [t("waitEst", Math.round(l.waitMin))];
+    if (l.walkMin) parts.unshift(t("walkN", Math.round(l.walkMin)));
+    parts.push(t("rideN", Math.round(l.rideMin)));
+    if (l.stops > 1) parts.push(t("stopsVia", l.stops - 1));
+    cur += l.waitMin + l.walkMin + l.rideMin;
+    return `
+    <div class="leg trtc-leg">
+      <div class="leg-rail" style="--lc:${TRTC_COLORS[trtcLineOf(l.line)] ?? "#888"}"></div>
+      <div class="leg-body">
+        <div class="leg-line1">
+          ${lineChip(trtcLineOf(l.line))}
+          <span class="leg-stations">${stnLabel(l.from)} → ${stnLabel(l.to)}</span>
+        </div>
+        <div class="leg-detail">${parts.join(" · ")}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+/** 北捷首末班警告：首段上車站該線的最晚末班早於上車時刻時提示 */
+function trtcLastWarn(r, boardMin, holiday) {
+  const first = r.legs[0];
+  const rows = (trtc.firstLast?.[first.from] ?? []).filter(([line, , , , days]) =>
+    trtcLineOf(line) === trtcLineOf(first.line) && days[holiday ? 6 : 2] === "1");
+  if (!rows.length) return "";
+  let latest = -1;
+  for (const [, , , last] of rows) {
+    if (!/^\d{2}:\d{2}/.test(last)) continue;
+    let m = hm2min(last);
+    if (m < 240) m += 1440; // 凌晨末班視為隔日
+    latest = Math.max(latest, m);
+  }
+  return latest >= 0 && boardMin > latest ? `<div class="panel empty-card">⚠ ${t("trtcLastWarn", trtcLineOf(first.line))}</div>` : "";
+}
+
+function renderHybrid(from, to, ctx) {
+  const box = $("results");
+  const holiday = dayTypeOf(ctx.date) === "holiday";
+  const fromT = isTrtc(from), toT = isTrtc(to);
+  const fc = state.flightCtx;
+  const fcBanner = fc && (to === "A12" || to === "A13")
+    ? `<aside class="panel flight-banner"><span class="fl-no">✈ ${fc.f}</span><span class="b-time">${fc.st}</span><span class="fl-dest">→ ${fc.o}</span><span class="fl-tag term">${t("terminalL")} ${fc.term} · ${t("alightAt", stnLabel(to))}</span></aside>`
+    : "";
+
+  if (!trtcGraph) { box.innerHTML = `<div class="panel empty-card">${t("noneFound")}</div>`; renderLineMap(null); return; }
+
+  /* 純北捷 */
+  if (fromT && toT) {
+    const r = planTrtc(trtc, trtcGraph, { from, to, min: ctx.min, holiday });
+    if (!r) { box.innerHTML = `<div class="panel empty-card">${t("noneFound")}</div>`; renderLineMap(null); return; }
+    const fare = trtcFares?.[`${from}|${to}`] ?? trtcFares?.[`${to}|${from}`];
+    box.innerHTML = trtcLastWarn(r, ctx.min, holiday) + `
+    <article class="panel journey-card best">
+      <div class="jc-head">
+        <span class="jc-badge">${t("fastest")}</span>
+        <span class="jc-times">~${r.totalMin} ${t("min")}</span>
+        <span class="jc-meta">${t("arriveEst", fmtTime(ctx.min + r.totalMin))}<br>
+          ${r.transfers ? t("transfersN", r.transfers) : t("noTransfer")}${fare ? ` · <span class="fare-chip">${t("fare", fare)}</span>` : ""}</span>
+      </div>
+      <div class="legs">${trtcLegsHtml(r, ctx.min)}</div>
+      <p class="map-hint">${t("estNote")}</p>
+    </article>`;
+    renderLineMap(null);
+    return;
+  }
+
+  /* 混合：經連結點（台北車站 A1／三重 A2） */
+  const cands = [];
+  let mrtDead = false;
+  for (const L of mrtLinks) {
+    for (const tid of L.trtcIds) {
+      if (fromT) {
+        const t1 = planTrtc(trtc, trtcGraph, { from, to: tid, min: ctx.min, holiday });
+        if (!t1) continue;
+        const arriveLink = ctx.min + t1.totalMin + L.walkMin;
+        let j = null;
+        try { j = planJourney(getIndex(dayTypeOf(ctx.date)), { from: L.a, to, departAfter: arriveLink }); } catch { /* 無班表 */ }
+        if (!j) { mrtDead = true; continue; }
+        cands.push({ L, tid, t1, j, arr: j.arr, dep: ctx.min });
+      } else {
+        let j = null;
+        try { j = planJourney(getIndex(dayTypeOf(ctx.date)), { from, to: L.a, departAfter: ctx.min }); } catch { /* 無班表 */ }
+        if (!j) { mrtDead = true; continue; }
+        const t2 = planTrtc(trtc, trtcGraph, { from: tid, to, min: j.arr + L.walkMin, holiday });
+        if (!t2) continue;
+        cands.push({ L, tid, j, t2, arr: j.arr + L.walkMin + t2.totalMin, dep: j.dep });
+      }
+    }
+  }
+  if (!cands.length) {
+    box.innerHTML = fcBanner + `<div class="panel empty-card">${mrtDead ? t("cantMake") : t("noneFound")}</div>`;
+    renderLineMap(null);
+    return;
+  }
+  cands.sort((a, b) => a.arr - b.arr);
+  const best = cands[0];
+  const mrtFare = fares?.[`${best.L.a}|${fromT ? to : from}`] ?? fares?.[`${fromT ? to : from}|${best.L.a}`];
+  const tFare = trtcFares?.[`${fromT ? from : to}|${best.tid}`] ?? trtcFares?.[`${best.tid}|${fromT ? from : to}`];
+  const total = (mrtFare ?? 0) + (tFare ?? 0);
+  const walkRow = `
+    <div class="transfer-row"><span><b>${best.L.trtcNames[0]}</b> ${t("viaLink", "")}${t("walkN", best.L.walkMin)}${best.L.note?.[lang === "zh" ? "zh" : "en"] ? ` · ${best.L.note[lang === "zh" ? "zh" : "en"]}` : ""}</span></div>`;
+
+  let inner;
+  if (fromT) {
+    inner = trtcLegsHtml(best.t1, ctx.min) + walkRow + best.j.legs.map((l, i) => legHtml(l, best.j, i)).join("");
+  } else {
+    inner = best.j.legs.map((l, i) => legHtml(l, best.j, i)).join("").replace(/<div class="alight-row">[\s\S]*?<\/div>\s*$/, "") + `
+      <div class="alight-row"><span class="leg-time">${fmtTime(best.j.arr)}</span><span class="leg-stations">${stnLabel(best.L.a)} ${t("arriveAt")}</span></div>` +
+      walkRow + trtcLegsHtml(best.t2, best.j.arr + best.L.walkMin);
+  }
+  const legsCount = (fromT ? best.t1.legs.length + best.j.legs.length : best.j.legs.length + best.t2.legs.length);
+  box.innerHTML = fcBanner + (fromT ? trtcLastWarn(best.t1, ctx.min, holiday) : "") + `
+  <article class="panel journey-card best">
+    <div class="jc-head">
+      <span class="jc-badge">${t("fastest")}</span>
+      <span class="jc-times">${fmtTime(best.dep)}<span class="jc-arrow">▶</span><span class="arr">~${fmtTime(best.arr)}</span></span>
+      <span class="jc-meta"><b>${Math.round(best.arr - best.dep)} ${t("min")}</b> · ${t("transfersN", legsCount - 1)}
+        ${total ? ` · <span class="fare-chip">${t("totalFare", total)}</span>` : ""}</span>
+    </div>
+    <div class="legs">${inner}</div>
+    <p class="map-hint">${t("estNote")}</p>
+  </article>`;
+  renderLineMap(fromT ? best.j : null);
 }
 
 /* ---------- 呈現 ---------- */
@@ -1479,12 +1640,40 @@ function openSheet(which) {
   const locateBtn = geo && navigator.geolocation
     ? `<li class="locate-li"><button class="pick-btn locate-btn" id="btn-locate">${t("locate")}</button></li>`
     : "";
-  $("station-list").innerHTML = locateBtn + stations.map((s) => `
+  const mrtRows = stations.map((s) => `
       <li><button class="pick-btn ${s.express ? "express" : "local-only"} ${cur === s.id ? "picked" : ""}" data-id="${s.id}">
         <span class="code">${s.id}</span>
         <span><span class="pick-name">${stnName(s.id)}</span><span class="pick-en">${lang === "zh" ? stationById.get(s.id).nameEn : stationById.get(s.id).name}</span></span>
         ${s.express ? `<span class="pick-tag">${t("expressTag")}</span>` : ""}
       </button></li>`).join("");
+  // 北捷分線清單（看板選站僅限機捷）
+  let trtcHtml = "";
+  if (trtc && which !== "board") {
+    trtcHtml = `<li class="sheet-sec">🚇 ${t("trtcSection")}</li>` +
+      Object.entries(trtc.lines ?? {}).filter(([, l]) => l.stations?.length).map(([lid, l]) =>
+        `<li class="sheet-line"><span class="line-chip" style="--lc:${TRTC_COLORS[lid] ?? "#888"}">${lid}</span></li>` +
+        l.stations.map((sid) => `
+        <li class="trtc-li"><button class="pick-btn trtc ${cur === sid ? "picked" : ""}" data-id="${sid}">
+          <span class="code trtc-code" style="--lc:${TRTC_COLORS[trtcLineOf(sid)] ?? "#888"}">${sid}</span>
+          <span><span class="pick-name">${trtcStnName(sid)}</span><span class="pick-en">${lang === "zh" ? (trtc.stations[sid]?.en ?? "") : trtc.stations[sid]?.zh ?? ""}</span></span>
+        </button></li>`).join("")
+      ).join("");
+  }
+  $("station-list").innerHTML =
+    `<li class="search-li"><input id="stn-search" class="dt-input stn-search" type="search" placeholder="${t("searchStation")}"></li>` +
+    locateBtn +
+    (trtcHtml ? `<li class="sheet-sec">✈ ${t("mrtSection")}</li>` : "") +
+    mrtRows + trtcHtml;
+  const si = $("stn-search");
+  si.addEventListener("input", () => {
+    const q = si.value.trim().toLowerCase();
+    $("station-list").querySelectorAll("li").forEach((li) => {
+      if (li.classList.contains("search-li")) return;
+      if (!q) { li.hidden = false; return; }
+      if (!li.querySelector("[data-id]")) { li.hidden = true; return; }
+      li.hidden = !li.textContent.toLowerCase().includes(q);
+    });
+  });
   $("station-sheet").hidden = false;
   $("sheet-backdrop").hidden = false;
   const lb = $("btn-locate");

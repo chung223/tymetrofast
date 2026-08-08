@@ -1,0 +1,8 @@
+{
+  "updated": "2026-08-07",
+  "comment": "機捷×北捷連結點。trtcNames 以站名對應（北捷站碼由 trtc.json 於執行時解析，多線站自動全對應）；walkMin 為站體間步行分鐘，可依實況修正。",
+  "links": [
+    { "a": "A1", "trtcNames": ["台北車站"], "walkMin": 8, "note": { "zh": "沿站前地下街指標往機捷", "en": "Follow underground signs to Airport MRT" } },
+    { "a": "A2", "trtcNames": ["三重"], "walkMin": 3, "note": { "zh": "同站體連通", "en": "Connected concourse" } }
+  ]
+}
