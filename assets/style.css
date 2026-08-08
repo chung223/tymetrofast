@@ -362,6 +362,25 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 /* ---------- 車站看板 ---------- */
 .board-panel { padding-top: 12px; }
 .board-pick { width: 100%; margin-bottom: 10px; }
+.swap-hint {
+  flex: none; margin-left: auto; align-self: center;
+  font-size: 11px; font-weight: 900; letter-spacing: 0.1em; color: var(--purple);
+  border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; white-space: nowrap;
+}
+.board-quick {
+  display: flex; gap: 6px; overflow-x: auto; margin-bottom: 10px;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.board-quick::-webkit-scrollbar { display: none; }
+.bq-chip {
+  flex: none; display: inline-flex; align-items: center; gap: 6px;
+  font: 700 12px var(--font-body); color: var(--text-dim);
+  background: var(--ink); border: 1px solid var(--line); border-radius: 999px;
+  padding: 4px 12px 4px 5px; white-space: nowrap;
+}
+.bq-chip .code { min-width: 34px; height: 22px; font-size: 12px; border-radius: 11px; }
+.bq-chip.cur { border-color: var(--amber); color: var(--text); }
+.bq-chip:hover { border-color: var(--purple); }
 .firstlast {
   display: flex; gap: 8px 22px; flex-wrap: wrap;
   font-size: 12px; color: var(--text-dim);

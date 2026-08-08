@@ -126,6 +126,10 @@ let hashHadFrom = false, pendingFlightSearch = null, pendingView = null;
   if (p.get("flight")) pendingFlightSearch = p.get("flight").toUpperCase();
   if (["board", "flight", "hsr"].includes(p.get("v"))) pendingView = p.get("v");
 })();
+{
+  const savedBoard = localStorage.getItem("tymf-board-stn");
+  if (savedBoard && (stationById.has(savedBoard) || isTrtc(savedBoard))) state.boardStation = savedBoard;
+}
 function syncHash() {
   const parts = [`from=${state.from}`, `to=${state.to}`, `m=${state.mode}`];
   if (state.mode !== "now" && state.custom) parts.push(`t=${state.custom}`);
@@ -1159,8 +1163,34 @@ async function renderTrtcBoard(sid) {
 }
 
 /* ---------- 車站看板 ---------- */
+// 快捷站鈕：最近查過優先，不足補預設熱門站（機捷＋北捷）；ID 不存在於資料就不顯示
+const BOARD_DEFAULTS = ["A1", "A13", "BL12", "BR10", "G12", "O07"];
+function rememberBoardStn(id) {
+  localStorage.setItem("tymf-board-stn", id);
+  const rec = JSON.parse(localStorage.getItem("tymf-board-recent") ?? "[]").filter((x) => x !== id);
+  rec.unshift(id);
+  localStorage.setItem("tymf-board-recent", JSON.stringify(rec.slice(0, 6)));
+}
+function renderBoardQuick() {
+  const rec = JSON.parse(localStorage.getItem("tymf-board-recent") ?? "[]");
+  const ids = [...new Set([...rec, ...BOARD_DEFAULTS])]
+    .filter((id) => stationById.has(id) || isTrtc(id))
+    .slice(0, 6);
+  $("board-quick").innerHTML = ids.map((id) => `
+    <button class="bq-chip ${id === state.boardStation ? "cur" : ""}" data-id="${id}">
+      <span class="code${isTrtc(id) ? " trtc-code" : ""}"${isTrtc(id) ? ` style="--lc:${TRTC_COLORS[trtcLineOf(id)] ?? "#888"}"` : ""}>${id}</span>${stnName(id)}
+    </button>`).join("");
+}
+$("board-quick").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-id]");
+  if (!btn) return;
+  state.boardStation = btn.dataset.id;
+  rememberBoardStn(btn.dataset.id);
+  renderBoard();
+});
 function renderBoard() {
   const now = taipeiNow();
+  renderBoardQuick();
   const sid = state.boardStation;
   if (isTrtc(sid)) { renderTrtcBoard(sid); return; }
   $("board-code").textContent = sid;
@@ -1786,7 +1816,7 @@ function openSheet(which) {
   if (lb) lb.onclick = () => locateNearest(lb, (id, km) => {
     lb.textContent = `📍 ${id} ${stnName(id)}・${t("kmAway", km)}`;
     setTimeout(() => {
-      if (picking === "board") state.boardStation = id;
+      if (picking === "board") { state.boardStation = id; rememberBoardStn(id); }
       else if (picking) state[picking] = id;
       closeSheet();
       refreshOD(); renderFavs(); syncHash();
@@ -1799,7 +1829,7 @@ function closeSheet() { $("station-sheet").hidden = true; $("sheet-backdrop").hi
 $("station-list").addEventListener("click", (e) => {
   const btn = e.target.closest("[data-id]");
   if (!btn || !picking) return;
-  if (picking === "board") state.boardStation = btn.dataset.id;
+  if (picking === "board") { state.boardStation = btn.dataset.id; rememberBoardStn(btn.dataset.id); }
   else {
     state[picking] = btn.dataset.id;
     // 目的地由航班／高鐵情境決定，改了才清除；改出發站保留（例如改成 A18 接高鐵）
@@ -1879,6 +1909,7 @@ function applyStatic() {
   $("flight-search").placeholder = t("flightSearchPh");
   $("fav-title").textContent = t("favTitle");
   $("board-title").textContent = t("boardTitle");
+  $("board-swap-hint").textContent = `${t("changeStn")} ▾`;
   $("map-hint-text").innerHTML = `<span class="dot-demo express"></span>${t("legendExpress")}　<span class="dot-demo"></span>${t("legendLocal")}　<span class="dot-demo live"></span>${t("liveNote")}`;
   $("data-note").innerHTML = `${timetable.dataStatus === "estimate" ? t("dataEstimate") : t("dataOfficial")} · ${t("version")} <code>${timetable.version}</code>`;
   $("lang-sel").value = lang;
