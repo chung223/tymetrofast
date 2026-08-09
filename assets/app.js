@@ -53,9 +53,15 @@ const SITE_URL = "https://chung223.github.io/tymetrofast/";
 const trtc = trtcFile?.stations && Object.keys(trtcFile.stations).length >= 10 ? trtcFile : null;
 const trtcFares = trtcFareFile?.pairs ?? null;
 const trtcGraph = trtc ? buildTrtcGraph(trtc) : null;
-const TRTC_COLORS = { BR: "#c48c31", R: "#e3002c", G: "#008659", O: "#f8b61c", BL: "#0070bd" };
+const TRTC_COLORS = { BR: "#c48c31", R: "#e3002c", G: "#008659", O: "#f8b61c", BL: "#0070bd", Y: "#c7a900" };
 const trtcLineOf = (id) => id.match(/^[A-Z]+/)?.[0] ?? "";
 const isTrtc = (id) => !!trtc?.stations?.[id];
+/** 同名共構站（轉乘站一站多碼，如台北車站 BL12/R10）；自己排最前 */
+const trtcSiblings = (sid) => {
+  const zh = trtc?.stations?.[sid]?.zh;
+  if (!zh) return [sid];
+  return [sid, ...Object.keys(trtc.stations).filter((id) => id !== sid && trtc.stations[id].zh === zh)];
+};
 const trtcStnName = (id) => {
   const s = trtc?.stations?.[id];
   return s ? (lang === "zh" ? s.zh : s.en || s.zh) : id;
@@ -253,6 +259,9 @@ function trtcLegsHtml(r, startMin) {
     parts.push(t("rideN", Math.round(l.rideMin)));
     if (l.stops > 1) parts.push(t("stopsVia", l.stops - 1));
     cur += l.waitMin + l.walkMin + l.rideMin;
+    // 轉乘段（有站內步行）附官方動線描述（上下樓層等）
+    const txDesc = l.walkMin
+      ? (trtc.transfers ?? []).find(([, ts, , tl]) => ts === l.from && tl === l.line)?.[5] : null;
     return `
     <div class="leg trtc-leg">
       <div class="leg-rail" style="--lc:${TRTC_COLORS[trtcLineOf(l.line)] ?? "#888"}"></div>
@@ -262,6 +271,7 @@ function trtcLegsHtml(r, startMin) {
           <span class="leg-stations">${stnLabel(l.from)} → ${stnLabel(l.to)}</span>
         </div>
         <div class="leg-detail">${parts.join(" · ")}</div>
+        ${txDesc ? `<div class="leg-tx">↳ ${txDesc}</div>` : ""}
       </div>
     </div>`;
   }).join("");
@@ -1064,7 +1074,7 @@ $("map-toggle").addEventListener("click", () => {
 let trtcBoardAt = 0;
 function trtcHeadwayRows(sid, note) {
   const holiday = dayTypeOf(taipeiNow().date) === "holiday";
-  const lines = [...(trtcGraph?.linesAt.get(sid) ?? [])];
+  const lines = [...new Set(trtcSiblings(sid).flatMap((s) => [...(trtcGraph?.linesAt.get(s) ?? [])]))];
   return (note ? `<li class="board-row empty">${note}</li>` : "") + (lines.length
     ? lines.map((l) => `
       <li class="board-row">
@@ -1110,8 +1120,9 @@ function trtcMinAlong(lineId, from, dest, sid) {
   for (let k = 0; k < i; k++) min += (adj.get(path[k]) ?? []).find(([s]) => s === path[k + 1])?.[1] ?? 2;
   return min;
 }
-/** 全網即時列 → 查詢站的到站推估（分）；容錯秒制營運商（任一值 >100 視為秒） */
+/** 全網即時列 → 查詢站（含同名共構站）的到站推估（分）；容錯秒制營運商（任一值 >100 視為秒） */
 function trtcLiveEta(sid, arr) {
+  const sibs = trtcSiblings(sid);
   const isSec = arr.some((x) => x.EstimateTime > 100);
   const toMin = (v) => (v == null ? 0 : isSec ? v / 60 : v);
   const items = [];
@@ -1121,8 +1132,9 @@ function trtcLiveEta(sid, arr) {
     const dest = x.DestinationStationID ?? x.DestinationStaionID ?? "";
     const destName = (lang === "zh" ? x.DestinationStationName?.Zh_tw : x.DestinationStationName?.En)
       ?? x.TripHeadSign ?? dest;
-    if (at === sid) { items.push({ line, dest: destName, min: Math.floor(toMin(x.EstimateTime)) }); continue; }
-    const ride = trtcMinAlong(line, at, dest, sid);
+    if (sibs.includes(at)) { items.push({ line, dest: destName, min: Math.floor(toMin(x.EstimateTime)) }); continue; }
+    let ride = null;
+    for (const s of sibs) { ride = trtcMinAlong(line, at, dest, s); if (ride != null) break; }
     if (ride == null) continue;
     const min = Math.round(toMin(x.EstimateTime) + ride);
     if (min <= 25) items.push({ line, dest: destName, min }); // 推得越遠越不準，超過即交給班距推估
@@ -1130,11 +1142,20 @@ function trtcLiveEta(sid, arr) {
   return items.sort((a, b) => a.min - b.min).slice(0, 8);
 }
 async function renderTrtcBoard(sid) {
-  $("board-code").textContent = sid;
+  const sibs = trtcSiblings(sid);
+  $("board-code").textContent = sibs.join("·");
   $("board-name").textContent = trtcStnName(sid);
   $("fac-card").hidden = true;
+  // 共構站轉乘動線（官方描述含上下樓；環狀線等站外轉乘也列出）
+  const tx = (trtc.transfers ?? []).filter(([fs]) => sibs.includes(fs));
+  $("board-transfer").hidden = !tx.length;
+  $("board-transfer").innerHTML = tx.length ? `<span class="tx-title">${t("transferInfo")}</span>` + tx.map(
+    ([, , fl2, tl2, walk, desc]) => `
+    <span class="tx-row">${lineChip(fl2)}<span class="tx-arrow">→</span>${lineChip(tl2)}
+      <span class="tx-desc">${desc || t("walkN", Math.round(walk))}</span></span>`).join("") : "";
   const holiday = dayTypeOf(taipeiNow().date) === "holiday";
-  const fl = (trtc.firstLast?.[sid] ?? []).filter(([, , , , days]) => days[holiday ? 6 : 2] === "1").slice(0, 4);
+  const fl = sibs.flatMap((s) => trtc.firstLast?.[s] ?? [])
+    .filter(([, , , , days]) => days[holiday ? 6 : 2] === "1").slice(0, 6);
   $("board-firstlast").innerHTML = fl.map(([line, dest, first, last]) => `
     <span class="fl-cell">${lineChip(trtcLineOf(line))}<b>${dest}</b>
       <span class="flc">${t("firstChip")} <span class="b-time sm">${first}</span></span>
@@ -1193,6 +1214,7 @@ function renderBoard() {
   renderBoardQuick();
   const sid = state.boardStation;
   if (isTrtc(sid)) { renderTrtcBoard(sid); return; }
+  $("board-transfer").hidden = true;
   $("board-code").textContent = sid;
   $("board-name").textContent = stnName(sid);
   const rows = [];
