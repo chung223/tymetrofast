@@ -1077,7 +1077,7 @@ function trtcHeadwayRows(sid, note) {
   const lines = [...new Set(trtcSiblings(sid).flatMap((s) => [...(trtcGraph?.linesAt.get(s) ?? [])]))];
   return (note ? `<li class="board-row empty">${note}</li>` : "") + (lines.length
     ? lines.map((l) => `
-      <li class="board-row">
+      <li class="board-row brd" style="--lc:${TRTC_COLORS[l] ?? "#888"}">
         ${lineChip(l)}
         <span class="b-dest">${t("headwayAbout", Math.round(headwayOf(trtc, l, taipeiNow().min, holiday)))}</span>
       </li>`).join("")
@@ -1139,20 +1139,24 @@ function trtcLiveEta(sid, arr) {
     const min = Math.round(toMin(x.EstimateTime) + ride);
     if (min <= 25) items.push({ line, dest: destName, min }); // 推得越遠越不準，超過即交給班距推估
   }
-  return items.sort((a, b) => a.min - b.min).slice(0, 8);
+  return items.sort((a, b) => a.min - b.min).slice(0, 12);
 }
 async function renderTrtcBoard(sid) {
   const sibs = trtcSiblings(sid);
-  $("board-code").textContent = sibs.join("·");
+  const bc = $("board-code");
+  bc.classList.add("multi");
+  bc.innerHTML = sibs.map((s) => `<span class="code trtc-code sm" style="--lc:${TRTC_COLORS[trtcLineOf(s)] ?? "#888"}">${s}</span>`).join("");
   $("board-name").textContent = trtcStnName(sid);
   $("fac-card").hidden = true;
   // 共構站轉乘動線（官方描述含上下樓；環狀線等站外轉乘也列出）
   const tx = (trtc.transfers ?? []).filter(([fs]) => sibs.includes(fs));
   $("board-transfer").hidden = !tx.length;
-  $("board-transfer").innerHTML = tx.length ? `<span class="tx-title">${t("transferInfo")}</span>` + tx.map(
+  $("board-transfer").innerHTML = tx.length ? `<span class="tx-title">🔁 ${t("transferInfo")}</span>` + tx.map(
     ([, , fl2, tl2, walk, desc, onsite]) => `
-    <span class="tx-row">${lineChip(fl2)}<span class="tx-arrow">→</span>${lineChip(tl2)}
-      <span class="tx-desc">${desc || `${t(onsite === 0 ? "txOutSite" : "txInSite")}・${t("walkN", Math.round(walk))}`}</span></span>`).join("") : "";
+    <span class="tx-row${onsite === 0 ? " out" : ""}">${lineChip(fl2)}<span class="tx-arrow">→</span>${lineChip(tl2)}
+      <span class="tx-walk">🚶${Math.round(walk)} ${t("minUnit")}</span>${desc ? `
+      <span class="tx-desc">${desc}</span>` : ""}${onsite === 0 ? `
+      <span class="tx-out">${t("txOutSite")}</span>` : ""}</span>`).join("") : "";
   const holiday = dayTypeOf(taipeiNow().date) === "holiday";
   const fl = sibs.flatMap((s) => trtc.firstLast?.[s] ?? [])
     .filter(([, , , , days]) => days[holiday ? 6 : 2] === "1").slice(0, 6);
@@ -1170,13 +1174,26 @@ async function renderTrtcBoard(sid) {
     const raw = await r.json();
     if (sid !== state.boardStation || state.view !== "board") return; // 使用者已換站
     const items = trtcLiveEta(sid, Array.isArray(raw) ? raw : []);
-    list.innerHTML = items.length
-      ? items.map((it) => `
-        <li class="board-row live">
-          <span class="b-count">${it.min < 1 ? t("now") : t("inMin", it.min)}</span>
-          ${lineChip(trtcLineOf(String(it.line)))}
-          <span class="b-dest">→ ${it.dest}</span>
-        </li>`).join("") + `<li class="board-row empty live-note">● ${t("liveNote2")}</li>`
+    // 依「路線×終點（方向）」分組：乘客只在意自己的方向——首班大字、次班小字
+    const groups = new Map();
+    for (const it of items) {
+      const k = `${it.line}|${it.dest}`;
+      if (!groups.has(k)) groups.set(k, { line: it.line, dest: it.dest, mins: [] });
+      groups.get(k).mins.push(it.min);
+    }
+    const gs = [...groups.values()]
+      .map((g) => ({ ...g, mins: g.mins.sort((a, b) => a - b).slice(0, 2) }))
+      .sort((a, b) => a.mins[0] - b.mins[0])
+      .slice(0, 6);
+    list.innerHTML = gs.length
+      ? gs.map((g) => `
+        <li class="board-row live brd" style="--lc:${TRTC_COLORS[trtcLineOf(String(g.line))] ?? "#888"}">
+          <span class="brd-count ${g.mins[0] < 1 ? "due" : g.mins[0] <= 2 ? "soon" : ""}">${
+            g.mins[0] < 1 ? t("now") : `<b>${g.mins[0]}</b><i>${t("minUnit")}</i>`}</span>
+          ${lineChip(trtcLineOf(String(g.line)))}
+          <span class="b-dest">${g.dest}</span>
+          ${g.mins[1] != null ? `<span class="brd-next">${t("nextIn", g.mins[1])}</span>` : ""}
+        </li>`).join("") + `<li class="board-row empty live-note"><span class="live-dot"></span>${t("liveNote2")}</li>`
       : trtcHeadwayRows(sid, t("liveNone"));
   } catch {
     if (sid === state.boardStation) list.innerHTML = trtcHeadwayRows(sid, t("liveFail"));
@@ -1215,6 +1232,7 @@ function renderBoard() {
   const sid = state.boardStation;
   if (isTrtc(sid)) { renderTrtcBoard(sid); return; }
   $("board-transfer").hidden = true;
+  $("board-code").classList.remove("multi");
   $("board-code").textContent = sid;
   $("board-name").textContent = stnName(sid);
   const rows = [];

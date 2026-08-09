@@ -379,17 +379,42 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
   padding: 4px 12px 4px 5px; white-space: nowrap;
 }
 .bq-chip .code { min-width: 34px; height: 22px; font-size: 12px; border-radius: 11px; }
-.bq-chip.cur { border-color: var(--amber); color: var(--text); }
+.bq-chip.cur { border-color: var(--amber); color: var(--text); background: rgba(212, 175, 110, 0.12); }
 .bq-chip:hover { border-color: var(--purple); }
 .tx-info {
-  display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;
+  display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;
   padding: 8px 10px; border: 1px dashed var(--line); border-radius: 10px;
 }
+.tx-info[hidden] { display: none; } /* display:flex 會蓋過 hidden 屬性 */
+.firstlast:empty { display: none; }
 .tx-title { font-size: 11px; font-weight: 900; color: var(--text-dim); letter-spacing: 0.2em; }
 .tx-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--text-dim); }
 .tx-arrow { color: var(--text-dim); }
 .tx-desc { color: var(--text); }
+.tx-walk { flex: none; border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; font-variant-numeric: tabular-nums; }
+.tx-row.out .tx-walk { border-color: var(--amber); color: var(--amber); }
+.tx-out { color: var(--amber); font-weight: 700; }
 .leg-tx { font-size: 12px; color: var(--amber); margin-top: 2px; }
+
+/* 北捷即時看板：方向分組列（左側線色欄、LED 倒數、次班小字） */
+.board-row.brd { border-left: 4px solid var(--lc, #888); padding-left: 10px; gap: 8px; }
+.brd-count { flex: none; min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; }
+.brd-count b { font: 400 25px/1 var(--font-led); color: var(--amber); text-shadow: 0 0 10px rgba(212, 175, 110, 0.45); }
+.brd-count i { font-style: normal; font-size: 11px; color: var(--text-dim); margin-left: 3px; }
+.brd-count.due {
+  font: 400 15px var(--font-led); color: var(--amber);
+  text-shadow: 0 0 12px rgba(212, 175, 110, 0.8); animation: breathe 1.3s ease-in-out infinite;
+}
+.brd-count.soon b { text-shadow: 0 0 14px rgba(212, 175, 110, 0.9); }
+@keyframes breathe { 50% { opacity: 0.4; } }
+.brd-next { margin-left: auto; flex: none; font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.live-note { gap: 6px; }
+.live-dot {
+  flex: none; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green); box-shadow: 0 0 6px var(--green); animation: breathe 1.6s ease-in-out infinite;
+}
+.code.multi { background: none; padding: 0; min-width: 0; display: inline-flex; gap: 4px; }
+.code.sm { min-width: 34px; height: 22px; font-size: 12px; border-radius: 11px; }
 .firstlast {
   display: flex; gap: 8px 22px; flex-wrap: wrap;
   font-size: 12px; color: var(--text-dim);
