@@ -1,6 +1,6 @@
 /* 快轉 · 前端主程式 */
 import { buildIndex, planDirect, planOptions, planJourney, planArriveBy, fmtTime } from "./planner.js";
-import { buildTrtcGraph, planTrtc, headwayOf } from "./trtc-engine.mjs";
+import { buildTrtcGraph, planTrtc, planTrtcAlts, headwayOf } from "./trtc-engine.mjs";
 import { LANGS, LANG_LABEL, makeT } from "./i18n.js";
 
 const $ = (id) => document.getElementById(id);
@@ -304,22 +304,25 @@ function renderHybrid(from, to, ctx) {
 
   if (!trtcGraph) { box.innerHTML = `<div class="panel empty-card">${t("noneFound")}</div>`; renderLineMap(null); return; }
 
-  /* 純北捷 */
+  /* 純北捷：多方案比較（依推估總時間排序，最快在前） */
   if (fromT && toT) {
-    const r = planTrtc(trtc, trtcGraph, { from, to, min: ctx.min, holiday });
-    if (!r) { box.innerHTML = `<div class="panel empty-card">${t("noneFound")}</div>`; renderLineMap(null); return; }
+    const alts = planTrtcAlts(trtc, trtcGraph, { from, to, min: ctx.min, holiday });
+    if (!alts.length) { box.innerHTML = `<div class="panel empty-card">${t("noneFound")}</div>`; renderLineMap(null); return; }
     const fare = trtcFares?.[`${from}|${to}`] ?? trtcFares?.[`${to}|${from}`];
-    box.innerHTML = trtcLastWarn(r, ctx.min, holiday) + `
-    <article class="panel journey-card best">
+    box.innerHTML = trtcLastWarn(alts[0], ctx.min, holiday) + alts.map((r, i) => {
+      const diff = r.totalMin - alts[0].totalMin;
+      return `
+    <article class="panel journey-card ${i === 0 ? "best" : ""}">
       <div class="jc-head">
-        <span class="jc-badge">${t("fastest")}</span>
+        <span class="jc-badge${i === 0 ? "" : " alt"}">${i === 0 ? t("fastest") : `+${diff} ${t("min")}`}</span>
         <span class="jc-times">~${r.totalMin} ${t("min")}</span>
         <span class="jc-meta">${t("arriveEst", fmtTime(ctx.min + r.totalMin))}<br>
           ${r.transfers ? t("transfersN", r.transfers) : t("noTransfer")}${fare ? ` · <span class="fare-chip">${t("fare", fare)}</span>` : ""}</span>
       </div>
       <div class="legs">${trtcLegsHtml(r, ctx.min)}</div>
-      <p class="map-hint">${t("estNote")}</p>
+      ${i === alts.length - 1 ? `<p class="map-hint">${t("estNote")}</p>` : ""}
     </article>`;
+    }).join("");
     renderLineMap(null);
     return;
   }

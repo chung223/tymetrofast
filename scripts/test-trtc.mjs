@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** 北捷班距引擎測試：兩線一轉乘的固定樣本，驗證路徑、轉乘與等車推估。 */
-import { buildTrtcGraph, planTrtc, headwayOf } from "../assets/trtc-engine.mjs";
+import { buildTrtcGraph, planTrtc, planTrtcAlts, headwayOf } from "../assets/trtc-engine.mjs";
 
 // BL 線：BL1–BL2–BL3；R 線：R1–R2–R3；BL2=R2 為同體轉乘站（步行 2 分）
 const data = {
@@ -50,6 +50,29 @@ ok("第二段步行 2 分", b && b.legs[1].walkMin === 2, `got ${b?.legs[1]?.wal
 // 起訖相同／查無站
 ok("起訖相同回 null", planTrtc(data, g, { from: "BL1", to: "BL1", min: 480, holiday: false }) === null);
 ok("查無站回 null", planTrtc(data, g, { from: "BL1", to: "X9", min: 480, holiday: false }) === null);
+
+// 封鎖路線
+const banned = planTrtc(data, g, { from: "BL1", to: "R3", min: 480, holiday: false, banLines: new Set(["R"]) });
+ok("封鎖 R 線後無替代路徑", banned === null);
+
+// 多方案：P 線慢車直達 vs 繞經 Q 線（快車＋兩端轉乘）
+const data2 = {
+  lines: {
+    P: { stations: ["P1", "P2"], s2s: [["P1", "P2", 10]] },
+    Q: { stations: ["Q1", "Q2"], s2s: [["Q1", "Q2", 2]] },
+  },
+  transfers: [
+    ["P1", "Q1", "P", "Q", 1], ["Q1", "P1", "Q", "P", 1],
+    ["P2", "Q2", "P", "Q", 1], ["Q2", "P2", "Q", "P", 1],
+  ],
+  freq: [["P", "1111111", "00:00", "23:59", 4], ["Q", "1111111", "00:00", "23:59", 4]],
+};
+const g2 = buildTrtcGraph(data2);
+const alts = planTrtcAlts(data2, g2, { from: "P1", to: "P2", min: 480, holiday: false });
+ok("多方案回兩種走法", alts.length === 2, JSON.stringify(alts.map((r) => r.totalMin)));
+ok("方案依總時間排序", alts.length === 2 && alts[0].totalMin <= alts[1].totalMin);
+ok("最快方案走 Q 線", alts[0]?.legs.some((l) => l.line === "Q"), JSON.stringify(alts[0]?.legs));
+ok("替代方案為 P 線直達", alts[1]?.legs.length === 1 && alts[1]?.legs[0].line === "P", JSON.stringify(alts[1]?.legs));
 
 console.log(fail ? `\n${fail} 項失敗` : "\n全部通過");
 process.exit(fail ? 1 : 0);
