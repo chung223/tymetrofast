@@ -106,17 +106,8 @@ try {
   await nap();
   const raw = await get("LineTransfer/TRTC");
   sample("轉乘", raw);
-  // 診斷：TransferDescription 實際形狀（首輪抽取為 0 組，需確認值的型別）
-  const shapes = {};
   for (const x of raw) {
-    const v = x.TransferDescription;
-    const k = v == null ? "null" : typeof v !== "object" ? (String(v).trim() ? typeof v : "empty")
-      : Array.isArray(v) ? "array" : `object:${Object.keys(v).join(",")}`;
-    shapes[k] = (shapes[k] ?? 0) + 1;
-  }
-  console.log("轉乘描述形狀:", JSON.stringify(shapes),
-    "首筆值:", JSON.stringify(raw[0]?.TransferDescription)?.slice(0, 200));
-  for (const x of raw) {
+    // 實測 TransferDescription 北捷 34 組全為空字串（欄位存在但未填），仍容錯保留
     const rv = x.TransferDescription;
     const desc = String((typeof rv === "string" ? rv : rv?.Zh_tw ?? rv?.zh_tw
       ?? (Array.isArray(rv) ? rv.filter(Boolean).join("；") : "")) ?? "").trim();
@@ -124,11 +115,12 @@ try {
       x.FromStationID, x.ToStationID,
       x.FromLineID ?? "", x.ToLineID ?? "",
       Math.round((x.TransferTime ?? 3) * 10) / 10, // 分鐘
-      desc, // 官方轉乘動線描述（上下樓層等）
+      desc, // 官方動線描述（若未來補填即自動顯示）
+      x.IsOnSiteTransfer == null ? 1 : x.IsOnSiteTransfer ? 1 : 0, // 站內 1／站外 0
     ]);
   }
   if (data.transfers.length < 10) throw new Error(`僅 ${data.transfers.length} 組`);
-  console.log(`✓ 轉乘 ${data.transfers.length} 組（含動線描述 ${data.transfers.filter((x) => x[5]).length} 組）`);
+  console.log(`✓ 轉乘 ${data.transfers.length} 組（描述 ${data.transfers.filter((x) => x[5]).length}、站外 ${data.transfers.filter((x) => !x[6]).length}）`);
   ok++;
 } catch (e) { console.log(`::warning::TRTC 轉乘失敗：${e.message}`); }
 

@@ -1150,9 +1150,9 @@ async function renderTrtcBoard(sid) {
   const tx = (trtc.transfers ?? []).filter(([fs]) => sibs.includes(fs));
   $("board-transfer").hidden = !tx.length;
   $("board-transfer").innerHTML = tx.length ? `<span class="tx-title">${t("transferInfo")}</span>` + tx.map(
-    ([, , fl2, tl2, walk, desc]) => `
+    ([, , fl2, tl2, walk, desc, onsite]) => `
     <span class="tx-row">${lineChip(fl2)}<span class="tx-arrow">→</span>${lineChip(tl2)}
-      <span class="tx-desc">${desc || t("walkN", Math.round(walk))}</span></span>`).join("") : "";
+      <span class="tx-desc">${desc || `${t(onsite === 0 ? "txOutSite" : "txInSite")}・${t("walkN", Math.round(walk))}`}</span></span>`).join("") : "";
   const holiday = dayTypeOf(taipeiNow().date) === "holiday";
   const fl = sibs.flatMap((s) => trtc.firstLast?.[s] ?? [])
     .filter(([, , , , days]) => days[holiday ? 6 : 2] === "1").slice(0, 6);
