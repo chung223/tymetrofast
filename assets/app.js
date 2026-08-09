@@ -1145,6 +1145,7 @@ function trtcLiveEta(sid, arr) {
   return items.sort((a, b) => a.min - b.min).slice(0, 12);
 }
 async function renderTrtcBoard(sid) {
+  $("board-title").textContent = `${t("boardTitle")}・🚇 ${t("trtcSection")}`;
   const sibs = trtcSiblings(sid);
   const bc = $("board-code");
   bc.classList.add("multi");
@@ -1219,7 +1220,7 @@ function renderBoardQuick() {
     .slice(0, 6);
   $("board-quick").innerHTML = ids.map((id) => `
     <button class="bq-chip ${id === state.boardStation ? "cur" : ""}" data-id="${id}">
-      <span class="code${isTrtc(id) ? " trtc-code" : ""}"${isTrtc(id) ? ` style="--lc:${TRTC_COLORS[trtcLineOf(id)] ?? "#888"}"` : ""}>${id}</span>${stnName(id)}
+      <span class="bq-sys">${isTrtc(id) ? "🚇" : "✈"}</span><span class="code${isTrtc(id) ? " trtc-code" : ""}"${isTrtc(id) ? ` style="--lc:${TRTC_COLORS[trtcLineOf(id)] ?? "#888"}"` : ""}>${id}</span>${stnName(id)}
     </button>`).join("");
 }
 $("board-quick").addEventListener("click", (e) => {
@@ -1234,6 +1235,7 @@ function renderBoard() {
   renderBoardQuick();
   const sid = state.boardStation;
   if (isTrtc(sid)) { renderTrtcBoard(sid); return; }
+  $("board-title").textContent = `${t("boardTitle")}・✈ ${t("mrtSection")}`;
   $("board-transfer").hidden = true;
   $("board-code").classList.remove("multi");
   $("board-code").textContent = sid;
@@ -1820,7 +1822,7 @@ function openSheet(which) {
     ? `<li class="locate-li"><button class="pick-btn locate-btn" id="btn-locate">${t("locate")}</button></li>`
     : "";
   const mrtRows = stations.map((s) => `
-      <li><button class="pick-btn ${s.express ? "express" : "local-only"} ${cur === s.id ? "picked" : ""}" data-id="${s.id}">
+      <li class="sys-mrt"><button class="pick-btn ${s.express ? "express" : "local-only"} ${cur === s.id ? "picked" : ""}" data-id="${s.id}">
         <span class="code">${s.id}</span>
         <span><span class="pick-name">${stnName(s.id)}</span><span class="pick-en">${lang === "zh" ? stationById.get(s.id).nameEn : stationById.get(s.id).name}</span></span>
         ${s.express ? `<span class="pick-tag">${t("expressTag")}</span>` : ""}
@@ -1828,29 +1830,45 @@ function openSheet(which) {
   // 北捷分線清單（看板選站也開放：即時到站／班距推估）
   let trtcHtml = "";
   if (trtc) {
-    trtcHtml = `<li class="sheet-sec">🚇 ${t("trtcSection")}</li>` +
-      Object.entries(trtc.lines ?? {}).filter(([, l]) => l.stations?.length).map(([lid, l]) =>
-        `<li class="sheet-line"><span class="line-chip" style="--lc:${TRTC_COLORS[lid] ?? "#888"}">${lid}</span></li>` +
+    trtcHtml = Object.entries(trtc.lines ?? {}).filter(([, l]) => l.stations?.length).map(([lid, l]) =>
+        `<li class="sheet-line sys-trtc"><span class="line-chip" style="--lc:${TRTC_COLORS[lid] ?? "#888"}">${lid}</span></li>` +
         l.stations.map((sid) => `
-        <li class="trtc-li"><button class="pick-btn trtc ${cur === sid ? "picked" : ""}" data-id="${sid}">
+        <li class="trtc-li sys-trtc"><button class="pick-btn trtc ${cur === sid ? "picked" : ""}" data-id="${sid}">
           <span class="code trtc-code" style="--lc:${TRTC_COLORS[trtcLineOf(sid)] ?? "#888"}">${sid}</span>
           <span><span class="pick-name">${trtcStnName(sid)}</span><span class="pick-en">${lang === "zh" ? (trtc.stations[sid]?.en ?? "") : trtc.stations[sid]?.zh ?? ""}</span></span>
         </button></li>`).join("")
       ).join("");
   }
+  // 兩系統分頁切換（搜尋時跨系統找）：143 站混排太亂，各看各的
+  const segBar = trtcHtml ? `<li class="seg-li"><div class="seg-control sheet-seg">
+      <button class="seg" data-sys="mrt">✈ ${t("mrtSection")}</button>
+      <button class="seg" data-sys="trtc">🚇 ${t("trtcSection")}</button>
+    </div></li>` : "";
   $("station-list").innerHTML =
     `<li class="search-li"><input id="stn-search" class="dt-input stn-search" type="search" placeholder="${t("searchStation")}"></li>` +
-    locateBtn +
-    (trtcHtml ? `<li class="sheet-sec">✈ ${t("mrtSection")}</li>` : "") +
-    mrtRows + trtcHtml;
+    segBar + locateBtn + mrtRows + trtcHtml;
+  let sheetSys = isTrtc(cur) ? "trtc" : "mrt";
+  const applySys = () => {
+    $("station-list").querySelectorAll(".sys-mrt, .sys-trtc").forEach((li) => {
+      li.hidden = !li.classList.contains(`sys-${sheetSys}`);
+    });
+    $("station-list").querySelectorAll(".sheet-seg .seg").forEach((b) => b.classList.toggle("on", b.dataset.sys === sheetSys));
+  };
+  if (trtcHtml) applySys();
+  $("station-list").querySelectorAll(".sheet-seg .seg").forEach((b) => (b.onclick = () => {
+    sheetSys = b.dataset.sys;
+    $("stn-search").value = "";
+    applySys();
+  }));
   const si = $("stn-search");
   si.addEventListener("input", () => {
     const q = si.value.trim().toLowerCase();
+    if (!q && trtcHtml) { applySys(); return; }
     $("station-list").querySelectorAll("li").forEach((li) => {
-      if (li.classList.contains("search-li")) return;
+      if (li.classList.contains("search-li") || li.classList.contains("seg-li")) return;
       if (!q) { li.hidden = false; return; }
       if (!li.querySelector("[data-id]")) { li.hidden = true; return; }
-      li.hidden = !li.textContent.toLowerCase().includes(q);
+      li.hidden = !li.textContent.toLowerCase().includes(q); // 搜尋不分系統
     });
   });
   $("station-sheet").hidden = false;
