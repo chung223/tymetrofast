@@ -106,9 +106,20 @@ try {
   await nap();
   const raw = await get("LineTransfer/TRTC");
   sample("轉乘", raw);
+  // 診斷：TransferDescription 實際形狀（首輪抽取為 0 組，需確認值的型別）
+  const shapes = {};
   for (const x of raw) {
-    const desc = (typeof x.TransferDescription === "string"
-      ? x.TransferDescription : x.TransferDescription?.Zh_tw ?? "").trim();
+    const v = x.TransferDescription;
+    const k = v == null ? "null" : typeof v !== "object" ? (String(v).trim() ? typeof v : "empty")
+      : Array.isArray(v) ? "array" : `object:${Object.keys(v).join(",")}`;
+    shapes[k] = (shapes[k] ?? 0) + 1;
+  }
+  console.log("轉乘描述形狀:", JSON.stringify(shapes),
+    "首筆值:", JSON.stringify(raw[0]?.TransferDescription)?.slice(0, 200));
+  for (const x of raw) {
+    const rv = x.TransferDescription;
+    const desc = String((typeof rv === "string" ? rv : rv?.Zh_tw ?? rv?.zh_tw
+      ?? (Array.isArray(rv) ? rv.filter(Boolean).join("；") : "")) ?? "").trim();
     data.transfers.push([
       x.FromStationID, x.ToStationID,
       x.FromLineID ?? "", x.ToLineID ?? "",
