@@ -54,13 +54,14 @@ export function headwayOf(data, lineId, minOfDay, holiday) {
  * 規劃：{from, to, min（當日第幾分）, holiday} → {totalMin, waitMin, legs} | null
  * legs = [{line, from, to, rideMin, waitMin, stops}]
  */
-export function planTrtc(data, graph, { from, to, min, holiday }) {
+export function planTrtc(data, graph, { from, to, min, holiday, banLines }) {
   if (from === to) return null;
   const { nodes, linesAt } = graph;
   if (!linesAt.has(from) || !linesAt.has(to)) return null;
   const dist = new Map(), prev = new Map();
   const pq = [];
   for (const line of linesAt.get(from)) {
+    if (banLines?.has(line)) continue;
     const wait = headwayOf(data, line, min, holiday) / 2;
     const key = `${from}|${line}`;
     dist.set(key, wait);
@@ -72,9 +73,10 @@ export function planTrtc(data, graph, { from, to, min, holiday }) {
     for (let i = 1; i < pq.length; i++) if (pq[i][0] < pq[bi][0]) bi = i;
     const [d, key] = pq.splice(bi, 1)[0];
     if (d > (dist.get(key) ?? Infinity)) continue;
-    const [stn] = key.split("|");
+    const [stn, curLine] = key.split("|");
     if (stn === to) continue; // 到站後不再外擴（仍讓其他線節點收斂）
     for (const e of nodes.get(key) ?? []) {
+      if (banLines?.has(e.walk != null ? e.boardLine : curLine)) continue;
       let cost = e.ride;
       let wait = 0;
       if (e.walk != null) {
@@ -131,4 +133,21 @@ export function planTrtc(data, graph, { from, to, min, holiday }) {
       rideMin: Math.max(0, l.rideMin), waitMin: l.waitMin, walkMin: l.walkMin, stops: l.stops,
     })),
   };
+}
+
+/**
+ * 多方案：先取最佳路線，再逐一封鎖它用到的每條線找「走別條線」的替代，
+ * 去重後依總時間排序取前三。北捷許多起訖本就有兩三種合理走法。
+ */
+export function planTrtcAlts(data, graph, opts) {
+  const best = planTrtc(data, graph, opts);
+  if (!best) return [];
+  const sig = (r) => r.legs.map((l) => `${l.line}:${l.from}-${l.to}`).join("|");
+  const out = [best];
+  const seen = new Set([sig(best)]);
+  for (const line of new Set(best.legs.map((l) => l.line))) {
+    const alt = planTrtc(data, graph, { ...opts, banLines: new Set([line]) });
+    if (alt && !seen.has(sig(alt))) { seen.add(sig(alt)); out.push(alt); }
+  }
+  return out.sort((a, b) => a.totalMin - b.totalMin).slice(0, 3);
 }
