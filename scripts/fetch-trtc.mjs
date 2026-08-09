@@ -107,14 +107,17 @@ try {
   const raw = await get("LineTransfer/TRTC");
   sample("轉乘", raw);
   for (const x of raw) {
+    const desc = (typeof x.TransferDescription === "string"
+      ? x.TransferDescription : x.TransferDescription?.Zh_tw ?? "").trim();
     data.transfers.push([
       x.FromStationID, x.ToStationID,
       x.FromLineID ?? "", x.ToLineID ?? "",
       Math.round((x.TransferTime ?? 3) * 10) / 10, // 分鐘
+      desc, // 官方轉乘動線描述（上下樓層等）
     ]);
   }
   if (data.transfers.length < 10) throw new Error(`僅 ${data.transfers.length} 組`);
-  console.log(`✓ 轉乘 ${data.transfers.length} 組`);
+  console.log(`✓ 轉乘 ${data.transfers.length} 組（含動線描述 ${data.transfers.filter((x) => x[5]).length} 組）`);
   ok++;
 } catch (e) { console.log(`::warning::TRTC 轉乘失敗：${e.message}`); }
 
