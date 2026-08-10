@@ -889,15 +889,20 @@ function renderLineMap(journey) {
   $("map-toggle").textContent = mapView === "geo" ? t("mapSchematic") : t("mapGeo");
 }
 
-/* ---------- 🚇 北捷行程路線圖（依實際站點座標，各段線色） ---------- */
+/* ---------- 🚇 北捷行程路線圖（依實際站點座標，各段線色）
+ * 全網底圖由官方站點座標＋站間資料即時生成：無授權疑慮、隨週更資料自動更新，
+ * 且能精準高亮本次行程——現成的路網圖做不到這件事。 */
 let lastTrtcPlan = null;
+let trtcMapFull = localStorage.getItem("tymf-trtc-net") !== "0";
 function renderTrtcMap(plan) {
   lastTrtcPlan = plan;
   lastJourney = null;
   const svg = $("line-map");
   svg.classList.remove("snake");
   svg.classList.add("trtc-map");
-  $("map-toggle").hidden = true;
+  const toggle = $("map-toggle");
+  toggle.hidden = false;
+  toggle.textContent = t(trtcMapFull ? "mapRouteOnly" : "mapWholeNet");
   // 展開每段的完整站序（含中間站），並記住段別與該段端點
   const pts = [];
   plan.legs.forEach((l, i) => {
@@ -911,12 +916,15 @@ function renderTrtcMap(plan) {
     svg.innerHTML = ""; svg.style.height = "0"; $("map-hint-text").textContent = "";
     return;
   }
+  // 投影基準：全網模式取全部站點，行程模式只取本行程（等於自動縮放到路線）
+  const netStns = Object.values(trtc.stations).filter((s) => s.lat != null && s.lon != null);
+  const base = trtcMapFull && netStns.length ? netStns : pts;
   // 經度依緯度收斂，等比縮放不變形
   const P = 34;
   const W = Math.max(300, (svg.closest(".line-map-scroll")?.clientWidth || 340) - 4);
-  const kLon = Math.cos((pts.reduce((s, p) => s + p.lat, 0) / pts.length) * Math.PI / 180);
-  const xs = pts.map((p) => p.lon * kLon), ys = pts.map((p) => -p.lat);
-  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const kLon = Math.cos((base.reduce((s, p) => s + p.lat, 0) / base.length) * Math.PI / 180);
+  const bx = base.map((p) => p.lon * kLon), by = base.map((p) => -p.lat);
+  const minX = Math.min(...bx), maxX = Math.max(...bx), minY = Math.min(...by), maxY = Math.max(...by);
   if (maxX - minX < 1e-7 && maxY - minY < 1e-7) { // 座標退化（資料異常）：不畫圖勝過畫錯
     svg.innerHTML = ""; svg.style.height = "0"; $("map-hint-text").textContent = "";
     return;
@@ -924,13 +932,25 @@ function renderTrtcMap(plan) {
   const dx = Math.max(maxX - minX, 1e-9), dy = Math.max(maxY - minY, 1e-9);
   const H = Math.min(300, Math.max(170, Math.round((W - P * 2) * (dy / dx)) + P * 2));
   const sc = Math.min((W - P * 2) / dx, (H - P * 2) / dy);
-  const XY = pts.map((p, i) => ({
-    x: (W - dx * sc) / 2 + (xs[i] - minX) * sc,
-    y: (H - dy * sc) / 2 + (ys[i] - minY) * sc,
-  }));
+  const at = (s) => ({
+    x: (W - dx * sc) / 2 + (s.lon * kLon - minX) * sc,
+    y: (H - dy * sc) / 2 + (-s.lat - minY) * sc,
+  });
+  const XY = pts.map(at);
   const colorOf = (i) => TRTC_COLORS[trtcLineOf(plan.legs[i].line)] ?? "#888";
 
   let g = "";
+  // 全網底圖：以官方站間資料畫出每一線段（淡色襯底，行程疊在其上）
+  if (trtcMapFull) {
+    for (const [lid, line] of Object.entries(trtc.lines ?? {})) {
+      for (const [a, b] of line.s2s ?? []) {
+        const sa = trtc.stations[a], sb = trtc.stations[b];
+        if (sa?.lat == null || sb?.lat == null) continue;
+        const pa = at(sa), pb = at(sb);
+        g += `<line x1="${pa.x.toFixed(1)}" y1="${pa.y.toFixed(1)}" x2="${pb.x.toFixed(1)}" y2="${pb.y.toFixed(1)}" stroke="${TRTC_COLORS[lid] ?? "#888"}" stroke-width="2.5" stroke-linecap="round" opacity="0.28" class="net-seg"/>`;
+      }
+    }
+  }
   plan.legs.forEach((_, i) => {
     const seq = XY.filter((_, j) => pts[j].leg === i).map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`);
     if (seq.length > 1) g += `<polyline points="${seq.join(" ")}" fill="none" stroke="${colorOf(i)}" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>`;
@@ -1145,6 +1165,12 @@ addEventListener("resize", () => {
   }, 200);
 });
 $("map-toggle").addEventListener("click", () => {
+  if (lastTrtcPlan) { // 北捷：切換「全網底圖／只看行程」
+    trtcMapFull = !trtcMapFull;
+    localStorage.setItem("tymf-trtc-net", trtcMapFull ? "1" : "0");
+    renderTrtcMap(lastTrtcPlan);
+    return;
+  }
   mapView = mapView === "geo" ? "schematic" : "geo";
   localStorage.setItem("tymf-map", mapView);
   renderLineMap(lastJourney);
