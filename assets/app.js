@@ -398,6 +398,10 @@ function legHtml(leg, journey, i) {
   const detail = [leg.dir === "S" ? t("towardS") : t("towardN"),
     leg.hops === 1 ? t("nextStop") : leg.type === "express" ? t("skipNote") : t("stopsVia", leg.hops - 1),
     t("rideN", Math.round(leg.arr - leg.dep))].join(" · ");
+  // 始發站：本站始發＝空車上來，較可能有座位；否則標出它從哪裡開來的
+  const seat = leg.origin === leg.from
+    ? `<span class="seat-chip">💺 ${t("startsHere")}</span>`
+    : leg.origin ? `<span class="from-origin">${t("fromOrigin", stnName(leg.origin))}</span>` : "";
   let html = `
     <div class="leg ${leg.type}">
       <div class="leg-rail"></div>
@@ -407,7 +411,7 @@ function legHtml(leg, journey, i) {
           <span class="leg-time">${fmtTime(leg.dep)}</span>
           <span class="leg-stations">${stnLabel(leg.from)} ${t("boardAt")}</span>
         </div>
-        <div class="leg-detail">${detail}</div>
+        <div class="leg-detail">${detail}${seat ? ` · ${seat}` : ""}</div>
       </div>
     </div>`;
   const next = journey.legs[i + 1];
@@ -1360,7 +1364,11 @@ function renderBoard() {
       const dm = dep - now.min;
       if (dm < -0.5 || dm > 120) continue;
       const train = idx.trainById.get(c.trip);
-      rows.push({ dep, dm, type: c.type, dir: c.dir, terminal: train.stops[train.stops.length - 1][0], isLast: c.dep === lastDep[c.dir] });
+      rows.push({
+        dep, dm, type: c.type, dir: c.dir,
+        terminal: train.stops[train.stops.length - 1][0],
+        origin: train.stops[0][0], isLast: c.dep === lastDep[c.dir],
+      });
     }
   };
   push(dayTypeOf(now.date), 0);
@@ -1394,6 +1402,8 @@ function renderBoard() {
         <span class="b-count">${r.dm < 1 ? t("now") : t("inMin", Math.round(r.dm))}</span>
         <span class="train-chip">${t(r.type)}</span>
         <span class="b-dest">${r.dir === "S" ? "→" : "←"} ${stnName(r.terminal)}</span>
+        ${r.origin === sid ? `<span class="seat-chip">💺 ${t("originChip")}</span>`
+          : r.origin ? `<span class="from-origin">${t("fromOrigin", stnName(r.origin))}</span>` : ""}
         ${r.isLast ? `<span class="last-chip">${t("lastChip")}</span>` : ""}
       </li>`).join("")
     : `<li class="board-row empty">${t("noneFound")}</li>`;
