@@ -169,6 +169,7 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .line-map-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
 .line-map { display: block; min-width: 690px; width: 100%; height: 104px; }
 .line-map.snake { min-width: 0; }
+.line-map.trtc-map { min-width: 0; } /* 北捷行程圖依容器寬繪製，不需橫向捲動 */
 .line-map .flow {
   stroke-dasharray: 3 9; opacity: 0.75;
   animation: dashflow 0.9s linear infinite;

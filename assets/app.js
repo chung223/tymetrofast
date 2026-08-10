@@ -323,7 +323,7 @@ function renderHybrid(from, to, ctx) {
       ${i === alts.length - 1 ? `<p class="map-hint">${t("estNote")}</p>` : ""}
     </article>`;
     }).join("");
-    renderLineMap(null);
+    renderTrtcMap(alts[0]);
     return;
   }
 
@@ -881,9 +881,83 @@ const stnIdx = new Map(stations.map((s, i) => [s.id, i]));
 
 function renderLineMap(journey) {
   lastJourney = journey;
+  lastTrtcPlan = null;
+  $("map-toggle").hidden = false;
+  $("line-map").classList.remove("trtc-map");
   if (mapView === "geo" && geo) renderGeoMap(journey);
   else renderSchematic(journey);
   $("map-toggle").textContent = mapView === "geo" ? t("mapSchematic") : t("mapGeo");
+}
+
+/* ---------- 🚇 北捷行程路線圖（依實際站點座標，各段線色） ---------- */
+let lastTrtcPlan = null;
+function renderTrtcMap(plan) {
+  lastTrtcPlan = plan;
+  lastJourney = null;
+  const svg = $("line-map");
+  svg.classList.remove("snake");
+  svg.classList.add("trtc-map");
+  $("map-toggle").hidden = true;
+  // 展開每段的完整站序（含中間站），並記住段別與該段端點
+  const pts = [];
+  plan.legs.forEach((l, i) => {
+    const path = trtcPath(l.line, l.from, l.to) ?? [l.from, l.to];
+    path.forEach((id, k) => pts.push({
+      id, leg: i, edge: k === 0 || k === path.length - 1,
+      lat: trtc.stations[id]?.lat, lon: trtc.stations[id]?.lon,
+    }));
+  });
+  if (pts.length < 2 || pts.some((p) => p.lat == null || p.lon == null)) {
+    svg.innerHTML = ""; svg.style.height = "0"; $("map-hint-text").textContent = "";
+    return;
+  }
+  // 經度依緯度收斂，等比縮放不變形
+  const P = 34;
+  const W = Math.max(300, (svg.closest(".line-map-scroll")?.clientWidth || 340) - 4);
+  const kLon = Math.cos((pts.reduce((s, p) => s + p.lat, 0) / pts.length) * Math.PI / 180);
+  const xs = pts.map((p) => p.lon * kLon), ys = pts.map((p) => -p.lat);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  if (maxX - minX < 1e-7 && maxY - minY < 1e-7) { // 座標退化（資料異常）：不畫圖勝過畫錯
+    svg.innerHTML = ""; svg.style.height = "0"; $("map-hint-text").textContent = "";
+    return;
+  }
+  const dx = Math.max(maxX - minX, 1e-9), dy = Math.max(maxY - minY, 1e-9);
+  const H = Math.min(300, Math.max(170, Math.round((W - P * 2) * (dy / dx)) + P * 2));
+  const sc = Math.min((W - P * 2) / dx, (H - P * 2) / dy);
+  const XY = pts.map((p, i) => ({
+    x: (W - dx * sc) / 2 + (xs[i] - minX) * sc,
+    y: (H - dy * sc) / 2 + (ys[i] - minY) * sc,
+  }));
+  const colorOf = (i) => TRTC_COLORS[trtcLineOf(plan.legs[i].line)] ?? "#888";
+
+  let g = "";
+  plan.legs.forEach((_, i) => {
+    const seq = XY.filter((_, j) => pts[j].leg === i).map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`);
+    if (seq.length > 1) g += `<polyline points="${seq.join(" ")}" fill="none" stroke="${colorOf(i)}" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  });
+  // 轉乘：兩段之間以虛線相連（同站不同月台亦可見）
+  for (let i = 1; i < plan.legs.length; i++) {
+    const a = pts.findLastIndex((p) => p.leg === i - 1), b = pts.findIndex((p) => p.leg === i);
+    if (a >= 0 && b >= 0) g += `<line x1="${XY[a].x.toFixed(1)}" y1="${XY[a].y.toFixed(1)}" x2="${XY[b].x.toFixed(1)}" y2="${XY[b].y.toFixed(1)}" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="3 3"/>`;
+  }
+  let lastLabel = null; // 轉乘兩站同名（同一實體站的兩個站碼）只標一次，避免文字疊字
+  pts.forEach((p, j) => {
+    const start = j === 0, end = j === pts.length - 1, junction = p.edge && !start && !end;
+    const r = start || end ? 6 : junction ? 5 : 3;
+    g += `<circle cx="${XY[j].x.toFixed(1)}" cy="${XY[j].y.toFixed(1)}" r="${r}" fill="${start || end ? "var(--amber)" : "#fff"}" stroke="${colorOf(p.leg)}" stroke-width="2.5"/>`;
+    if (!(start || end || junction)) return;
+    const name = trtcStnName(p.id);
+    if (lastLabel && lastLabel.name === name && Math.hypot(XY[j].x - lastLabel.x, XY[j].y - lastLabel.y) < 40) return;
+    lastLabel = { name, x: XY[j].x, y: XY[j].y };
+    const anchor = XY[j].x > W - 76 ? "end" : XY[j].x < 76 ? "start" : "middle";
+    const ty = XY[j].y < 34 ? XY[j].y + 21 : XY[j].y - 13;
+    g += `<text x="${XY[j].x.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="11" font-weight="700" font-family="Noto Sans TC, sans-serif" fill="${start || end ? "var(--amber)" : "var(--text-dim)"}">${name}</text>`;
+  });
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.style.height = `${H}px`;
+  svg.innerHTML = g;
+  $("map-hint-text").innerHTML =
+    [...new Set(plan.legs.map((l) => trtcLineOf(l.line)))].map(lineChip).join(" ") + `　${t("trtcMapNote")}`;
 }
 
 /* 版面抽象：pt(f) 把「小數站序」轉成座標。窄螢幕用兩排蛇形（車廂路線圖式），
@@ -1065,7 +1139,10 @@ function renderGeoMap(journey) {
 let resizeT;
 addEventListener("resize", () => {
   clearTimeout(resizeT);
-  resizeT = setTimeout(() => { if (state.view === "plan") renderLineMap(lastJourney); }, 200);
+  resizeT = setTimeout(() => {
+    if (state.view !== "plan") return;
+    lastTrtcPlan ? renderTrtcMap(lastTrtcPlan) : renderLineMap(lastJourney);
+  }, 200);
 });
 $("map-toggle").addEventListener("click", () => {
   mapView = mapView === "geo" ? "schematic" : "geo";
@@ -1103,22 +1180,28 @@ function trtcAdj(lineId) {
   }
   return trtcAdjCache.get(lineId);
 }
-/** 列車自 from 開往 dest 的唯一路徑若經過 sid，回傳 from→sid 行駛分鐘；否則 null */
-function trtcMinAlong(lineId, from, dest, sid) {
+/** 沿某線由 a 至 b 的完整站序（路網為樹狀，以相鄰站 BFS 尋路）；無路徑回 null */
+function trtcPath(lineId, a, b) {
   const adj = trtcAdj(lineId);
-  if (!adj.has(from) || !adj.has(dest)) return null;
-  const prev = new Map([[from, null]]);
-  const q = [from];
+  if (!adj.has(a) || !adj.has(b)) return null;
+  const prev = new Map([[a, null]]);
+  const q = [a];
   while (q.length) {
     const cur = q.shift();
-    if (cur === dest) break;
+    if (cur === b) break;
     for (const [nx] of adj.get(cur) ?? []) if (!prev.has(nx)) { prev.set(nx, cur); q.push(nx); }
   }
-  if (!prev.has(dest)) return null;
+  if (!prev.has(b)) return null;
   const path = [];
-  for (let c = dest; c != null; c = prev.get(c)) path.unshift(c);
-  const i = path.indexOf(sid);
+  for (let c = b; c != null; c = prev.get(c)) path.unshift(c);
+  return path;
+}
+/** 列車自 from 開往 dest 的唯一路徑若經過 sid，回傳 from→sid 行駛分鐘；否則 null */
+function trtcMinAlong(lineId, from, dest, sid) {
+  const path = trtcPath(lineId, from, dest);
+  const i = path ? path.indexOf(sid) : -1;
   if (i <= 0) return null;
+  const adj = trtcAdj(lineId);
   let min = 0;
   for (let k = 0; k < i; k++) min += (adj.get(path[k]) ?? []).find(([s]) => s === path[k + 1])?.[1] ?? 2;
   return min;
@@ -1906,8 +1989,11 @@ addEventListener("keydown", (e) => e.key === "Escape" && closeSheet());
 /* ---------- 控制列 ---------- */
 function refreshOD() {
   for (const w of ["from", "to"]) {
-    $(`${w}-code`).textContent = state[w];
-    $(`${w}-name`).textContent = stnName(state[w]);
+    const id = state[w], el = $(`${w}-code`);
+    el.textContent = id;
+    el.classList.toggle("trtc-code", isTrtc(id)); // 北捷站碼吃線色，與看板一致
+    el.style.setProperty("--lc", isTrtc(id) ? TRTC_COLORS[trtcLineOf(id)] ?? "#888" : "");
+    $(`${w}-name`).textContent = stnName(id);
   }
 }
 $("btn-from").addEventListener("click", () => openSheet("from"));
