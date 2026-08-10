@@ -383,7 +383,8 @@ function renderHybrid(from, to, ctx) {
     <div class="legs">${inner}</div>
     <p class="map-hint">${t("estNote")}</p>
   </article>`;
-  renderLineMap(fromT ? best.j : null);
+  // 跨系統行程圖：機捷段與北捷段畫在同一張圖，接駁段以虛線相連
+  renderJourneyGeo({ trtc: fromT ? best.t1 : best.t2, mrt: best.j, first: fromT ? "trtc" : "mrt" });
 }
 
 /* ---------- 呈現 ---------- */
@@ -885,7 +886,7 @@ const stnIdx = new Map(stations.map((s, i) => [s.id, i]));
 
 function renderLineMap(journey) {
   lastJourney = journey;
-  lastTrtcPlan = null;
+  lastGeoSpec = null;
   $("map-toggle").hidden = false;
   $("line-map").classList.remove("trtc-map");
   if (mapView === "geo" && geo) renderGeoMap(journey);
@@ -896,10 +897,39 @@ function renderLineMap(journey) {
 /* ---------- 🚇 北捷行程路線圖（依實際站點座標，各段線色）
  * 全網底圖由官方站點座標＋站間資料即時生成：無授權疑慮、隨週更資料自動更新，
  * 且能精準高亮本次行程——現成的路網圖做不到這件事。 */
-let lastTrtcPlan = null;
+let lastGeoSpec = null;
 let trtcMapFull = localStorage.getItem("tymf-trtc-net") !== "0";
-function renderTrtcMap(plan) {
-  lastTrtcPlan = plan;
+const mrtOrder = () => new Map(stations.map((s, i) => [s.id, i]));
+/** 機捷某段的完整站序（列車實際行經的站，直達車跳站仍走同一條線） */
+function mrtLegPts(leg) {
+  if (!geo) return [];
+  const ord = mrtOrder(), a = ord.get(leg.from), b = ord.get(leg.to);
+  if (a == null || b == null) return [];
+  const out = [];
+  for (let i = a; i !== b + (a <= b ? 1 : -1); i += (a <= b ? 1 : -1)) {
+    const id = stations[i].id, g = geo[id];
+    if (g) out.push({ id, lon: g[0], lat: g[1], sys: "mrt" });
+  }
+  return out;
+}
+/** 把行程（北捷／機捷／兩者）拆成可繪製的線段，依實際搭乘順序排列 */
+function geoPartsOf(spec) {
+  const trtcParts = (spec.trtc?.legs ?? []).map((l) => ({
+    color: TRTC_COLORS[trtcLineOf(l.line)] ?? "#888",
+    pts: (trtcPath(l.line, l.from, l.to) ?? [l.from, l.to])
+      .map((id) => ({ id, lat: trtc.stations[id]?.lat, lon: trtc.stations[id]?.lon, sys: "trtc" }))
+      .filter((p) => p.lat != null && p.lon != null),
+  })).filter((p) => p.pts.length > 1);
+  const mrtParts = (spec.mrt?.legs ?? []).map((l) => ({
+    color: l.type === "express" ? "var(--purple)" : "var(--blue)",
+    pts: mrtLegPts(l),
+  })).filter((p) => p.pts.length > 1);
+  return spec.first === "mrt" ? [...mrtParts, ...trtcParts] : [...trtcParts, ...mrtParts];
+}
+const renderTrtcMap = (plan) => renderJourneyGeo({ trtc: plan, first: "trtc" });
+/** 跨系統行程圖：機捷段與北捷段畫在同一張圖上，接駁以虛線相連 */
+function renderJourneyGeo(spec) {
+  lastGeoSpec = spec;
   lastJourney = null;
   const svg = $("line-map");
   svg.classList.remove("snake");
@@ -907,22 +937,17 @@ function renderTrtcMap(plan) {
   const toggle = $("map-toggle");
   toggle.hidden = false;
   toggle.textContent = t(trtcMapFull ? "mapRouteOnly" : "mapWholeNet");
-  // 展開每段的完整站序（含中間站），並記住段別與該段端點
-  const pts = [];
-  plan.legs.forEach((l, i) => {
-    const path = trtcPath(l.line, l.from, l.to) ?? [l.from, l.to];
-    path.forEach((id, k) => pts.push({
-      id, leg: i, edge: k === 0 || k === path.length - 1,
-      lat: trtc.stations[id]?.lat, lon: trtc.stations[id]?.lon,
-    }));
-  });
-  if (pts.length < 2 || pts.some((p) => p.lat == null || p.lon == null)) {
+  const parts = geoPartsOf(spec);
+  const pts = parts.flatMap((p) => p.pts);
+  if (!parts.length || pts.length < 2) {
     svg.innerHTML = ""; svg.style.height = "0"; $("map-hint-text").textContent = "";
     return;
   }
-  // 投影基準：全網模式取全部站點，行程模式只取本行程（等於自動縮放到路線）
-  const netStns = Object.values(trtc.stations).filter((s) => s.lat != null && s.lon != null);
-  const base = trtcMapFull && netStns.length ? netStns : pts;
+  // 投影基準：全網模式取所在系統的全部站點，行程模式只取本行程（等於自動縮放到路線）
+  const netStns = Object.values(trtc?.stations ?? {}).filter((s) => s.lat != null && s.lon != null);
+  const netMrt = spec.mrt && geo ? stations.map((s) => geo[s.id]).filter(Boolean).map(([lon, lat]) => ({ lat, lon })) : [];
+  const netAll = [...(spec.trtc ? netStns : []), ...netMrt];
+  const base = trtcMapFull && netAll.length ? netAll : pts;
   // 經度依緯度收斂，等比縮放不變形
   const P = 34;
   const W = Math.max(300, (svg.closest(".line-map-scroll")?.clientWidth || 340) - 4);
@@ -940,48 +965,68 @@ function renderTrtcMap(plan) {
     x: (W - dx * sc) / 2 + (s.lon * kLon - minX) * sc,
     y: (H - dy * sc) / 2 + (-s.lat - minY) * sc,
   });
-  const XY = pts.map(at);
-  const colorOf = (i) => TRTC_COLORS[trtcLineOf(plan.legs[i].line)] ?? "#888";
-
   let g = "";
-  // 全網底圖：以官方站間資料畫出每一線段（淡色襯底，行程疊在其上）
+  // 全網底圖：以官方站點與站間資料畫出路網（淡色襯底，行程疊在其上）
   if (trtcMapFull) {
-    for (const [lid, line] of Object.entries(trtc.lines ?? {})) {
-      for (const [a, b] of line.s2s ?? []) {
-        const sa = trtc.stations[a], sb = trtc.stations[b];
-        if (sa?.lat == null || sb?.lat == null) continue;
-        const pa = at(sa), pb = at(sb);
-        g += `<line x1="${pa.x.toFixed(1)}" y1="${pa.y.toFixed(1)}" x2="${pb.x.toFixed(1)}" y2="${pb.y.toFixed(1)}" stroke="${TRTC_COLORS[lid] ?? "#888"}" stroke-width="2.5" stroke-linecap="round" opacity="0.28" class="net-seg"/>`;
+    if (spec.trtc) {
+      for (const [lid, line] of Object.entries(trtc.lines ?? {})) {
+        for (const [a, b] of line.s2s ?? []) {
+          const sa = trtc.stations[a], sb = trtc.stations[b];
+          if (sa?.lat == null || sb?.lat == null) continue;
+          const pa = at(sa), pb = at(sb);
+          g += `<line x1="${pa.x.toFixed(1)}" y1="${pa.y.toFixed(1)}" x2="${pb.x.toFixed(1)}" y2="${pb.y.toFixed(1)}" stroke="${TRTC_COLORS[lid] ?? "#888"}" stroke-width="2.5" stroke-linecap="round" opacity="0.28" class="net-seg"/>`;
+        }
+      }
+    }
+    if (spec.mrt && geo) {
+      for (let i = 1; i < stations.length; i++) {
+        const ga = geo[stations[i - 1].id], gb = geo[stations[i].id];
+        if (!ga || !gb) continue;
+        const pa = at({ lon: ga[0], lat: ga[1] }), pb = at({ lon: gb[0], lat: gb[1] });
+        g += `<line x1="${pa.x.toFixed(1)}" y1="${pa.y.toFixed(1)}" x2="${pb.x.toFixed(1)}" y2="${pb.y.toFixed(1)}" stroke="var(--rail)" stroke-width="2.5" stroke-linecap="round" opacity="0.35" class="net-seg"/>`;
       }
     }
   }
-  plan.legs.forEach((_, i) => {
-    const seq = XY.filter((_, j) => pts[j].leg === i).map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`);
-    if (seq.length > 1) g += `<polyline points="${seq.join(" ")}" fill="none" stroke="${colorOf(i)}" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  // 各段以系統／路線代表色繪製
+  const XYof = parts.map((part) => part.pts.map(at));
+  parts.forEach((part, i) => {
+    g += `<polyline points="${XYof[i].map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(" ")}" fill="none" stroke="${part.color}" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>`;
   });
-  // 轉乘：兩段之間以虛線相連（同站不同月台亦可見）
-  for (let i = 1; i < plan.legs.length; i++) {
-    const a = pts.findLastIndex((p) => p.leg === i - 1), b = pts.findIndex((p) => p.leg === i);
-    if (a >= 0 && b >= 0) g += `<line x1="${XY[a].x.toFixed(1)}" y1="${XY[a].y.toFixed(1)}" x2="${XY[b].x.toFixed(1)}" y2="${XY[b].y.toFixed(1)}" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="3 3"/>`;
+  // 段與段之間：北捷轉乘、跨系統步行接駁都以虛線相連（同站同點則免）
+  for (let i = 1; i < parts.length; i++) {
+    const a = XYof[i - 1].at(-1), b = XYof[i][0];
+    if (Math.hypot(a.x - b.x, a.y - b.y) < 1) continue;
+    g += `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="3 3"/>`;
   }
-  let lastLabel = null; // 轉乘兩站同名（同一實體站的兩個站碼）只標一次，避免文字疊字
-  pts.forEach((p, j) => {
-    const start = j === 0, end = j === pts.length - 1, junction = p.edge && !start && !end;
-    const r = start || end ? 6 : junction ? 5 : 3;
-    g += `<circle cx="${XY[j].x.toFixed(1)}" cy="${XY[j].y.toFixed(1)}" r="${r}" fill="${start || end ? "var(--amber)" : "#fff"}" stroke="${colorOf(p.leg)}" stroke-width="2.5"/>`;
-    if (!(start || end || junction)) return;
-    const name = trtcStnName(p.id);
-    if (lastLabel && lastLabel.name === name && Math.hypot(XY[j].x - lastLabel.x, XY[j].y - lastLabel.y) < 40) return;
-    lastLabel = { name, x: XY[j].x, y: XY[j].y };
-    const anchor = XY[j].x > W - 76 ? "end" : XY[j].x < 76 ? "start" : "middle";
-    const ty = XY[j].y < 34 ? XY[j].y + 21 : XY[j].y - 13;
-    g += `<text x="${XY[j].x.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="11" font-weight="700" font-family="Noto Sans TC, sans-serif" fill="${start || end ? "var(--amber)" : "var(--text-dim)"}">${name}</text>`;
+  // 標籤：起訖必標；轉乘點在不與既有標籤打架時才標（近距離同名＝同一實體站，一定併成一個）
+  const drawn = [];
+  const labels = [];
+  parts.forEach((part, i) => {
+    part.pts.forEach((p, k) => {
+      const q = XYof[i][k];
+      const first = i === 0 && k === 0, last = i === parts.length - 1 && k === part.pts.length - 1;
+      const edge = k === 0 || k === part.pts.length - 1;
+      const junction = edge && !first && !last;
+      const r = first || last ? 6 : junction ? 5 : 3;
+      g += `<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="${r}" fill="${first || last ? "var(--amber)" : "#fff"}" stroke="${part.color}" stroke-width="2.5"/>`;
+      if (first || last || junction) {
+        labels.push({ q, key: first || last ? "end" : "mid", name: p.sys === "mrt" ? stnName(p.id) : trtcStnName(p.id) });
+      }
+    });
   });
+  for (const L of [...labels.filter((l) => l.key === "end"), ...labels.filter((l) => l.key === "mid")]) {
+    if (drawn.some((d) => Math.hypot(L.q.x - d.x, L.q.y - d.y) < 46)) continue; // 太擠就讓位給更重要的標籤
+    drawn.push(L.q);
+    const anchor = L.q.x > W - 76 ? "end" : L.q.x < 76 ? "start" : "middle";
+    const ty = L.q.y < 34 ? L.q.y + 21 : L.q.y - 13;
+    g += `<text x="${L.q.x.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="11" font-weight="700" font-family="Noto Sans TC, sans-serif" fill="${L.key === "end" ? "var(--amber)" : "var(--text-dim)"}">${L.name}</text>`;
+  }
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.style.height = `${H}px`;
   svg.innerHTML = g;
+  const chips = [...new Set((spec.trtc?.legs ?? []).map((l) => trtcLineOf(l.line)))].map(lineChip).join(" ");
   $("map-hint-text").innerHTML =
-    [...new Set(plan.legs.map((l) => trtcLineOf(l.line)))].map(lineChip).join(" ") + `　${t("trtcMapNote")}`;
+    (spec.mrt ? `<span class="sys-tag">✈ ${t("mrtSection")}</span> ` : "") + chips + `　${t("trtcMapNote")}`;
 }
 
 /* 版面抽象：pt(f) 把「小數站序」轉成座標。窄螢幕用兩排蛇形（車廂路線圖式），
@@ -1165,14 +1210,14 @@ addEventListener("resize", () => {
   clearTimeout(resizeT);
   resizeT = setTimeout(() => {
     if (state.view !== "plan") return;
-    lastTrtcPlan ? renderTrtcMap(lastTrtcPlan) : renderLineMap(lastJourney);
+    lastGeoSpec ? renderJourneyGeo(lastGeoSpec) : renderLineMap(lastJourney);
   }, 200);
 });
 $("map-toggle").addEventListener("click", () => {
-  if (lastTrtcPlan) { // 北捷：切換「全網底圖／只看行程」
+  if (lastGeoSpec) { // 北捷／跨系統：切換「全網底圖／只看行程」
     trtcMapFull = !trtcMapFull;
     localStorage.setItem("tymf-trtc-net", trtcMapFull ? "1" : "0");
-    renderTrtcMap(lastTrtcPlan);
+    renderJourneyGeo(lastGeoSpec);
     return;
   }
   mapView = mapView === "geo" ? "schematic" : "geo";
