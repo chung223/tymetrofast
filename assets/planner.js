@@ -42,7 +42,7 @@ export function buildIndex(network, timetable, dayType) {
 
 /** 最早抵達單一行程。回傳 journey 或 null（當日無法抵達）。 */
 export function planJourney(index, { from, to, departAfter }) {
-  const { connections, transferMin } = index;
+  const { connections, transferMin, trainById } = index;
   const arrival = new Map();
   const inConn = new Map();
   const boardable = new Set();
@@ -88,7 +88,12 @@ export function planJourney(index, { from, to, departAfter }) {
       last.arr = c.arr;
       last.hops++;
     } else {
-      legs.push({ trip: c.trip, type: c.type, dir: c.dir, from: c.from, dep: c.dep, to: c.to, arr: c.arr, hops: 1 });
+      // 始發站：判斷上車時是否為空車（本站始發較可能有座位）
+      const train = trainById?.get(c.trip);
+      legs.push({
+        trip: c.trip, type: c.type, dir: c.dir, from: c.from, dep: c.dep, to: c.to, arr: c.arr, hops: 1,
+        origin: train?.stops[0][0], originDep: train?.stops[0][1],
+      });
     }
   }
   return {
@@ -115,7 +120,10 @@ export function planDirect(index, { from, to, departAfter }) {
         dep, arr,
         rideMin: arr - dep,
         transfers: 0,
-        legs: [{ trip: t.id, type: t.type, dir: t.dir, from, dep, to, arr, hops: iT - iF }],
+        legs: [{
+          trip: t.id, type: t.type, dir: t.dir, from, dep, to, arr, hops: iT - iF,
+          origin: t.stops[0][0], originDep: t.stops[0][1],
+        }],
       };
     }
   }
