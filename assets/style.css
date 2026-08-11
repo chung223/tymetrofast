@@ -18,8 +18,8 @@
   --red: #c96f5f;
   --sign-bg: #120f0a;
   color-scheme: dark;
-  --radius: 20px;
-  --radius-sm: 13px;
+  --radius: 22px;
+  --radius-sm: 10px;
   /* Liquid Glass：半透明基底＋鏡面邊緣＋景深陰影（深色） */
   --glass-bg: rgba(40, 32, 21, 0.52);
   --glass-bg-2: rgba(62, 50, 33, 0.38);
@@ -666,18 +666,13 @@ body::after {
 }
 :root[data-theme="light"] body::after, .light-amb { opacity: 0.75; }
 
-/* 玻璃表面（大面積：真模糊） */
-.panel,
+/* 導覽層：只有「浮在內容之上的功能元素」用真玻璃
+   （依 Apple 規範：Liquid Glass 屬導覽/控制層，內容層不該是玻璃，
+     也避免玻璃疊玻璃） */
 .station-sign,
 .sheet,
-.station-btn,
-.swap-btn,
-.dt-input,
-.seg-control,
-.map-toggle,
-.theme-btn,
-.lang-sel,
-.vtab {
+.vtab,
+.map-toggle {
   background: linear-gradient(158deg, var(--glass-bg-2), var(--glass-bg));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(165%);
   backdrop-filter: blur(var(--glass-blur)) saturate(165%);
@@ -687,14 +682,34 @@ body::after {
     inset 0 1px 0 var(--glass-edge),
     inset 0 -1px 0 rgba(0, 0, 0, 0.14);
 }
-.panel { padding: 15px; }
+/* 內容層：實心表面，讓上方的玻璃有東西可折射、也才分得出層次 */
+.panel {
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--line);
+  padding: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+}
+/* 內容層裡的控制項：質感一致但不加模糊（不疊玻璃、效能也較好） */
+.station-btn, .swap-btn, .dt-input, .seg-control, .theme-btn, .lang-sel {
+  background: linear-gradient(160deg, var(--glass-bg-2), var(--glass-bg));
+  border: 1px solid var(--glass-edge-lo);
+  box-shadow: inset 0 1px 0 var(--glass-edge), 0 2px 8px rgba(0, 0, 0, 0.16);
+}
 .station-sign {
   border: 0; border-bottom: 1px solid var(--glass-edge-lo);
   box-shadow: 0 8px 26px rgba(0, 0, 0, 0.22), inset 0 -1px 0 var(--glass-edge-lo);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
   backdrop-filter: blur(28px) saturate(180%);
 }
-.station-btn, .swap-btn, .dt-input, .lang-sel { border-radius: var(--radius-sm); }
+/* 捲動邊緣效果：內容捲入頁首時漸隱，維持列上文字的辨識度 */
+.station-sign::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 16px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, var(--glass-bg), transparent);
+}
+.station-sign { position: sticky; }
+/* 同心圓角：面板 22 − 內距 12 = 內部控制項 10，維持視覺連續 */
+.station-btn, .swap-btn, .dt-input, .lang-sel { border-radius: 10px; }
 .seg-control, .map-toggle, .theme-btn { border-radius: 999px; }
 .theme-btn { width: 32px; height: 32px; }
 
@@ -772,20 +787,36 @@ body::after {
 
 /* 退回策略：不支援模糊、或使用者要求降低透明度時，一律回到實心表面 */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .panel, .station-sign, .sheet, .station-btn, .swap-btn, .dt-input,
-  .seg-control, .map-toggle, .theme-btn, .lang-sel, .vtab {
+  .station-sign, .sheet, .vtab, .map-toggle,
+  .station-btn, .swap-btn, .dt-input, .seg-control, .theme-btn, .lang-sel {
     background: linear-gradient(180deg, var(--panel-2), var(--panel));
   }
   .sheet-backdrop { background: rgba(12, 8, 4, 0.86); }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .panel, .station-sign, .sheet, .station-btn, .swap-btn, .dt-input,
-  .seg-control, .map-toggle, .theme-btn, .lang-sel, .vtab {
+  .station-sign, .sheet, .vtab, .map-toggle,
+  .station-btn, .swap-btn, .dt-input, .seg-control, .theme-btn, .lang-sel {
     background: linear-gradient(180deg, var(--panel-2), var(--panel));
     -webkit-backdrop-filter: none; backdrop-filter: none;
   }
   .sheet-backdrop { background: rgba(12, 8, 4, 0.9); -webkit-backdrop-filter: none; backdrop-filter: none; }
   body::after { display: none; }
+  .station-sign::after { display: none; }
+}
+/* 提高對比：邊緣加深、透明度降低（規範要求為色彩提供高對比變體） */
+@media (prefers-contrast: more) {
+  :root {
+    --glass-bg: rgba(28, 22, 14, 0.88);
+    --glass-bg-2: rgba(44, 35, 23, 0.86);
+    --glass-edge: rgba(255, 244, 222, 0.55);
+    --glass-edge-lo: rgba(255, 244, 222, 0.34);
+  }
+  :root[data-theme="light"] {
+    --glass-bg: rgba(255, 253, 248, 0.94);
+    --glass-bg-2: rgba(255, 255, 255, 0.92);
+    --glass-edge-lo: rgba(70, 52, 20, 0.42);
+  }
+  .panel { border-color: var(--line-strong); }
 }
 @media (prefers-reduced-motion: reduce) {
   body::after { animation: none; }
