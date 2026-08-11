@@ -2130,10 +2130,12 @@ function applyStatic() {
   $("mode-now").textContent = t("modeNow");
   $("mode-depart").textContent = t("modeDepart");
   $("mode-arrive").textContent = t("modeArrive");
-  $("tab-plan").textContent = t("tabPlan");
-  $("tab-board").textContent = t("tabBoard");
-  $("tab-flight").textContent = t("tabFlight");
-  $("tab-hsr").textContent = t("tabHsr");
+  // 分頁圖示寫在標記裡，這裡只換文字（去掉語系字串前綴的圖示避免重複）
+  for (const [id, key] of [["tab-plan", "tabPlan"], ["tab-board", "tabBoard"], ["tab-flight", "tabFlight"], ["tab-hsr", "tabHsr"]]) {
+    const label = t(key).replace(/^[^\p{L}\p{N}]+/u, "");
+    $(id).querySelector(".vt-label").textContent = label;
+    $(id).setAttribute("aria-label", label);
+  }
   $("flight-search").placeholder = t("flightSearchPh");
   $("fav-title").textContent = t("favTitle");
   $("board-title").textContent = t("boardTitle");
