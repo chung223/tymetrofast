@@ -28,10 +28,19 @@ jobs:
 
       # 排程產生、不進版控的資料：先抓回線上版，避免某一步失敗時部署把它洗掉
       - name: 保留線上動態資料
+        id: keep
         run: |
+          risky=""
           for f in fids.json fids-future.json thsr-stations.json thsr-timetable.json thsr-fares.json thsr-live.json alerts.json trtc.json trtc-fares.json; do
-            curl -sf "https://chung223.github.io/tymetrofast/data/$f" -o "data/$f" || true
+            code=$(curl -s --retry 3 --retry-delay 2 --retry-all-errors -o "data/$f.tmp" \
+              -w '%{http_code}' "https://chung223.github.io/tymetrofast/data/$f" || echo 000)
+            if [ "$code" = "200" ]; then mv "data/$f.tmp" "data/$f"; continue; fi
+            rm -f "data/$f.tmp"
+            # 404 代表線上本來就沒有；其他狀態代表「有、只是這次沒拿到」，不能讓部署洗掉
+            [ "$code" = "404" ] || risky="$risky $f"
+            echo "::warning::取回線上 data/$f 失敗（HTTP $code）"
           done
+          echo "risky=$risky" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@v4
         with:
@@ -52,8 +61,25 @@ jobs:
           cp data/*.json _site/data/
           node scripts/build-share-pages.mjs _site
 
+      # 線上有、這次卻沒取回，本輪也沒重新產生 → 部署等於永久刪檔，寧可整輪不部署
+      - name: 確認不會洗掉線上資料
+        id: guard
+        run: |
+          echo "本輪 _site/data：$(ls _site/data | tr '\n' ' ')"
+          lost=""
+          for f in ${{ steps.keep.outputs.risky }}; do [ -s "_site/data/$f" ] || lost="$lost $f"; done
+          if [ -n "$lost" ]; then
+            echo "::warning::缺少$lost，跳過本輪部署以保留線上既有資料"
+            echo "ok=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=1" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/configure-pages@v5
+        if: steps.guard.outputs.ok == '1'
       - uses: actions/upload-pages-artifact@v3
+        if: steps.guard.outputs.ok == '1'
         with:
           path: _site
       - uses: actions/deploy-pages@v4
+        if: steps.guard.outputs.ok == '1'
