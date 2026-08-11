@@ -11,10 +11,19 @@ const PATHS = {
   "/trtc-live": `${TDX}/Rail/Metro/LiveBoard/TRTC?%24format=JSON`,
   "/tymc-live": `${TDX}/Rail/Metro/LiveBoard/TYMC?%24format=JSON`,
 };
-const TTL = 30000;
+const TTL = 120000;       // 2 分鐘共用快取（原 30 秒）：即時看板夠用，額度差 4 倍
+const DAILY_CAP = 400;    // 每日上游呼叫上限；超過即一律回 stale，保護 TDX 月額度
 
 const mem = new Map(); // path -> { body(string), at }
 let tokenCache = { v: null, exp: 0 };
+let budget = { day: "", used: 0 };
+function takeBudget() {
+  const day = new Date().toISOString().slice(0, 10);
+  if (budget.day !== day) budget = { day, used: 0 };
+  if (budget.used >= DAILY_CAP) return false;
+  budget.used++;
+  return true;
+}
 
 async function getToken(env) {
   if (tokenCache.v && Date.now() < tokenCache.exp) return tokenCache.v;
@@ -62,6 +71,11 @@ export default {
 
     const hit = mem.get(url.pathname);
     if (hit && Date.now() - hit.at < TTL) return reply(filterStn(hit.body, stn), "hit");
+    // 每日上限用罄：回上次成功的資料，寧可稍舊也不再消耗額度
+    if (!takeBudget()) {
+      if (hit) return reply(filterStn(hit.body, stn), "capped");
+      return reply(JSON.stringify({ error: "daily cap reached" }), "capped", 503);
+    }
 
     try {
       const token = await getToken(env);
