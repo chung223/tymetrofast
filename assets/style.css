@@ -338,13 +338,6 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .pick-btn.picked { outline: 2px solid var(--amber); }
 
 /* ---------- 檢視切換 / 語言 ---------- */
-.view-tabs { display: flex; gap: 8px; margin-top: 14px; }
-.vtab {
-  flex: none; font: 700 14px/1 var(--font-body); letter-spacing: 0.08em;
-  color: var(--text-dim); background: var(--panel); border: 1px solid var(--line);
-  border-radius: 10px 10px 0 0; padding: 10px 18px 9px; border-bottom: 2px solid transparent;
-}
-.vtab.on { color: var(--amber); border-bottom-color: var(--amber); background: var(--panel-2); }
 .lang-sel {
   margin-left: 0; background: var(--ink); color: var(--text-dim);
   border: 1px solid var(--line); border-radius: 8px; padding: 4px 6px;
@@ -671,7 +664,7 @@ body::after {
      也避免玻璃疊玻璃） */
 .station-sign,
 .sheet,
-.vtab,
+.view-tabs,
 .map-toggle {
   background: linear-gradient(158deg, var(--glass-bg-2), var(--glass-bg));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(165%);
@@ -722,22 +715,37 @@ body::after {
 .map-toggle:active, .theme-btn:active, .pick-btn:active, .bq-chip:active { transform: scale(0.955); }
 .station-btn:hover { border-color: var(--glass-edge); box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-edge), 0 0 0 1px var(--glass-edge-lo); }
 
-/* 分頁列：浮起來的玻璃膠囊（窄螢幕自動縮排，仍放不下才橫向捲動） */
-.view-tabs { gap: 6px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 2px 2px 0; }
-.view-tabs::-webkit-scrollbar { display: none; }
+/* 底部分頁列：浮在內容之上的導覽層。
+   整條 bar 是「一片」玻璃（等同 GlassEffectContainer 的意圖），
+   裡面四個分頁是透明按鈕——避免玻璃疊玻璃。 */
+.view-tabs {
+  position: fixed; z-index: 30; left: 50%; transform: translateX(-50%);
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  width: min(440px, calc(100vw - 24px));
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
+  margin: 0; padding: 6px; border-radius: 26px;
+}
 .vtab {
-  border-radius: 999px 999px 8px 8px; border-bottom: 0;
-  padding: 10px 17px 10px; white-space: nowrap;
+  display: grid; justify-items: center; gap: 3px;
+  background: none; border: 0; box-shadow: none;
+  border-radius: 20px; padding: 7px 2px 6px;
+  font: 700 11px/1.1 var(--font-body); letter-spacing: 0.02em; color: var(--text-dim);
+  white-space: nowrap; min-width: 0;
 }
-@media (max-width: 440px) {
-  .view-tabs { gap: 4px; }
-  .vtab { padding: 10px 11px; font-size: 13px; letter-spacing: 0.02em; }
+/* 捲動邊緣效果：讓捲到 bar 下方的內容淡出，維持分頁文字辨識度 */
+.view-tabs { isolation: isolate; }
+.view-tabs::before {
+  content: ""; position: absolute; z-index: -1; pointer-events: none;
+  left: -16px; right: -16px; top: -30px; bottom: -22px;
+  background: linear-gradient(to top, var(--ink) 42%, transparent);
 }
-.vtab.on {
-  color: var(--amber);
-  background: linear-gradient(158deg, var(--glass-edge-lo), var(--glass-bg-2));
-  box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-edge), 0 0 22px -6px var(--amber);
-}
+.vt-ico { font-size: 18px; line-height: 1; filter: saturate(0.6) opacity(0.75); transition: filter 0.2s, transform 0.32s cubic-bezier(0.2, 1.5, 0.4, 1); }
+.vt-label { overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.vtab.on { color: var(--amber); background: var(--glass-edge-lo); box-shadow: inset 0 1px 0 var(--glass-edge); }
+.vtab.on .vt-ico { filter: none; transform: translateY(-1px) scale(1.12); }
+/* 內容不被 bar 蓋住（內容捲動於玻璃之下） */
+main { padding-bottom: 26px; }
+.site-footer { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 
 /* 分段控制：選中的那顆是一塊被光打亮的玻璃 */
 .seg-control { padding: 4px; }
@@ -787,14 +795,14 @@ body::after {
 
 /* 退回策略：不支援模糊、或使用者要求降低透明度時，一律回到實心表面 */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .station-sign, .sheet, .vtab, .map-toggle,
+  .station-sign, .sheet, .view-tabs, .map-toggle,
   .station-btn, .swap-btn, .dt-input, .seg-control, .theme-btn, .lang-sel {
     background: linear-gradient(180deg, var(--panel-2), var(--panel));
   }
   .sheet-backdrop { background: rgba(12, 8, 4, 0.86); }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .station-sign, .sheet, .vtab, .map-toggle,
+  .station-sign, .sheet, .view-tabs, .map-toggle,
   .station-btn, .swap-btn, .dt-input, .seg-control, .theme-btn, .lang-sel {
     background: linear-gradient(180deg, var(--panel-2), var(--panel));
     -webkit-backdrop-filter: none; backdrop-filter: none;

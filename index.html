@@ -42,13 +42,6 @@
 <div class="alert-strip" id="alert-strip" hidden></div>
 
 <main>
-  <nav class="view-tabs" role="tablist">
-    <button class="vtab on" id="tab-plan" role="tab">路線查詢</button>
-    <button class="vtab" id="tab-board" role="tab">車站看板</button>
-    <button class="vtab" id="tab-flight" role="tab">✈ 航班</button>
-    <button class="vtab" id="tab-hsr" role="tab">🚄 高鐵</button>
-  </nav>
-
   <div id="plan-wrap">
     <!-- 查詢面板 -->
     <section class="panel query-panel" aria-label="行程查詢">
@@ -167,6 +160,14 @@
     · 姊妹站 <a href="https://chung223.github.io/as-jx/" target="_blank" rel="noopener">✈ 哩程玩家工具箱</a>
     · <a href="https://chung223.github.io/" target="_blank" rel="noopener">旅人工具箱</a></p>
 </footer>
+
+<!-- 底部分頁列：浮在內容之上的導覽層（單一玻璃容器，內含四個透明分頁） -->
+<nav class="view-tabs" role="tablist" aria-label="檢視切換">
+  <button class="vtab on" id="tab-plan" role="tab"><span class="vt-ico" aria-hidden="true">🚉</span><span class="vt-label">路線查詢</span></button>
+  <button class="vtab" id="tab-board" role="tab"><span class="vt-ico" aria-hidden="true">🕒</span><span class="vt-label">車站看板</span></button>
+  <button class="vtab" id="tab-flight" role="tab"><span class="vt-ico" aria-hidden="true">✈</span><span class="vt-label">航班</span></button>
+  <button class="vtab" id="tab-hsr" role="tab"><span class="vt-ico" aria-hidden="true">🚄</span><span class="vt-label">高鐵</span></button>
+</nav>
 
 <!-- 選站底部面板 -->
 <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
