@@ -21,7 +21,13 @@ async function getToken() {
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
   });
-  if (!r.ok) throw new Error(`TDX token 失敗: ${r.status}`);
+  if (!r.ok) {
+    // 金鑰停權／額度用罄時 TDX 回 400 invalid_client（非 401/403）。重跑也不會好，
+    // 溫和跳出、沿用既有加值資料，不讓排程每週寄一封失敗信。
+    const detail = (await r.text().catch(() => "")).replace(/\s+/g, " ").slice(0, 160);
+    console.log(`::warning::TDX token 回應 ${r.status}${detail ? `：${detail}` : ""}——金鑰可能已達額度上限或被停用，本輪跳過加值資料`);
+    process.exit(0);
+  }
   return (await r.json()).access_token;
 }
 
