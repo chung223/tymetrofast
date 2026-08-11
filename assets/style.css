@@ -18,7 +18,16 @@
   --red: #c96f5f;
   --sign-bg: #120f0a;
   color-scheme: dark;
-  --radius: 14px;
+  --radius: 20px;
+  --radius-sm: 13px;
+  /* Liquid Glass：半透明基底＋鏡面邊緣＋景深陰影（深色） */
+  --glass-bg: rgba(40, 32, 21, 0.52);
+  --glass-bg-2: rgba(62, 50, 33, 0.38);
+  --glass-edge: rgba(255, 238, 208, 0.26);
+  --glass-edge-lo: rgba(255, 238, 208, 0.10);
+  --glass-shadow: 0 18px 44px rgba(0, 0, 0, 0.46), 0 3px 10px rgba(0, 0, 0, 0.34);
+  --glass-blur: 22px;
+  --glass-hover: rgba(255, 238, 208, 0.07);
   --font-num: "Chakra Petch", "Noto Sans TC", monospace;
   --font-led: "DotGothic16", "Chakra Petch", "Noto Sans TC", monospace;
   --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
@@ -44,6 +53,12 @@
   --green: #2f7a55;
   --red: #a84b39;
   color-scheme: light;
+  --glass-bg: rgba(255, 252, 244, 0.60);
+  --glass-bg-2: rgba(255, 255, 255, 0.46);
+  --glass-edge: rgba(255, 255, 255, 0.95);
+  --glass-edge-lo: rgba(124, 95, 43, 0.12);
+  --glass-shadow: 0 16px 40px rgba(96, 74, 36, 0.15), 0 3px 10px rgba(96, 74, 36, 0.10);
+  --glass-hover: rgba(124, 95, 43, 0.07);
   }
 }
 :root[data-theme="light"] {
@@ -64,6 +79,12 @@
   --green: #2f7a55;
   --red: #a84b39;
   color-scheme: light;
+  --glass-bg: rgba(255, 252, 244, 0.60);
+  --glass-bg-2: rgba(255, 255, 255, 0.46);
+  --glass-edge: rgba(255, 255, 255, 0.95);
+  --glass-edge-lo: rgba(124, 95, 43, 0.12);
+  --glass-shadow: 0 16px 40px rgba(96, 74, 36, 0.15), 0 3px 10px rgba(96, 74, 36, 0.10);
+  --glass-hover: rgba(124, 95, 43, 0.07);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -620,4 +641,152 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
+}
+
+/* ============================================================
+   Liquid Glass：把每個表面做成一層折射光的玻璃
+   —— 半透明基底吸收底下的環境光、上緣鏡面高光、下緣暗邊做出厚度，
+      大面積用真 backdrop-filter，小晶片用模擬玻璃（避免行動裝置疊太多層）。
+   ============================================================ */
+
+/* 環境光斑：緩慢漂移，讓玻璃有東西可折射（沒有它玻璃只是灰霧） */
+body::after {
+  content: ""; position: fixed; inset: -25%; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(38% 30% at 22% 26%, rgba(212, 175, 110, 0.30), transparent 70%),
+    radial-gradient(34% 28% at 78% 22%, rgba(142, 78, 158, 0.24), transparent 70%),
+    radial-gradient(42% 34% at 62% 82%, rgba(60, 110, 158, 0.22), transparent 70%);
+  filter: blur(28px);
+  animation: aurora 34s ease-in-out infinite alternate;
+}
+@keyframes aurora {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(2.5%, -2%, 0) scale(1.08); }
+  100% { transform: translate3d(-2%, 2.5%, 0) scale(1.04); }
+}
+:root[data-theme="light"] body::after, .light-amb { opacity: 0.75; }
+
+/* 玻璃表面（大面積：真模糊） */
+.panel,
+.station-sign,
+.sheet,
+.station-btn,
+.swap-btn,
+.dt-input,
+.seg-control,
+.map-toggle,
+.theme-btn,
+.lang-sel,
+.vtab {
+  background: linear-gradient(158deg, var(--glass-bg-2), var(--glass-bg));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(165%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(165%);
+  border: 1px solid var(--glass-edge-lo);
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 1px 0 var(--glass-edge),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.14);
+}
+.panel { padding: 15px; }
+.station-sign {
+  border: 0; border-bottom: 1px solid var(--glass-edge-lo);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.22), inset 0 -1px 0 var(--glass-edge-lo);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+}
+.station-btn, .swap-btn, .dt-input, .lang-sel { border-radius: var(--radius-sm); }
+.seg-control, .map-toggle, .theme-btn { border-radius: 999px; }
+.theme-btn { width: 32px; height: 32px; }
+
+/* 按壓：玻璃有厚度，壓下去要有彈性回彈 */
+.station-btn, .swap-btn, .seg, .vtab, .map-toggle, .theme-btn, .pick-btn,
+.fav-chip, .fav-star, .bq-chip, .tab-btn {
+  transition: transform 0.32s cubic-bezier(0.2, 1.5, 0.4, 1), background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.station-btn:active, .swap-btn:active, .seg:active, .vtab:active,
+.map-toggle:active, .theme-btn:active, .pick-btn:active, .bq-chip:active { transform: scale(0.955); }
+.station-btn:hover { border-color: var(--glass-edge); box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-edge), 0 0 0 1px var(--glass-edge-lo); }
+
+/* 分頁列：浮起來的玻璃膠囊（窄螢幕自動縮排，仍放不下才橫向捲動） */
+.view-tabs { gap: 6px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 2px 2px 0; }
+.view-tabs::-webkit-scrollbar { display: none; }
+.vtab {
+  border-radius: 999px 999px 8px 8px; border-bottom: 0;
+  padding: 10px 17px 10px; white-space: nowrap;
+}
+@media (max-width: 440px) {
+  .view-tabs { gap: 4px; }
+  .vtab { padding: 10px 11px; font-size: 13px; letter-spacing: 0.02em; }
+}
+.vtab.on {
+  color: var(--amber);
+  background: linear-gradient(158deg, var(--glass-edge-lo), var(--glass-bg-2));
+  box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-edge), 0 0 22px -6px var(--amber);
+}
+
+/* 分段控制：選中的那顆是一塊被光打亮的玻璃 */
+.seg-control { padding: 4px; }
+.seg { transition: color 0.2s; }
+.seg.on {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.20), var(--purple-deep));
+  box-shadow: 0 4px 14px rgba(142, 78, 158, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.42);
+}
+
+/* 站碼圓牌：玻璃珠般的高光 */
+.code {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -2px 6px rgba(0, 0, 0, 0.22), 0 2px 6px rgba(0, 0, 0, 0.20);
+}
+.line-roundel { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 0 0 3px rgba(255, 255, 255, 0.10), 0 6px 20px rgba(185, 149, 216, 0.45); }
+
+/* 小晶片：模擬玻璃（不加模糊，行動裝置才不會卡） */
+.fav-star, .fav-chip, .bq-chip, .sys-tag, .daytype-chip, .tx-walk, .seat-chip, .swap-hint, .pick-tag {
+  background: linear-gradient(160deg, var(--glass-bg-2), transparent);
+  box-shadow: inset 0 1px 0 var(--glass-edge);
+}
+.fav-chip:hover, .bq-chip:hover, .fav-star:hover { background: var(--glass-hover); }
+
+/* 結果卡：最佳方案上緣掃過一道鏡面反光 */
+.journey-card.best { border-color: var(--glass-edge-lo); }
+.journey-card.best::before {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--amber), var(--purple), transparent);
+  background-size: 220% 100%;
+  animation: sheen 6s ease-in-out infinite;
+}
+@keyframes sheen { 0%, 100% { background-position: 120% 0; } 50% { background-position: -20% 0; } }
+
+/* 選站面板：底層加深、面板本體為厚玻璃 */
+.sheet-backdrop { background: rgba(12, 8, 4, 0.5); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.sheet {
+  border-radius: 26px 26px 0 0;
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  backdrop-filter: blur(30px) saturate(180%);
+}
+.sheet-handle { background: var(--glass-edge); opacity: 0.5; }
+.pick-btn { border-radius: var(--radius-sm); }
+.pick-btn:hover, .pick-btn:focus-visible { background: var(--glass-hover); }
+.pick-btn.picked { outline: 2px solid var(--amber); outline-offset: -2px; background: var(--glass-hover); }
+
+/* 月台警示帶：玻璃下的斜紋 */
+.platform-strip { opacity: 0.45; border-radius: 999px; }
+
+/* 退回策略：不支援模糊、或使用者要求降低透明度時，一律回到實心表面 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .panel, .station-sign, .sheet, .station-btn, .swap-btn, .dt-input,
+  .seg-control, .map-toggle, .theme-btn, .lang-sel, .vtab {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  }
+  .sheet-backdrop { background: rgba(12, 8, 4, 0.86); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .panel, .station-sign, .sheet, .station-btn, .swap-btn, .dt-input,
+  .seg-control, .map-toggle, .theme-btn, .lang-sel, .vtab {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+  .sheet-backdrop { background: rgba(12, 8, 4, 0.9); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  body::after { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body::after { animation: none; }
 }
