@@ -23,7 +23,7 @@ jobs:
             code=$(curl -s --retry 3 --retry-delay 2 --retry-all-errors -o "$body" -w '%{http_code}' "$BASE/$f" || echo 000)
             if [ "$code" = "200" ]; then
               size=$(wc -c <"$body")
-              upd=$(node -e 'const j=require(process.argv[1]);console.log(j.updated??j.updated_at??"—")' "$body" 2>/dev/null || echo "—")
+              upd=$(node -e 'const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));console.log(j.updated??j.updated_at??"—")' "$body" 2>/dev/null || echo "—")
               echo "✓ $f　${size} bytes　更新 $upd"
             else
               echo "::warning::✗ $f　HTTP $code"
