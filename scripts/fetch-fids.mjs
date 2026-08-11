@@ -12,10 +12,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const id = process.env.TDX_CLIENT_ID, secret = process.env.TDX_CLIENT_SECRET;
 if (!id || !secret) { console.error("缺 TDX 金鑰"); process.exit(1); }
-// 額度用罄／金鑰停用（TDX 回 401/403）不算「壞掉」：保留線上既有資料、
-// 溫和跳出，避免每半小時寄一封失敗信。真正的異常仍以非零碼結束。
-const quotaOut = (status, where) => {
-  console.log(`::warning::TDX ${where} 回應 ${status}——金鑰可能已達額度上限或被停用，本輪跳過，沿用既有資料`);
+// 額度用罄／金鑰停用不算「壞掉」：保留線上既有資料、溫和跳出，避免每半小時寄一封失敗信。
+const quotaOut = (status, where, detail = "") => {
+  console.log(`::warning::TDX ${where} 回應 ${status}${detail ? `：${detail}` : ""}——金鑰可能已達額度上限或被停用，本輪跳過，沿用既有資料`);
   process.exit(0);
 };
 
@@ -24,9 +23,10 @@ const tokRes = await fetch("https://tdx.transportdata.tw/auth/realms/TDXConnect/
   headers: { "content-type": "application/x-www-form-urlencoded" },
   body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
 });
+// 金鑰有設定卻換不到 token，重跑也不會好，讓工作流失敗只是多寄一封信，故一律溫和跳出。
+// （實測金鑰被停權時 TDX 回 400 invalid_client，並非 401/403，因此不挑狀態碼。）
 if (!tokRes.ok) {
-  if ([401, 403, 429].includes(tokRes.status)) quotaOut(tokRes.status, "token");
-  console.error(`token 失敗 ${tokRes.status}`); process.exit(1);
+  quotaOut(tokRes.status, "token", (await tokRes.text().catch(() => "")).replace(/\s+/g, " ").slice(0, 160));
 }
 const token = (await tokRes.json()).access_token;
 
