@@ -18,12 +18,22 @@ const out = (f, obj) => writeFileSync(join(root, "data", f), JSON.stringify(obj)
 
 const id = process.env.TDX_CLIENT_ID, secret = process.env.TDX_CLIENT_SECRET;
 if (!id || !secret) { console.error("缺 TDX 金鑰"); process.exit(1); }
+// 額度用罄／金鑰停用（TDX 回 401/403）不算「壞掉」：保留線上既有資料、
+// 溫和跳出，避免每半小時寄一封失敗信。真正的異常仍以非零碼結束。
+const quotaOut = (status, where) => {
+  console.log(`::warning::TDX ${where} 回應 ${status}——金鑰可能已達額度上限或被停用，本輪跳過，沿用既有資料`);
+  process.exit(0);
+};
+
 const tokRes = await fetch("https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token", {
   method: "POST",
   headers: { "content-type": "application/x-www-form-urlencoded" },
   body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
 });
-if (!tokRes.ok) { console.error(`token 失敗 ${tokRes.status}`); process.exit(1); }
+if (!tokRes.ok) {
+  if ([401, 403, 429].includes(tokRes.status)) quotaOut(tokRes.status, "token");
+  console.error(`token 失敗 ${tokRes.status}`); process.exit(1);
+}
 const token = (await tokRes.json()).access_token;
 
 const BASE = "https://tdx.transportdata.tw/api/basic/v2/Rail";
@@ -125,11 +135,20 @@ try {
       ? JSON.parse(readFileSync(join(root, "data/thsr-stations.json"), "utf8")).stations.map((s) => s.id)
       : []);
   if (!ids.length) throw new Error("無車站清單");
-  const seat = {};
+  // 額度控管：餘票是全站最耗點數的來源（每輪 = 站數 × 1 次）。
+  // 每輪只更新一段站（輪替），其餘沿用上一輪結果——餘票變動慢，
+  // 12 站在兩三輪內都會輪到，實際新鮮度仍在小時級。
+  const SEAT_PER_RUN = Number(process.env.THSR_SEAT_PER_RUN ?? 4);
+  const prev = existsSync(join(root, "data/thsr-live.json"))
+    ? JSON.parse(readFileSync(join(root, "data/thsr-live.json"), "utf8")) : null;
+  const startAt = Number.isFinite(prev?.seatCursor) ? prev.seatCursor % ids.length : 0;
+  const picked = Array.from({ length: Math.min(SEAT_PER_RUN, ids.length) }, (_, i) => ids[(startAt + i) % ids.length]);
+  console.log(`餘票本輪更新 ${picked.length}/${ids.length} 站：${picked.join(",")}（游標 ${startAt}）`);
+  const seat = { ...(prev?.seat ?? {}) }; // 未輪到的站沿用上一輪
   // 狀態壓縮：O=充足 L=有限 X=售完
   const code = (v) => (/avail|^O$/i.test(v ?? "") ? "O" : /limit|^L$/i.test(v ?? "") ? "L" : /full|^X$/i.test(v ?? "") ? "X" : "");
   let logged = false;
-  for (const sid of ids) {
+  for (const sid of picked) {
     await nap();
     let raw;
     try { raw = await get(`${BASE}/THSR/AvailableSeatStatusList/Station/${sid}?%24format=JSON`); }
@@ -159,8 +178,9 @@ try {
     if (ent.some((e) => e[1] || e[2])) withStatus++;
   }
   if (!withStatus) console.log("::warning::餘票狀態值全空，欄位對映可能失效");
-  out("thsr-live.json", { updated: stamp, seat });
-  console.log(`✓ 餘票 ${Object.keys(seat).length} 站（${withStatus}/${total} 筆含狀態值）`);
+  const seatCursor = (startAt + picked.length) % ids.length;
+  out("thsr-live.json", { updated: stamp, seat, seatCursor, seatStations: ids.length });
+  console.log(`✓ 餘票 ${Object.keys(seat).length}/${ids.length} 站有資料（本輪更新 ${picked.length} 站、${withStatus}/${total} 筆含狀態值，下輪游標 ${seatCursor}）`);
 } catch (e) { console.log(`::warning::高鐵餘票未更新：${e.message}`); }
 
 /* ── 營運通阻（高鐵＋桃捷） ── */

@@ -12,12 +12,22 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const id = process.env.TDX_CLIENT_ID, secret = process.env.TDX_CLIENT_SECRET;
 if (!id || !secret) { console.error("缺 TDX 金鑰"); process.exit(1); }
+// 額度用罄／金鑰停用（TDX 回 401/403）不算「壞掉」：保留線上既有資料、
+// 溫和跳出，避免每半小時寄一封失敗信。真正的異常仍以非零碼結束。
+const quotaOut = (status, where) => {
+  console.log(`::warning::TDX ${where} 回應 ${status}——金鑰可能已達額度上限或被停用，本輪跳過，沿用既有資料`);
+  process.exit(0);
+};
+
 const tokRes = await fetch("https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token", {
   method: "POST",
   headers: { "content-type": "application/x-www-form-urlencoded" },
   body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
 });
-if (!tokRes.ok) { console.error(`token 失敗 ${tokRes.status}`); process.exit(1); }
+if (!tokRes.ok) {
+  if ([401, 403, 429].includes(tokRes.status)) quotaOut(tokRes.status, "token");
+  console.error(`token 失敗 ${tokRes.status}`); process.exit(1);
+}
 const token = (await tokRes.json()).access_token;
 
 async function fetchRetry(url) {

@@ -2191,7 +2191,8 @@ function tick() {
     if (layer) layer.innerHTML = trainDotsSvg(mapCtx);
   }
   // 北捷即時看板每 20 秒刷新
-  if (state.view === "board" && isTrtc(state.boardStation) && liveApi && Date.now() - trtcBoardAt > 20000) {
+  // 60 秒重取一次（Worker 端 2 分鐘快取；拉長間隔以節省 TDX 額度）
+  if (state.view === "board" && isTrtc(state.boardStation) && liveApi && Date.now() - trtcBoardAt > 60000) {
     renderTrtcBoard(state.boardStation);
   }
 }

@@ -1,11 +1,10 @@
-name: 更新機場航班看板
+name: 更新高鐵時刻／餘票／警示
 
-# TDX 額度控管：航班是核心功能，營運時段維持 30 分更新，深夜降為每小時。
-# 高鐵餘票／警示已拆到 thsr.yml（每 2 小時），避免陪著航班每半小時全掃 12 站。
+# 自 fids.yml 拆出：餘票需逐站查詢（12 站 × 1 次），是全站最耗 TDX 點數的來源。
+# 餘票不會半小時就翻盤，改為營運時段每 2 小時更新；深夜不跑。
 on:
   schedule:
-    - cron: "*/30 22,23,0-15 * * *"  # 台北 06:00–23:59
-    - cron: "0 16-21 * * *"          # 台北 00:00–05:59（每小時）
+    - cron: "0 22,0,2,4,6,8,10,12,14 * * *"  # 台北 06/08/10/12/14/16/18/20/22 時
   workflow_dispatch:
 
 permissions:
@@ -18,7 +17,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  fids-deploy:
+  thsr-deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     environment:
@@ -37,12 +36,12 @@ jobs:
         with:
           node-version: 22
 
-      - name: 抓取 TDX FIDS 看板
-        continue-on-error: true   # 額度用罄／TDX 異常時保留線上既有資料，不讓排程整條紅
+      - name: 抓取高鐵時刻／票價／餘票／警示
+        continue-on-error: true   # 額度用罄時保留線上既有資料，不讓排程整條紅
         env:
           TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
           TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
-        run: node scripts/fetch-fids.mjs
+        run: node scripts/fetch-thsr.mjs
 
       - name: 組裝網站
         run: |
