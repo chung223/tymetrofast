@@ -1,0 +1,39 @@
+name: 線上資料健檢
+
+# 排程產生的 data/*.json 不進版控，唯一副本就是已部署的站台。
+# 這支工作流只做一件事：列出每個檔案的 HTTP 狀態與更新時間，
+# 懷疑資料被洗掉或卡住時手動觸發，log 很短、一眼可看完。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 檢查線上動態資料
+        run: |
+          BASE=https://chung223.github.io/tymetrofast/data
+          bad=0
+          for f in fids.json fids-future.json thsr-stations.json thsr-timetable.json thsr-fares.json thsr-live.json alerts.json trtc.json trtc-fares.json; do
+            body=$(mktemp)
+            code=$(curl -s --retry 3 --retry-delay 2 --retry-all-errors -o "$body" -w '%{http_code}' "$BASE/$f" || echo 000)
+            if [ "$code" = "200" ]; then
+              size=$(wc -c <"$body")
+              upd=$(node -e 'const j=require(process.argv[1]);console.log(j.updated??j.updated_at??"—")' "$body" 2>/dev/null || echo "—")
+              echo "✓ $f　${size} bytes　更新 $upd"
+            else
+              echo "::warning::✗ $f　HTTP $code"
+              bad=$((bad + 1))
+            fi
+            rm -f "$body"
+          done
+          echo "---"
+          if [ "$bad" -gt 0 ]; then
+            echo "::warning::$bad 個檔案取不到——若是 404 代表已從線上消失，需等下一輪抓取重新產生"
+          else
+            echo "全部就緒"
+          fi
