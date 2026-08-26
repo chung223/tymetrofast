@@ -395,10 +395,20 @@ function transferHint(stationId, fromDir, toDir) {
   return sec <= 90 ? t("sameReverse") : "";
 }
 
+// 車種名稱：優先用官方車種（含跳站普通車、尖峰增停直達），沒有就退回 直達/普通
+function trainLabel(x) {
+  const k = x?.cls;
+  return k && t(k) !== k ? t(k) : t(x?.type ?? "local");
+}
+function clsNote(x) {
+  const note = t("clsNote");
+  return (note && typeof note === "object" && x?.cls && note[x.cls]) || "";
+}
+
 function legHtml(leg, journey, i) {
   const detail = [leg.dir === "S" ? t("towardS") : t("towardN"),
     leg.hops === 1 ? t("nextStop") : leg.type === "express" ? t("skipNote") : t("stopsVia", leg.hops - 1),
-    t("rideN", Math.round(leg.arr - leg.dep))].join(" · ");
+    t("rideN", Math.round(leg.arr - leg.dep)), clsNote(leg)].filter(Boolean).join(" · ");
   // 始發站：本站始發＝空車上來，較可能有座位；否則標出它從哪裡開來的
   const seat = leg.origin === leg.from
     ? `<span class="seat-chip">💺 ${t("startsHere")}</span>`
@@ -408,7 +418,7 @@ function legHtml(leg, journey, i) {
       <div class="leg-rail"></div>
       <div class="leg-body">
         <div class="leg-line1">
-          <span class="train-chip">${t(leg.type)}</span>
+          <span class="train-chip">${trainLabel(leg)}</span>
           <span class="leg-time">${fmtTime(leg.dep)}</span>
           <span class="leg-stations">${stnLabel(leg.from)} ${t("boardAt")}</span>
         </div>
@@ -1410,7 +1420,7 @@ function renderBoard() {
       if (dm < -0.5 || dm > 120) continue;
       const train = idx.trainById.get(c.trip);
       rows.push({
-        dep, dm, type: c.type, dir: c.dir,
+        dep, dm, type: c.type, cls: train.cls, dir: c.dir,
         terminal: train.stops[train.stops.length - 1][0],
         origin: train.stops[0][0], isLast: c.dep === lastDep[c.dir],
       });
@@ -1435,7 +1445,7 @@ function renderBoard() {
   rows.sort((a, b) => a.dep - b.dep);
   const seen = new Set();
   const list = rows.filter((r) => {
-    const k = `${Math.round(r.dep)}|${r.dir}|${r.type}`;
+    const k = `${Math.round(r.dep)}|${r.dir}|${r.type}|${r.cls ?? ""}`;
     if (seen.has(k)) return false;
     seen.add(k);
     return true;
@@ -1445,7 +1455,7 @@ function renderBoard() {
       <li class="board-row ${r.type}">
         <span class="b-time">${fmtTime(r.dep)}</span>
         <span class="b-count">${r.dm < 1 ? t("now") : t("inMin", Math.round(r.dm))}</span>
-        <span class="train-chip">${t(r.type)}</span>
+        <span class="train-chip" title="${clsNote(r)}">${trainLabel(r)}</span>
         <span class="b-dest">${r.dir === "S" ? "→" : "←"} ${stnName(r.terminal)}</span>
         ${r.origin === sid ? `<span class="seat-chip">💺 ${t("originChip")}</span>`
           : r.origin ? `<span class="from-origin">${t("fromOrigin", stnName(r.origin))}</span>` : ""}
