@@ -91,7 +91,7 @@ export function planJourney(index, { from, to, departAfter }) {
       // 始發站：判斷上車時是否為空車（本站始發較可能有座位）
       const train = trainById?.get(c.trip);
       legs.push({
-        trip: c.trip, type: c.type, dir: c.dir, from: c.from, dep: c.dep, to: c.to, arr: c.arr, hops: 1,
+        trip: c.trip, type: c.type, cls: train?.cls, dir: c.dir, from: c.from, dep: c.dep, to: c.to, arr: c.arr, hops: 1,
         origin: train?.stops[0][0], originDep: train?.stops[0][1],
       });
     }
@@ -121,7 +121,7 @@ export function planDirect(index, { from, to, departAfter }) {
         rideMin: arr - dep,
         transfers: 0,
         legs: [{
-          trip: t.id, type: t.type, dir: t.dir, from, dep, to, arr, hops: iT - iF,
+          trip: t.id, type: t.type, cls: t.cls, dir: t.dir, from, dep, to, arr, hops: iT - iF,
           origin: t.stops[0][0], originDep: t.stops[0][1],
         }],
       };

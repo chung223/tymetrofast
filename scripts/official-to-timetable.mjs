@@ -23,11 +23,24 @@ const cumLocal = patterns.cumulativeMinutes.local;
 const cumExpress = patterns.cumulativeMinutes.express;
 
 const TERMINALS = { S: new Set(["A13", "A21", "A22"]), N: new Set(["A12", "A1"]) };
+// 官網把同一班車在不同站標成不同車種（例：尖峰增停直達車在 A13 標 des01、在 A3 標 des02），
+// 逐車種各自串連就會把一班車拆成好幾段殘骸。改為先依「停站型態家族」串連，再回頭標車種。
+const EXPRESS_CLS = new Set(["des01", "des02"]);
+const FAMILY_OF = (cls) => (EXPRESS_CLS.has(cls) ? "express" : "local");
+const RANK_MAP = { des03: 0, des04: 1, des01: 0, des02: 1, des05: 2 };
+const RANK = (cls) => RANK_MAP[cls] ?? 0;
+// 普通車的合法始發站；自其他站「憑空出現」代表它跳過了上游各站
+const LOCAL_ORIGINS = new Set(["A1", "A12", "A13", "A21", "A22"]);
+const clsAt = new Map(); // `${dir}|${station}|${t}` -> 最特殊的車種標記
 const ORIGINS = new Set(["A1", "A13", "A21", "A22"]);
 
+// 直達車的加速優勢只發生在 A13–A1 這段（中間站全跳過）；A13 以南的 A18／A21
+// 官方增停班次實測跑得跟普通車差不多，沿用 cumExpress 會早估 4–5 分鐘，
+// 剛好讓串連在 A18→A13 之間誤判成兩班車。故只在核心區間採用直達車時間。
+const EXPRESS_CORE = new Set(["A1", "A3", "A8", "A12", "A13"]);
 function runBetweenFor(isExpress) {
   return (a, b) => {
-    if (isExpress && a in cumExpress && b in cumExpress) return Math.abs(cumExpress[b] - cumExpress[a]);
+    if (isExpress && EXPRESS_CORE.has(a) && EXPRESS_CORE.has(b)) return Math.abs(cumExpress[b] - cumExpress[a]);
     return Math.abs(cumLocal[b] - cumLocal[a]);
   };
 }
@@ -95,9 +108,14 @@ for (const day of ["weekday", "holiday"]) {
       const key = `${ev.dir}|${ev.cls}|${ev.station}|${ev.t}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      const byStation = buckets[ev.dir].get(ev.cls) ?? new Map();
-      if (!buckets[ev.dir].has(ev.cls)) buckets[ev.dir].set(ev.cls, byStation);
-      (byStation.get(ev.station) ?? byStation.set(ev.station, []).get(ev.station)).push({ t: ev.t, dest: null });
+      const fam = FAMILY_OF(ev.cls);
+      const byStation = buckets[ev.dir].get(fam) ?? new Map();
+      if (!buckets[ev.dir].has(fam)) buckets[ev.dir].set(fam, byStation);
+      const list = byStation.get(ev.station) ?? byStation.set(ev.station, []).get(ev.station);
+      // 併家族後同一格可能來自兩個車種標記，以 (站,時刻) 去重，車種另存供事後標記
+      if (!list.some((x) => x.t === ev.t)) list.push({ t: ev.t, dest: null });
+      const ck = `${ev.dir}|${ev.station}|${ev.t}`;
+      if (!clsAt.has(ck) || RANK(ev.cls) > RANK(clsAt.get(ck))) clsAt.set(ck, ev.cls);
       totalEvents++;
     }
   }
@@ -106,9 +124,8 @@ for (const day of ["weekday", "holiday"]) {
   let matchedStops = 0;
   for (const dirKey of ["S", "N"]) {
     const seqAll = dirKey === "S" ? order : [...order].reverse();
-    for (const [cls, byStation] of buckets[dirKey]) {
-      const desc = clsDesc.get(cls) ?? "";
-      const isExpress = desc.includes("直達車");
+    for (const [fam, byStation] of buckets[dirKey]) {
+      const isExpress = fam === "express";
       const chained = chainEvents({
         byStation,
         seqAll,
@@ -116,17 +133,30 @@ for (const day of ["weekday", "holiday"]) {
         origins: ORIGINS,
         runBetween: runBetweenFor(isExpress),
         lineIndex: (id) => idx.get(id),
-        maxTerminalGap: isExpress || desc.includes("跳站") ? 8 : 2,
+        maxTerminalGap: isExpress ? 8 : 2,
       });
       for (const tr of chained) {
         const dep = Math.round(tr.stops[0][1]);
         const hh = String(Math.floor(dep / 60) % 24).padStart(2, "0");
         const mm = String(dep % 60).padStart(2, "0");
         matchedStops += tr.stops.length;
+        // 車種以「串出來的實際停站型態」為準。官網同一班車在不同站可能標成不同
+        // 車種（尖峰增停直達車在 A13 標 des01、在 A3 才標 des02），只信標記會錯。
+        const ids = tr.stops.map(([id]) => id);
+        const marked = new Set(tr.stops.map(([sid, t]) => clsAt.get(`${dirKey}|${sid}|${t}`)).filter(Boolean));
+        let cls;
+        if (isExpress) {
+          cls = ids.some((id) => id === "A18" || id === "A21") ? "des02" : "des01";
+        } else {
+          // 普通車若非自端點站起始，代表它是一路通過上游站才在此出現＝跳站車
+          const gapless = ids.every((id, i) => i === 0 || Math.abs(idx.get(id) - idx.get(ids[i - 1])) === 1);
+          cls = gapless && LOCAL_ORIGINS.has(ids[0]) ? (marked.has("des04") ? "des04" : "des03") : "des05";
+        }
         trains.push({
           id: `${dirKey}-${isExpress ? "EXP" : "LOC"}-${hh}${mm}-${cls}`,
           type: isExpress ? "express" : "local",
           dir: dirKey,
+          cls,
           stops: tr.stops,
         });
       }
@@ -152,6 +182,13 @@ for (const { day, trains, totalEvents, matchedStops } of stats) {
   }
   const expS = list.filter((t) => t.type === "express" && t.dir === "S" && t.stops.some(([id]) => id === "A13"));
   if (!expS.length) problems.push(`${day} 沒有南下直達車停 A13`);
+  // 車種完整性：官網逐站標記不一致時最容易產生「兩三站的殘骸」，這裡直接擋下
+  const frag = list.filter((t) => t.stops.length <= 2);
+  if (frag.length > 1) problems.push(`${day} 有 ${frag.length} 班只串出 ≤2 站（${frag.slice(0, 3).map((t) => t.id).join("、")}…）`);
+  const d2 = list.filter((t) => t.cls === "des02");
+  const d2bad = d2.filter((t) => t.stops.length !== 7);
+  if (!d2.length) problems.push(`${day} 沒有尖峰增停直達車（des02）`);
+  else if (d2bad.length) problems.push(`${day} 尖峰增停直達車應停 7 站，有 ${d2bad.length} 班不是（${d2bad[0].id} ${d2bad[0].stops.length} 站）`);
   const avg = list.reduce((s, t) => s + t.stops.length, 0) / list.length;
   console.log(`${day}: ${list.length} 班，平均 ${avg.toFixed(1)} 站/班，南下直達 ${expS.length} 班，事件涵蓋率 ${(coverage * 100).toFixed(1)}%`);
 }
