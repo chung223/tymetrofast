@@ -1,64 +1,250 @@
 {
-  "$comment": "班表模式定義：scripts/build-timetable.mjs 會把這份設定展開成逐班車的 data/timetable.json。桃捷公告改點時，改這個檔（或直接改 timetable.json）再重新產生即可。時間皆為當日 HH:MM，跨午夜用 24:xx 表示。",
-  "version": "2026-08-04.1",
-  "dataStatus": "estimate",
-  "sourceNote": "依桃捷官方公告之班距（平日離峰直達車/普通車各約15分、尖峰普通車加密）與行駛時間（直達車 A1→A12 約35分、A1→A13 約38分；普通車 A1→A13 約46分、A1→A21 約70分）推估。請執行官方時刻表抓取流程校正。",
-
-  "$cumulative_comment": "南下（S）方向自 A1 出發的累積行駛分鐘（到站時刻）。北上（N）由程式以相同區間時間鏡射產生。",
-  "cumulativeMinutes": {
-    "local": {
-      "A1": 0, "A2": 5, "A3": 9, "A4": 12, "A5": 14.5, "A6": 17, "A7": 23.5,
-      "A8": 27, "A9": 30, "A10": 35, "A11": 38.5, "A12": 42, "A13": 46,
-      "A14a": 49, "A15": 52, "A16": 55.5, "A17": 58, "A18": 61, "A19": 64,
-      "A20": 67, "A21": 70, "A22": 73
-    },
-    "express": {
-      "A1": 0, "A3": 7.5, "A8": 20.5, "A12": 35, "A13": 38, "A18": 48,
-      "A21": 54, "A22": 57
-    }
+ "$comment": "班表模式定義：scripts/build-timetable.mjs 會把這份設定展開成逐班車的 data/timetable.json。桃捷公告改點時，改這個檔（或直接改 timetable.json）再重新產生即可。時間皆為當日 HH:MM，跨午夜用 24:xx 表示。",
+ "version": "2026-08-04.1",
+ "dataStatus": "estimate",
+ "sourceNote": "依桃捷官方公告之班距（平日離峰直達車/普通車各約15分、尖峰普通車加密）與行駛時間（直達車 A1→A12 約35分、A1→A13 約38分；普通車 A1→A13 約46分、A1→A21 約70分）推估。請執行官方時刻表抓取流程校正。",
+ "$cumulative_comment": "南下（S）方向自 A1 出發的累積行駛分鐘（到站時刻）。北上（N）由程式以相同區間時間鏡射產生。",
+ "cumulativeMinutes": {
+  "local": {
+   "A1": 0,
+   "A2": 5,
+   "A3": 9,
+   "A4": 12,
+   "A5": 14.5,
+   "A6": 17,
+   "A7": 23.5,
+   "A8": 27,
+   "A9": 30,
+   "A10": 35,
+   "A11": 38.5,
+   "A12": 42,
+   "A13": 46,
+   "A14a": 49,
+   "A15": 52,
+   "A16": 55.5,
+   "A17": 58,
+   "A18": 61,
+   "A19": 64,
+   "A20": 67,
+   "A21": 70,
+   "A22": 73
   },
-
-  "$overtake_comment": "普通車待避規則：若同方向直達車即將追上，普通車會在待避站停等讓直達車先行。maxHoldMin 為最長停等分鐘。",
-  "overtake": {
-    "S": { "stations": ["A8"], "maxHoldMin": 6 },
-    "N": { "stations": ["A15", "A8"], "maxHoldMin": 6 }
-  },
-
-  "$services_comment": "各日別（weekday=平日、holiday=週末與國定假日）、各方向（S=往老街溪、N=往台北）的發車帶。type: express|local，from/to 為起訖站，start~end 間每 headwayMin 分鐘發一班。",
-  "services": {
-    "weekday": {
-      "S": [
-        { "type": "express", "from": "A1", "to": "A22", "start": "06:00", "end": "23:00", "headwayMin": 15 },
-        { "type": "local", "from": "A1", "to": "A22", "start": "05:52", "end": "06:52", "headwayMin": 15 },
-        { "type": "local", "from": "A1", "to": "A22", "start": "07:04", "end": "08:56", "headwayMin": 7.5 },
-        { "type": "local", "from": "A1", "to": "A22", "start": "09:07", "end": "16:52", "headwayMin": 15 },
-        { "type": "local", "from": "A1", "to": "A22", "start": "17:04", "end": "19:26", "headwayMin": 7.5 },
-        { "type": "local", "from": "A1", "to": "A22", "start": "19:37", "end": "22:52", "headwayMin": 15 },
-        { "type": "local", "from": "A1", "to": "A13", "start": "23:07", "end": "23:37", "headwayMin": 15 }
-      ],
-      "N": [
-        { "type": "express", "from": "A13", "to": "A1", "start": "05:57", "end": "05:57", "headwayMin": 15 },
-        { "type": "express", "from": "A22", "to": "A1", "start": "06:00", "end": "22:30", "headwayMin": 15 },
-        { "type": "local", "from": "A22", "to": "A1", "start": "05:33", "end": "06:18", "headwayMin": 15 },
-        { "type": "local", "from": "A22", "to": "A1", "start": "06:26", "end": "08:26", "headwayMin": 7.5 },
-        { "type": "local", "from": "A22", "to": "A1", "start": "08:37", "end": "16:37", "headwayMin": 15 },
-        { "type": "local", "from": "A22", "to": "A1", "start": "16:49", "end": "18:49", "headwayMin": 7.5 },
-        { "type": "local", "from": "A22", "to": "A1", "start": "18:56", "end": "22:26", "headwayMin": 15 },
-        { "type": "local", "from": "A13", "to": "A1", "start": "22:55", "end": "23:40", "headwayMin": 15 }
-      ]
-    },
-    "holiday": {
-      "S": [
-        { "type": "express", "from": "A1", "to": "A22", "start": "06:00", "end": "23:00", "headwayMin": 15 },
-        { "type": "local", "from": "A1", "to": "A22", "start": "05:52", "end": "22:52", "headwayMin": 15 },
-        { "type": "local", "from": "A1", "to": "A13", "start": "23:07", "end": "23:37", "headwayMin": 15 }
-      ],
-      "N": [
-        { "type": "express", "from": "A13", "to": "A1", "start": "05:57", "end": "05:57", "headwayMin": 15 },
-        { "type": "express", "from": "A22", "to": "A1", "start": "06:00", "end": "22:30", "headwayMin": 15 },
-        { "type": "local", "from": "A22", "to": "A1", "start": "05:33", "end": "22:33", "headwayMin": 15 },
-        { "type": "local", "from": "A13", "to": "A1", "start": "22:55", "end": "23:40", "headwayMin": 15 }
-      ]
-    }
+  "express": {
+   "A1": 0,
+   "A3": 7.5,
+   "A8": 20.5,
+   "A12": 35,
+   "A13": 38,
+   "A18": 51.5,
+   "A21": 62.5,
+   "A22": 65.5
   }
+ },
+ "$overtake_comment": "普通車待避規則：若同方向直達車即將追上，普通車會在待避站停等讓直達車先行。maxHoldMin 為最長停等分鐘。",
+ "overtake": {
+  "S": {
+   "stations": [
+    "A8"
+   ],
+   "maxHoldMin": 6
+  },
+  "N": {
+   "stations": [
+    "A15",
+    "A8"
+   ],
+   "maxHoldMin": 6
+  }
+ },
+ "$services_comment": "各日別（weekday=平日、holiday=週末與國定假日）、各方向（S=往老街溪、N=往台北）的發車帶。type: express|local，from/to 為起訖站，start~end 間每 headwayMin 分鐘發一班。",
+ "services": {
+  "weekday": {
+   "S": [
+    {
+     "type": "express",
+     "from": "A1",
+     "to": "A22",
+     "start": "06:00",
+     "end": "23:00",
+     "headwayMin": 15
+    },
+    {
+     "type": "local",
+     "from": "A1",
+     "to": "A22",
+     "start": "05:52",
+     "end": "06:52",
+     "headwayMin": 15
+    },
+    {
+     "type": "local",
+     "from": "A1",
+     "to": "A22",
+     "start": "07:04",
+     "end": "08:56",
+     "headwayMin": 7.5
+    },
+    {
+     "type": "local",
+     "from": "A1",
+     "to": "A22",
+     "start": "09:07",
+     "end": "16:52",
+     "headwayMin": 15
+    },
+    {
+     "type": "local",
+     "from": "A1",
+     "to": "A22",
+     "start": "17:04",
+     "end": "19:26",
+     "headwayMin": 7.5
+    },
+    {
+     "type": "local",
+     "from": "A1",
+     "to": "A22",
+     "start": "19:37",
+     "end": "22:52",
+     "headwayMin": 15
+    },
+    {
+     "type": "local",
+     "from": "A1",
+     "to": "A13",
+     "start": "23:07",
+     "end": "23:37",
+     "headwayMin": 15
+    }
+   ],
+   "N": [
+    {
+     "type": "express",
+     "from": "A13",
+     "to": "A1",
+     "start": "05:57",
+     "end": "05:57",
+     "headwayMin": 15
+    },
+    {
+     "type": "express",
+     "from": "A22",
+     "to": "A1",
+     "start": "06:00",
+     "end": "22:30",
+     "headwayMin": 15
+    },
+    {
+     "type": "local",
+     "from": "A22",
+     "to": "A1",
+     "start": "05:33",
+     "end": "06:18",
+     "headwayMin": 15
+    },
+    {
+     "type": "local",
+     "from": "A22",
+     "to": "A1",
+     "start": "06:26",
+     "end": "08:26",
+     "headwayMin": 7.5
+    },
+    {
+     "type": "local",
+     "from": "A22",
+     "to": "A1",
+     "start": "08:37",
+     "end": "16:37",
+     "headwayMin": 15
+    },
+    {
+     "type": "local",
+     "from": "A22",
+     "to": "A1",
+     "start": "16:49",
+     "end": "18:49",
+     "headwayMin": 7.5
+    },
+    {
+     "type": "local",
+     "from": "A22",
+     "to": "A1",
+     "start": "18:56",
+     "end": "22:26",
+     "headwayMin": 15
+    },
+    {
+     "type": "local",
+     "from": "A13",
+     "to": "A1",
+     "start": "22:55",
+     "end": "23:40",
+     "headwayMin": 15
+    }
+   ]
+  },
+  "holiday": {
+   "S": [
+    {
+     "type": "express",
+     "from": "A1",
+     "to": "A22",
+     "start": "06:00",
+     "end": "23:00",
+     "headwayMin": 15
+    },
+    {
+     "type": "local",
+     "from": "A1",
+     "to": "A22",
+     "start": "05:52",
+     "end": "22:52",
+     "headwayMin": 15
+    },
+    {
+     "type": "local",
+     "from": "A1",
+     "to": "A13",
+     "start": "23:07",
+     "end": "23:37",
+     "headwayMin": 15
+    }
+   ],
+   "N": [
+    {
+     "type": "express",
+     "from": "A13",
+     "to": "A1",
+     "start": "05:57",
+     "end": "05:57",
+     "headwayMin": 15
+    },
+    {
+     "type": "express",
+     "from": "A22",
+     "to": "A1",
+     "start": "06:00",
+     "end": "22:30",
+     "headwayMin": 15
+    },
+    {
+     "type": "local",
+     "from": "A22",
+     "to": "A1",
+     "start": "05:33",
+     "end": "22:33",
+     "headwayMin": 15
+    },
+    {
+     "type": "local",
+     "from": "A13",
+     "to": "A1",
+     "start": "22:55",
+     "end": "23:40",
+     "headwayMin": 15
+    }
+   ]
+  }
+ }
 }
