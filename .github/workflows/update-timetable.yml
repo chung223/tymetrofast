@@ -50,10 +50,14 @@ jobs:
       - name: 串連成逐班車時刻並驗證
         run: |
           cp data/timetable.json /tmp/timetable-old.json
-          if [ -d data/raw/official/weekday ] && [ -d data/raw/official/holiday ]; then
-            node scripts/official-to-timetable.mjs
-          elif [ -f data/raw/tdx/StationTimeTable.json ]; then
+          # TDX 優先：它直接給 StoppingPatternID（停站型態）與平日/假日標記，
+          # 始發站與停站型態不必用時刻推測。官網 HTML 逐站標記不一致，只當備援。
+          # 實例：平日 07:15／07:30／08:15／09:15 由環北始發的北上直達車，
+          # 只有 TDX 有；官網頁面把它們漏成第二航廈始發。
+          if [ -f data/raw/tdx/StationTimeTable.json ]; then
             node scripts/tdx-to-timetable.mjs
+          elif [ -d data/raw/official/weekday ] && [ -d data/raw/official/holiday ]; then
+            node scripts/official-to-timetable.mjs
           else
             echo "::warning::官網與 TDX 皆無資料，未更新時刻表"
             exit 0

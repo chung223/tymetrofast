@@ -34,13 +34,9 @@ const LOCAL_ORIGINS = new Set(["A1", "A12", "A13", "A21", "A22"]);
 const clsAt = new Map(); // `${dir}|${station}|${t}` -> 最特殊的車種標記
 const ORIGINS = new Set(["A1", "A13", "A21", "A22"]);
 
-// 直達車的加速優勢只發生在 A13–A1 這段（中間站全跳過）；A13 以南的 A18／A21
-// 官方增停班次實測跑得跟普通車差不多，沿用 cumExpress 會早估 4–5 分鐘，
-// 剛好讓串連在 A18→A13 之間誤判成兩班車。故只在核心區間採用直達車時間。
-const EXPRESS_CORE = new Set(["A1", "A3", "A8", "A12", "A13"]);
 function runBetweenFor(isExpress) {
   return (a, b) => {
-    if (isExpress && EXPRESS_CORE.has(a) && EXPRESS_CORE.has(b)) return Math.abs(cumExpress[b] - cumExpress[a]);
+    if (isExpress && a in cumExpress && b in cumExpress) return Math.abs(cumExpress[b] - cumExpress[a]);
     return Math.abs(cumLocal[b] - cumLocal[a]);
   };
 }

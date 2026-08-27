@@ -110,6 +110,14 @@ for (const rec of stt) {
 /* ---------- 沿路線做單調對齊，串成逐班車（共用 lib/chain.mjs） ---------- */
 const TERMINALS = { S: new Set(["A13", "A21", "A22"]), N: new Set(["A12", "A1"]) };
 const ORIGINS = new Set(["A1", "A13", "A21", "A22"]); // 常見中途始發站
+const LOCAL_ORIGINS = new Set(["A1", "A12", "A13", "A21", "A22"]); // 普通車的合法始發站
+const CLASS_DESC = {
+  des01: "直達車(停靠A1、A3、A8、A12、A13)",
+  des02: "尖峰增停直達車(加停A18、A21)",
+  des03: "普通車(每站停靠)",
+  des04: "增開往機場服務班次",
+  des05: "尖峰跳站普通車(通過部分車站)",
+};
 
 function chain(dir, sp, group) {
   const seqAll = dir === "S" ? order : [...order].reverse();
@@ -127,9 +135,20 @@ function chain(dir, sp, group) {
     const dep = Math.round(tr.stops[0][1]);
     const hh = String(Math.floor(dep / 60) % 24).padStart(2, "0");
     const mm = String(dep % 60).padStart(2, "0");
+    // 車種以實際停站型態判定，與官網解析（official-to-timetable.mjs）用同一套代碼，
+    // 前端才能共用同一份車種字典。停 A18/A21 的直達車＝尖峰增停直達；
+    // 普通車若非自端點站起始，代表一路通過上游站才進入服務＝跳站車。
+    const ids = tr.stops.map(([id]) => id);
+    let cls;
+    if (group.express) {
+      cls = ids.some((id) => id === "A18" || id === "A21") ? "des02" : "des01";
+    } else {
+      const gapless = ids.every((id, i) => i === 0 || Math.abs(idx.get(id) - idx.get(ids[i - 1])) === 1);
+      cls = gapless && LOCAL_ORIGINS.has(ids[0]) ? (sp === "SP3" || sp === "SP4" ? "des04" : "des03") : "des05";
+    }
     return {
-      id: `${dir}-${group.express ? "EXP" : "LOC"}-${hh}${mm}-${sp}`,
-      type, dir, stops: tr.stops,
+      id: `${dir}-${group.express ? "EXP" : "LOC"}-${hh}${mm}-${cls}`,
+      type, cls, dir, stops: tr.stops,
     };
   });
 }
@@ -162,6 +181,11 @@ for (const [day, trains] of Object.entries(dayTypes)) {
   if (!expS.length) problems.push(`${day} 沒有任何南下直達車停 A13`);
   const avgStops = trains.reduce((s, t) => s + t.stops.length, 0) / trains.length;
   if (avgStops < 6) problems.push(`${day} 平均每班僅 ${avgStops.toFixed(1)} 站（串連疑似失敗）`);
+  // 環北始發的北上直達車（尖峰增停）最容易在 A18→A13 被誤切成兩班，單獨把關
+  if (day === "weekday") {
+    const fromA21 = trains.filter((t) => t.dir === "N" && t.type === "express" && t.stops[0][0] === "A21");
+    if (fromA21.length < 4) problems.push(`weekday 只有 ${fromA21.length} 班環北始發的北上直達車（應 ≥4，串連疑似在 A18→A13 斷開）`);
+  }
   console.log(`${day}: ${trains.length} 班，平均 ${avgStops.toFixed(1)} 站/班，直達南下 ${expS.length} 班`);
 }
 if (problems.length) {
@@ -176,6 +200,7 @@ const out = {
   dataStatus: "official",
   sourceNote: "TDX 運輸資料流通服務・桃園捷運各站時刻表（StationTimeTable）串連而成",
   generatedAt: new Date().toISOString(),
+  trainClasses: CLASS_DESC,
   dayTypes,
 };
 writeFileSync(join(root, "data/timetable.json"), JSON.stringify(out));
