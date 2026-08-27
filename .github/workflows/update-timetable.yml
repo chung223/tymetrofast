@@ -3,8 +3,9 @@ name: 更新官方時刻表（TDX）
 on:
   workflow_dispatch:
   schedule:
-    # 每週六 05:00（台灣時間）自動檢查官方班表是否異動
-    - cron: "0 21 * * 5"
+    # 每月 1 號與 15 號 05:00（台灣時間）。實際上第一步只打一次 TDX 查版本號，
+    # 沒改點就整輪跳過；真的重抓（官網 22×2 頁＋7 份 TDX 資源）一年只有幾次。
+    - cron: "0 21 1,15 * *"
   push:
     branches: ["claude/**"]
     paths: ["data/raw/.fetch-request"]
@@ -28,11 +29,22 @@ jobs:
         with:
           node-version: 22
 
-      - name: 抓取桃捷官網時刻表頁面（主要資料源，平日＋假日）
+      # 先用一次極輕的查詢問「官方班表改版了嗎」：$top=1&$select 只回幾十位元組。
+      # 手動觸發一律當成要重抓，方便隨時強制重建。
+      - name: 查官方班表版本號
+        id: ver
+        env:
+          TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
+          TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
+        run: node scripts/check-timetable-version.mjs
+
+      - name: 抓取桃捷官網時刻表頁面（備援資料源，平日＋假日）
+        if: steps.ver.outputs.changed == 'true' || github.event_name != 'schedule'
         continue-on-error: true
         run: bash scripts/fetch-official-site.sh
 
       - name: 抓取 TDX 原始資料（備援；無金鑰時僅警告）
+        if: steps.ver.outputs.changed == 'true' || github.event_name != 'schedule'
         continue-on-error: true
         env:
           TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
@@ -40,6 +52,7 @@ jobs:
         run: node scripts/fetch-tdx.mjs
 
       - name: 提交原始資料
+        if: steps.ver.outputs.changed == 'true' || github.event_name != 'schedule'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -48,6 +61,7 @@ jobs:
           git push
 
       - name: 串連成逐班車時刻並驗證
+        if: steps.ver.outputs.changed == 'true' || github.event_name != 'schedule'
         run: |
           cp data/timetable.json /tmp/timetable-old.json
           # TDX 優先：它直接給 StoppingPatternID（停站型態）與平日/假日標記，
@@ -68,6 +82,7 @@ jobs:
           git push
 
       - name: 更新加值資料（票價／高鐵接駁）
+        if: steps.ver.outputs.changed == 'true' || github.event_name != 'schedule'
         continue-on-error: true
         env:
           TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
@@ -98,7 +113,7 @@ jobs:
 
       # GITHUB_TOKEN 的 push 不會觸發其他 workflow，須主動觸發部署
       - name: 觸發網站重新部署
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && (steps.ver.outputs.changed == 'true' || github.event_name != 'schedule')
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run deploy.yml --ref main

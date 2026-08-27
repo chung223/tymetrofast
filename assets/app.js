@@ -395,6 +395,18 @@ function transferHint(stationId, fromDir, toDir) {
   return sec <= 90 ? t("sameReverse") : "";
 }
 
+const stnOrder = new Map(stations.map((s, i) => [s.id, i]));
+// 想搶座就往回坐到始發站。只在「前一站就是始發站」時建議——再遠就不划算了，
+// 而機場兩個航廈剛好是這種關係（A13 第二航廈始發、A12 第一航廈是下一站）。
+function originTip(leg) {
+  if (!leg.origin || leg.origin === leg.from || leg.originDep == null) return "";
+  const a = stnOrder.get(leg.origin), b = stnOrder.get(leg.from);
+  if (a == null || b == null || Math.abs(a - b) !== 1) return "";
+  const pair = [leg.origin, leg.from].sort().join("-");
+  const extra = pair === "A12-A13" ? t("terminalShuttle") : "";
+  return `<div class="origin-tip">💺 ${t("boardAtOrigin", stnName(leg.origin), fmtTime(leg.originDep))}${extra}</div>`;
+}
+
 // 車種名稱：優先用官方車種（含跳站普通車、尖峰增停直達），沒有就退回 直達/普通
 function trainLabel(x) {
   const k = x?.cls;
@@ -423,6 +435,7 @@ function legHtml(leg, journey, i) {
           <span class="leg-stations">${stnLabel(leg.from)} ${t("boardAt")}</span>
         </div>
         <div class="leg-detail">${detail}${seat ? ` · ${seat}` : ""}</div>
+        ${i === 0 ? originTip(leg) : ""}
       </div>
     </div>`;
   const next = journey.legs[i + 1];

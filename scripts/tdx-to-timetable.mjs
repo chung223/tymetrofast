@@ -195,8 +195,11 @@ if (problems.length) {
 }
 
 const meta = loadRaw("meta");
+// 記下 TDX 的官方版本號，排程才能用一次極輕的查詢判斷「有沒有改點」
+const srcVersion = String(stt.find((r) => r.VersionID != null)?.VersionID ?? "");
 const out = {
   version: `tdx-${(meta?.fetchedAt ?? new Date().toISOString()).slice(0, 10)}`,
+  srcVersion,
   dataStatus: "official",
   sourceNote: "TDX 運輸資料流通服務・桃園捷運各站時刻表（StationTimeTable）串連而成",
   generatedAt: new Date().toISOString(),
