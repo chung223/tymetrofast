@@ -403,8 +403,10 @@ function originTip(leg) {
   const a = stnOrder.get(leg.origin), b = stnOrder.get(leg.from);
   if (a == null || b == null || Math.abs(a - b) !== 1) return "";
   const pair = [leg.origin, leg.from].sort().join("-");
-  const extra = pair === "A12-A13" ? t("terminalShuttle") : "";
-  return `<div class="origin-tip">💺 ${t("boardAtOrigin", stnName(leg.origin), fmtTime(leg.originDep))}${extra}</div>`;
+  // 兩航廈之間有免費電車，等於只是「挑哪個航廈上車」，可以直接建議；
+  // 其他相鄰站得倒坐一站，講清楚代價讓使用者自己決定。
+  const key = pair === "A12-A13" ? "boardAtTerminal" : "boardAtOrigin";
+  return `<div class="origin-tip">💺 ${t(key, stnName(leg.origin), fmtTime(leg.originDep))}</div>`;
 }
 
 // 車種名稱：優先用官方車種（含跳站普通車、尖峰增停直達），沒有就退回 直達/普通
