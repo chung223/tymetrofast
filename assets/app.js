@@ -406,7 +406,11 @@ function originTip(leg) {
   // 兩航廈之間有免費電車，等於只是「挑哪個航廈上車」，可以直接建議；
   // 其他相鄰站得倒坐一站，講清楚代價讓使用者自己決定。
   const key = pair === "A12-A13" ? "boardAtTerminal" : "boardAtOrigin";
-  return `<div class="origin-tip">💺 ${t(key, stnName(leg.origin), fmtTime(leg.originDep))}</div>`;
+  // 講完就要能一鍵照做，否則等於叫使用者自己回去改起點
+  return `<div class="origin-tip">
+    <span>💺 ${t(key, stnName(leg.origin), fmtTime(leg.originDep))}</span>
+    <button class="origin-swap" data-stn="${leg.origin}">${t("switchOrigin", stnName(leg.origin))}</button>
+  </div>`;
 }
 
 // 車種名稱：優先用官方車種（含跳站普通車、尖峰增停直達），沒有就退回 直達/普通
@@ -1238,6 +1242,15 @@ addEventListener("resize", () => {
     lastGeoSpec ? renderJourneyGeo(lastGeoSpec) : renderLineMap(lastJourney);
   }, 200);
 });
+// 搶座建議的「改從這站上車」：直接換起點重查，不用自己回去改
+$("results").addEventListener("click", (e) => {
+  const btn = e.target.closest(".origin-swap");
+  if (!btn) return;
+  state.from = btn.dataset.stn;
+  refreshOD(); syncHash(); renderFavs(); runQuery();
+  $("results").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
 $("map-toggle").addEventListener("click", () => {
   if (lastGeoSpec) { // 北捷／跨系統：切換「全網底圖／只看行程」
     trtcMapFull = !trtcMapFull;

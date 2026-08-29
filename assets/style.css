@@ -278,8 +278,14 @@ button { font-family: inherit; color: inherit; background: none; border: 0; curs
 .origin-tip {
   margin-top: 6px; font-size: 12px; line-height: 1.45;
   color: var(--text); background: var(--panel-2);
-  border-left: 3px solid var(--amber); border-radius: 0 8px 8px 0; padding: 6px 10px;
+  border-left: 3px solid var(--amber); border-radius: 0 8px 8px 0; padding: 8px 10px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
 }
+.origin-swap {
+  flex: none; font: inherit; font-weight: 700; font-size: 12px; cursor: pointer;
+  color: var(--ink); background: var(--amber); border: 0; border-radius: 999px; padding: 5px 12px;
+}
+.origin-swap:active { transform: scale(0.97); }
 .transfer-row {
   display: flex; align-items: center; gap: 8px;
   font-size: 13px; color: var(--text-dim); padding: 0 0 12px 32px; position: relative;
