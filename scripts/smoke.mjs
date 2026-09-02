@@ -46,6 +46,25 @@ try {
   await page.waitForSelector(".journey-card", { timeout: 15000 }).catch(() => fail("路線查詢沒有結果卡"));
   console.log("✓ 路線查詢");
 
+  // 1b. 環狀線（新北捷運 NTMC）可規劃：站號從實際資料取，不寫死避免改號就失效
+  {
+    let tr = null;
+    try { tr = JSON.parse(await readFile(join(root, "data/trtc.json"), "utf8")); } catch { /* 排程產生，本機可能沒有 */ }
+    if (tr) {
+      const ys = (tr.lines?.Y?.stations ?? []).filter((id) => tr.stations?.[id]);
+      if (ys.length < 10) fail(`環狀線只有 ${ys.length} 站（資料疑似沒抓到 NTMC）`);
+      const [a, b] = [ys[0], ys[ys.length - 1]];
+      await page.goto(`http://localhost:8787/#from=${a}&to=${b}`, { waitUntil: "domcontentloaded" });
+      await page.waitForSelector(".journey-card", { timeout: 15000 })
+        .catch(() => fail(`環狀線 ${a}→${b} 規劃不出結果`));
+      console.log(`✓ 環狀線可規劃（${ys.length} 站，${tr.stations[a].zh}→${tr.stations[b].zh}）`);
+      await page.goto("http://localhost:8787/", { waitUntil: "domcontentloaded" });
+      await page.waitForSelector(".journey-card", { timeout: 15000 });
+    } else {
+      console.log("（無 data/trtc.json，跳過環狀線檢查）");
+    }
+  }
+
   // 2. 手機寬度使用蛇形路線圖且無橫向捲動
   const cls = (await page.getAttribute("#line-map", "class")) ?? "";
   if (!/\bsnake\b/.test(cls)) fail("手機寬度未使用蛇形路線圖");
