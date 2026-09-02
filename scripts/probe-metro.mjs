@@ -28,18 +28,13 @@ async function get(path, label) {
   return r.json();
 }
 
-const net = await get("Network?%24format=JSON", "系統清單");
-if (Array.isArray(net)) {
-  console.log(`── TDX 捷運系統共 ${net.length} 個 ──`);
-  for (const n of net) {
-    console.log(`  ${String(n.OperatorCode ?? n.MRTSystemCode ?? "?").padEnd(8)} ${n.OperatorName?.Zh_tw ?? n.MRTSystemName?.Zh_tw ?? ""}`);
-  }
-}
-
 // 逐一問「這個業者幾站」。TRTC 拿來對照，其餘是我們還沒接的系統。
-for (const op of ["TRTC", "NTMC", "NTDLRT", "TYMC"]) {
-  await sleep(13500); // TDX 免費層約每分鐘 5 次
-  const rows = await get(`Station/${op}?%24select=StationID%2CStationName%2CLineNo&%24format=JSON`, `${op} 車站`);
+// $select 只挑 Station 真的有的欄位——帶了不存在的欄位 TDX 會直接回 400。
+let first = true;
+for (const op of ["TRTC", "NTMC", "NTDLRT", "TYMC", "KRTC", "TMRT"]) {
+  if (!first) await sleep(13500); // TDX 免費層約每分鐘 5 次
+  first = false;
+  const rows = await get(`Station/${op}?%24select=StationID%2CStationName&%24format=JSON`, `${op} 車站`);
   if (!Array.isArray(rows)) continue;
   const byPrefix = {};
   for (const s of rows) {
