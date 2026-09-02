@@ -24,7 +24,17 @@ jobs:
             if [ "$code" = "200" ]; then
               size=$(wc -c <"$body")
               upd=$(node -e 'const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));console.log(j.updated??j.updated_at??"—")' "$body" 2>/dev/null || echo "—")
-              echo "✓ $f　${size} bytes　更新 $upd"
+              # 順便摘要內容量，改點／新站一眼就看得出來（純讀已下載的檔案，不打 TDX）
+              sum=$(node -e '
+                const j = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+                const n = (o) => (o ? Object.keys(o).length : 0);
+                if (j.stations) console.log(`${n(j.stations)} 站／${n(j.lines)} 線／轉乘 ${j.transfers?.length ?? 0} 組`);
+                else if (j.pairs) console.log(`${n(j.pairs)} 組票價`);
+                else if (j.airports) console.log(Object.entries(j.airports).map(([a, d]) => `${a} 出${d.dep?.length ?? 0}/入${d.arr?.length ?? 0}`).join(" "));
+                else if (Array.isArray(j.trains)) console.log(`${j.trains.length} 班`);
+                else console.log("");
+              ' "$body" 2>/dev/null || echo "")
+              echo "✓ $f　${size} bytes　更新 $upd${sum:+　$sum}"
             else
               echo "::warning::✗ $f　HTTP $code"
               bad=$((bad + 1))
