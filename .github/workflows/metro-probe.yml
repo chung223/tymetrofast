@@ -1,0 +1,24 @@
+name: 盤點捷運系統（診斷用）
+
+# 手動觸發的診斷工具：確認「新站」屬於哪個業者、我們的管線少接了什麼。
+# 只打 4–5 次 TDX 且用 $select 縮小回應，log 短到可以一眼看完。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 盤點捷運系統與站數
+        env:
+          TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
+          TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
+        run: node scripts/probe-metro.mjs
