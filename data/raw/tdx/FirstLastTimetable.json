@@ -18,42 +18,6 @@
    "Ko": "공항 터미널 2 역"
   },
   "TrainType": 0,
-  "FirstTrainTime": "06:08",
-  "LastTrainTime": "23:38",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A1",
-  "StationName": {
-   "Zh_tw": "台北車站",
-   "En": "Taipei Main Station",
-   "Ja": "台北駅",
-   "Ko": "타이베이 역"
-  },
-  "TripHeadSign": "往機場第二航廈站",
-  "DestinationStaionID": "A13",
-  "DestinationStationName": {
-   "Zh_tw": "機場第二航廈站",
-   "En": "Airport Terminal 2 Station",
-   "Ja": "空港第2ターミナル駅",
-   "Ko": "공항 터미널 2 역"
-  },
-  "TrainType": 0,
   "FirstTrainTime": "05:30",
   "LastTrainTime": "23:00",
   "ServiceDay": {
@@ -67,9 +31,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -93,19 +57,19 @@
   "FirstTrainTime": "06:08",
   "LastTrainTime": "23:38",
   "ServiceDay": {
-   "ServiceTag": "假日",
-   "Monday": false,
-   "Tuesday": false,
-   "Wednesday": false,
-   "Thursday": false,
-   "Friday": false,
-   "Saturday": true,
-   "Sunday": true,
-   "NationalHolidays": true
+   "ServiceTag": "平日",
+   "Monday": true,
+   "Tuesday": true,
+   "Wednesday": true,
+   "Thursday": true,
+   "Friday": true,
+   "Saturday": false,
+   "Sunday": false,
+   "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -139,9 +103,45 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
+ },
+ {
+  "LineNo": "A",
+  "LineID": "A",
+  "StationID": "A1",
+  "StationName": {
+   "Zh_tw": "台北車站",
+   "En": "Taipei Main Station",
+   "Ja": "台北駅",
+   "Ko": "타이베이 역"
+  },
+  "TripHeadSign": "往機場第二航廈站",
+  "DestinationStaionID": "A13",
+  "DestinationStationName": {
+   "Zh_tw": "機場第二航廈站",
+   "En": "Airport Terminal 2 Station",
+   "Ja": "空港第2ターミナル駅",
+   "Ko": "공항 터미널 2 역"
+  },
+  "TrainType": 0,
+  "FirstTrainTime": "06:08",
+  "LastTrainTime": "23:38",
+  "ServiceDay": {
+   "ServiceTag": "假日",
+   "Monday": false,
+   "Tuesday": false,
+   "Wednesday": false,
+   "Thursday": false,
+   "Friday": false,
+   "Saturday": true,
+   "Sunday": true,
+   "NationalHolidays": true
+  },
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -163,7 +163,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "06:15",
-  "LastTrainTime": "08:00",
+  "LastTrainTime": "19:00",
   "ServiceDay": {
    "ServiceTag": "平日",
    "Monday": true,
@@ -175,45 +175,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A1",
-  "StationName": {
-   "Zh_tw": "台北車站",
-   "En": "Taipei Main Station",
-   "Ja": "台北駅",
-   "Ko": "타이베이 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "18:04",
-  "LastTrainTime": "18:34",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -247,9 +211,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -283,9 +247,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -319,9 +283,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -355,9 +319,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -391,9 +355,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -427,45 +391,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A2",
-  "StationName": {
-   "Zh_tw": "三重站",
-   "En": "Sanchong Station",
-   "Ja": "三重駅",
-   "Ko": "싼충 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "18:10",
-  "LastTrainTime": "18:40",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -499,9 +427,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -535,45 +463,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A3",
-  "StationName": {
-   "Zh_tw": "新北產業園區站",
-   "En": "New Taipei Industrial Park Station",
-   "Ja": "新北産業園区駅",
-   "Ko": "뉴 타이베이 산업 단지 역"
-  },
-  "TripHeadSign": "往台北車站",
-  "DestinationStaionID": "A1",
-  "DestinationStationName": {
-   "Zh_tw": "台北車站",
-   "En": "Taipei Main Station",
-   "Ja": "台北駅",
-   "Ko": "타이베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "06:11",
-  "LastTrainTime": "23:28",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -607,9 +499,45 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
+ },
+ {
+  "LineNo": "A",
+  "LineID": "A",
+  "StationID": "A3",
+  "StationName": {
+   "Zh_tw": "新北產業園區站",
+   "En": "New Taipei Industrial Park Station",
+   "Ja": "新北産業園区駅",
+   "Ko": "뉴 타이베이 산업 단지 역"
+  },
+  "TripHeadSign": "往台北車站",
+  "DestinationStaionID": "A1",
+  "DestinationStationName": {
+   "Zh_tw": "台北車站",
+   "En": "Taipei Main Station",
+   "Ja": "台北駅",
+   "Ko": "타이베이 역"
+  },
+  "TrainType": 0,
+  "FirstTrainTime": "06:11",
+  "LastTrainTime": "23:28",
+  "ServiceDay": {
+   "ServiceTag": "平日",
+   "Monday": true,
+   "Tuesday": true,
+   "Wednesday": true,
+   "Thursday": true,
+   "Friday": true,
+   "Saturday": false,
+   "Sunday": false,
+   "NationalHolidays": false
+  },
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -643,9 +571,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -679,45 +607,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A3",
-  "StationName": {
-   "Zh_tw": "新北產業園區站",
-   "En": "New Taipei Industrial Park Station",
-   "Ja": "新北産業園区駅",
-   "Ko": "뉴 타이베이 산업 단지 역"
-  },
-  "TripHeadSign": "往機場第二航廈站",
-  "DestinationStaionID": "A13",
-  "DestinationStationName": {
-   "Zh_tw": "機場第二航廈站",
-   "En": "Airport Terminal 2 Station",
-   "Ja": "空港第2ターミナル駅",
-   "Ko": "공항 터미널 2 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "06:03",
-  "LastTrainTime": "23:50",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -751,9 +643,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -774,22 +666,22 @@
    "Ko": "공항 터미널 2 역"
   },
   "TrainType": 0,
-  "FirstTrainTime": "05:40",
-  "LastTrainTime": "23:10",
+  "FirstTrainTime": "06:03",
+  "LastTrainTime": "23:50",
   "ServiceDay": {
-   "ServiceTag": "假日",
-   "Monday": false,
-   "Tuesday": false,
-   "Wednesday": false,
-   "Thursday": false,
-   "Friday": false,
-   "Saturday": true,
-   "Sunday": true,
-   "NationalHolidays": true
+   "ServiceTag": "平日",
+   "Monday": true,
+   "Tuesday": true,
+   "Wednesday": true,
+   "Thursday": true,
+   "Friday": true,
+   "Saturday": false,
+   "Sunday": false,
+   "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -823,9 +715,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -837,31 +729,31 @@
    "Ja": "新北産業園区駅",
    "Ko": "뉴 타이베이 산업 단지 역"
   },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
+  "TripHeadSign": "往機場第二航廈站",
+  "DestinationStaionID": "A13",
   "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
+   "Zh_tw": "機場第二航廈站",
+   "En": "Airport Terminal 2 Station",
+   "Ja": "空港第2ターミナル駅",
+   "Ko": "공항 터미널 2 역"
   },
   "TrainType": 0,
-  "FirstTrainTime": "18:14",
-  "LastTrainTime": "18:44",
+  "FirstTrainTime": "05:40",
+  "LastTrainTime": "23:10",
   "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
+   "ServiceTag": "假日",
+   "Monday": false,
+   "Tuesday": false,
+   "Wednesday": false,
+   "Thursday": false,
+   "Friday": false,
+   "Saturday": true,
+   "Sunday": true,
+   "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -883,7 +775,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "06:25",
-  "LastTrainTime": "08:10",
+  "LastTrainTime": "19:10",
   "ServiceDay": {
    "ServiceTag": "平日",
    "Monday": true,
@@ -895,9 +787,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -931,9 +823,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -967,9 +859,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1003,9 +895,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1039,9 +931,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1075,9 +967,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1111,45 +1003,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A4",
-  "StationName": {
-   "Zh_tw": "新莊副都心站",
-   "En": "Xinzhuang Fuduxin Station",
-   "Ja": "新荘副都心駅",
-   "Ko": "신좡 부도심 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "18:16",
-  "LastTrainTime": "18:46",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1183,9 +1039,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1219,9 +1075,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1255,9 +1111,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1291,9 +1147,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1327,9 +1183,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1363,45 +1219,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A5",
-  "StationName": {
-   "Zh_tw": "泰山站",
-   "En": "Taishan Station",
-   "Ja": "泰山駅",
-   "Ko": "타이산 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "18:18",
-  "LastTrainTime": "18:48",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1435,9 +1255,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1471,9 +1291,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1507,9 +1327,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1543,9 +1363,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1579,9 +1399,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1615,45 +1435,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A6",
-  "StationName": {
-   "Zh_tw": "泰山貴和站",
-   "En": "Taishan Guihe Station",
-   "Ja": "泰山貴和駅",
-   "Ko": "타이산 구이허"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "18:21",
-  "LastTrainTime": "18:51",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1687,9 +1471,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1723,9 +1507,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1759,9 +1543,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1795,9 +1579,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1831,9 +1615,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1867,45 +1651,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A7",
-  "StationName": {
-   "Zh_tw": "體育大學站",
-   "En": "National Taiwan Sport University Station",
-   "Ja": "体育大学駅",
-   "Ko": "국립 체육대학교 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "18:26",
-  "LastTrainTime": "18:56",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1939,9 +1687,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -1975,45 +1723,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A8",
-  "StationName": {
-   "Zh_tw": "長庚醫院站",
-   "En": "Chang Gung Memorial Hospital Station",
-   "Ja": "長庚病院駅",
-   "Ko": "창컹병원 역"
-  },
-  "TripHeadSign": "往台北車站",
-  "DestinationStaionID": "A1",
-  "DestinationStationName": {
-   "Zh_tw": "台北車站",
-   "En": "Taipei Main Station",
-   "Ja": "台北駅",
-   "Ko": "타이베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "05:58",
-  "LastTrainTime": "23:57",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2047,9 +1759,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2070,22 +1782,22 @@
    "Ko": "타이베이 역"
   },
   "TrainType": 0,
-  "FirstTrainTime": "05:56",
-  "LastTrainTime": "23:14",
+  "FirstTrainTime": "05:58",
+  "LastTrainTime": "23:57",
   "ServiceDay": {
-   "ServiceTag": "假日",
-   "Monday": false,
-   "Tuesday": false,
-   "Wednesday": false,
-   "Thursday": false,
-   "Friday": false,
-   "Saturday": true,
-   "Sunday": true,
-   "NationalHolidays": true
+   "ServiceTag": "平日",
+   "Monday": true,
+   "Tuesday": true,
+   "Wednesday": true,
+   "Thursday": true,
+   "Friday": true,
+   "Saturday": false,
+   "Sunday": false,
+   "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2119,9 +1831,45 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
+ },
+ {
+  "LineNo": "A",
+  "LineID": "A",
+  "StationID": "A8",
+  "StationName": {
+   "Zh_tw": "長庚醫院站",
+   "En": "Chang Gung Memorial Hospital Station",
+   "Ja": "長庚病院駅",
+   "Ko": "창컹병원 역"
+  },
+  "TripHeadSign": "往台北車站",
+  "DestinationStaionID": "A1",
+  "DestinationStationName": {
+   "Zh_tw": "台北車站",
+   "En": "Taipei Main Station",
+   "Ja": "台北駅",
+   "Ko": "타이베이 역"
+  },
+  "TrainType": 0,
+  "FirstTrainTime": "05:56",
+  "LastTrainTime": "23:14",
+  "ServiceDay": {
+   "ServiceTag": "假日",
+   "Monday": false,
+   "Tuesday": false,
+   "Wednesday": false,
+   "Thursday": false,
+   "Friday": false,
+   "Saturday": true,
+   "Sunday": true,
+   "NationalHolidays": true
+  },
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2155,9 +1903,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2191,9 +1939,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2227,9 +1975,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2263,45 +2011,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A8",
-  "StationName": {
-   "Zh_tw": "長庚醫院站",
-   "En": "Chang Gung Memorial Hospital Station",
-   "Ja": "長庚病院駅",
-   "Ko": "창컹병원 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "18:30",
-  "LastTrainTime": "19:00",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2323,7 +2035,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "06:07",
-  "LastTrainTime": "08:22",
+  "LastTrainTime": "19:22",
   "ServiceDay": {
    "ServiceTag": "平日",
    "Monday": true,
@@ -2335,9 +2047,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2371,9 +2083,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2407,9 +2119,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2443,9 +2155,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2479,9 +2191,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2515,9 +2227,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2551,45 +2263,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A9",
-  "StationName": {
-   "Zh_tw": "林口站",
-   "En": "Linkou Station",
-   "Ja": "林口駅",
-   "Ko": "린커우 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "18:33",
-  "LastTrainTime": "19:03",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2623,9 +2299,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2659,9 +2335,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2695,9 +2371,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2731,9 +2407,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2767,9 +2443,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2803,45 +2479,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A10",
-  "StationName": {
-   "Zh_tw": "山鼻站",
-   "En": "Shanbi Station",
-   "Ja": "山鼻駅",
-   "Ko": "샨비 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "18:42",
-  "LastTrainTime": "19:12",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2875,9 +2515,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2911,9 +2551,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2947,9 +2587,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -2983,9 +2623,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3019,9 +2659,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3055,45 +2695,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A11",
-  "StationName": {
-   "Zh_tw": "坑口站",
-   "En": "Kengkou Station",
-   "Ja": "坑口駅",
-   "Ko": "컹커우역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "18:45",
-  "LastTrainTime": "19:15",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3127,9 +2731,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3163,45 +2767,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A12",
-  "StationName": {
-   "Zh_tw": "機場第一航廈站",
-   "En": "Airport Terminal 1 Station",
-   "Ja": "空港第1ターミナル駅",
-   "Ko": "공항 터미널 1 역"
-  },
-  "TripHeadSign": "往台北車站",
-  "DestinationStaionID": "A1",
-  "DestinationStationName": {
-   "Zh_tw": "台北車站",
-   "En": "Taipei Main Station",
-   "Ja": "台北駅",
-   "Ko": "타이베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "06:07",
-  "LastTrainTime": "23:37",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3235,9 +2803,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3261,19 +2829,19 @@
   "FirstTrainTime": "06:07",
   "LastTrainTime": "23:37",
   "ServiceDay": {
-   "ServiceTag": "假日",
-   "Monday": false,
-   "Tuesday": false,
-   "Wednesday": false,
-   "Thursday": false,
-   "Friday": false,
-   "Saturday": true,
-   "Sunday": true,
-   "NationalHolidays": true
+   "ServiceTag": "平日",
+   "Monday": true,
+   "Tuesday": true,
+   "Wednesday": true,
+   "Thursday": true,
+   "Friday": true,
+   "Saturday": false,
+   "Sunday": false,
+   "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3307,9 +2875,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3321,31 +2889,31 @@
    "Ja": "空港第1ターミナル駅",
    "Ko": "공항 터미널 1 역"
   },
-  "TripHeadSign": "往機場第二航廈站",
-  "DestinationStaionID": "A13",
+  "TripHeadSign": "往台北車站",
+  "DestinationStaionID": "A1",
   "DestinationStationName": {
-   "Zh_tw": "機場第二航廈站",
-   "En": "Airport Terminal 2 Station",
-   "Ja": "空港第2ターミナル駅",
-   "Ko": "공항 터미널 2 역"
+   "Zh_tw": "台北車站",
+   "En": "Taipei Main Station",
+   "Ja": "台北駅",
+   "Ko": "타이베이 역"
   },
   "TrainType": 0,
-  "FirstTrainTime": "05:57",
-  "LastTrainTime": "00:28",
+  "FirstTrainTime": "06:07",
+  "LastTrainTime": "23:37",
   "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
+   "ServiceTag": "假日",
+   "Monday": false,
+   "Tuesday": false,
+   "Wednesday": false,
+   "Thursday": false,
+   "Friday": false,
+   "Saturday": true,
+   "Sunday": true,
+   "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3379,9 +2947,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3405,19 +2973,19 @@
   "FirstTrainTime": "05:57",
   "LastTrainTime": "00:28",
   "ServiceDay": {
-   "ServiceTag": "假日",
-   "Monday": false,
-   "Tuesday": false,
-   "Wednesday": false,
-   "Thursday": false,
-   "Friday": false,
-   "Saturday": true,
-   "Sunday": true,
-   "NationalHolidays": true
+   "ServiceTag": "平日",
+   "Monday": true,
+   "Tuesday": true,
+   "Wednesday": true,
+   "Thursday": true,
+   "Friday": true,
+   "Saturday": false,
+   "Sunday": false,
+   "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3451,9 +3019,45 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
+ },
+ {
+  "LineNo": "A",
+  "LineID": "A",
+  "StationID": "A12",
+  "StationName": {
+   "Zh_tw": "機場第一航廈站",
+   "En": "Airport Terminal 1 Station",
+   "Ja": "空港第1ターミナル駅",
+   "Ko": "공항 터미널 1 역"
+  },
+  "TripHeadSign": "往機場第二航廈站",
+  "DestinationStaionID": "A13",
+  "DestinationStationName": {
+   "Zh_tw": "機場第二航廈站",
+   "En": "Airport Terminal 2 Station",
+   "Ja": "空港第2ターミナル駅",
+   "Ko": "공항 터미널 2 역"
+  },
+  "TrainType": 0,
+  "FirstTrainTime": "05:57",
+  "LastTrainTime": "00:28",
+  "ServiceDay": {
+   "ServiceTag": "假日",
+   "Monday": false,
+   "Tuesday": false,
+   "Wednesday": false,
+   "Thursday": false,
+   "Friday": false,
+   "Saturday": true,
+   "Sunday": true,
+   "NationalHolidays": true
+  },
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3475,7 +3079,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "06:22",
-  "LastTrainTime": "08:37",
+  "LastTrainTime": "19:37",
   "ServiceDay": {
    "ServiceTag": "平日",
    "Monday": true,
@@ -3487,45 +3091,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A12",
-  "StationName": {
-   "Zh_tw": "機場第一航廈站",
-   "En": "Airport Terminal 1 Station",
-   "Ja": "空港第1ターミナル駅",
-   "Ko": "공항 터미널 1 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "15:49",
-  "LastTrainTime": "19:49",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3547,7 +3115,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "10:49",
-  "LastTrainTime": "21:49",
+  "LastTrainTime": "19:49",
   "ServiceDay": {
    "ServiceTag": "假日",
    "Monday": false,
@@ -3559,9 +3127,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3595,9 +3163,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3631,45 +3199,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A13",
-  "StationName": {
-   "Zh_tw": "機場第二航廈站",
-   "En": "Airport Terminal 2 Station",
-   "Ja": "空港第2ターミナル駅",
-   "Ko": "공항 터미널 2 역"
-  },
-  "TripHeadSign": "往台北車站",
-  "DestinationStaionID": "A1",
-  "DestinationStationName": {
-   "Zh_tw": "台北車站",
-   "En": "Taipei Main Station",
-   "Ja": "台北駅",
-   "Ko": "타이베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "06:04",
-  "LastTrainTime": "23:35",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3703,9 +3235,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3729,19 +3261,19 @@
   "FirstTrainTime": "06:04",
   "LastTrainTime": "23:35",
   "ServiceDay": {
-   "ServiceTag": "假日",
-   "Monday": false,
-   "Tuesday": false,
-   "Wednesday": false,
-   "Thursday": false,
-   "Friday": false,
-   "Saturday": true,
-   "Sunday": true,
-   "NationalHolidays": true
+   "ServiceTag": "平日",
+   "Monday": true,
+   "Tuesday": true,
+   "Wednesday": true,
+   "Thursday": true,
+   "Friday": true,
+   "Saturday": false,
+   "Sunday": false,
+   "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3775,9 +3307,45 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
+ },
+ {
+  "LineNo": "A",
+  "LineID": "A",
+  "StationID": "A13",
+  "StationName": {
+   "Zh_tw": "機場第二航廈站",
+   "En": "Airport Terminal 2 Station",
+   "Ja": "空港第2ターミナル駅",
+   "Ko": "공항 터미널 2 역"
+  },
+  "TripHeadSign": "往台北車站",
+  "DestinationStaionID": "A1",
+  "DestinationStationName": {
+   "Zh_tw": "台北車站",
+   "En": "Taipei Main Station",
+   "Ja": "台北駅",
+   "Ko": "타이베이 역"
+  },
+  "TrainType": 0,
+  "FirstTrainTime": "06:04",
+  "LastTrainTime": "23:35",
+  "ServiceDay": {
+   "ServiceTag": "假日",
+   "Monday": false,
+   "Tuesday": false,
+   "Wednesday": false,
+   "Thursday": false,
+   "Friday": false,
+   "Saturday": true,
+   "Sunday": true,
+   "NationalHolidays": true
+  },
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3811,9 +3379,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3847,9 +3415,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3871,7 +3439,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "06:26",
-  "LastTrainTime": "08:41",
+  "LastTrainTime": "19:41",
   "ServiceDay": {
    "ServiceTag": "平日",
    "Monday": true,
@@ -3883,45 +3451,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A13",
-  "StationName": {
-   "Zh_tw": "機場第二航廈站",
-   "En": "Airport Terminal 2 Station",
-   "Ja": "空港第2ターミナル駅",
-   "Ko": "공항 터미널 2 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "15:51",
-  "LastTrainTime": "19:51",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3943,7 +3475,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "10:51",
-  "LastTrainTime": "21:51",
+  "LastTrainTime": "19:51",
   "ServiceDay": {
    "ServiceTag": "假日",
    "Monday": false,
@@ -3955,9 +3487,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -3991,9 +3523,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4027,9 +3559,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4063,9 +3595,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4099,9 +3631,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4135,9 +3667,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4171,45 +3703,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A14a",
-  "StationName": {
-   "Zh_tw": "機場旅館站",
-   "En": "Airport Hotel Station",
-   "Ja": "空港ホテル駅",
-   "Ko": "공항호텔 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "15:54",
-  "LastTrainTime": "19:54",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4231,7 +3727,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "10:54",
-  "LastTrainTime": "21:54",
+  "LastTrainTime": "19:54",
   "ServiceDay": {
    "ServiceTag": "假日",
    "Monday": false,
@@ -4243,9 +3739,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4279,9 +3775,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4315,9 +3811,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4351,9 +3847,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4387,9 +3883,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4423,9 +3919,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4459,45 +3955,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A15",
-  "StationName": {
-   "Zh_tw": "大園站",
-   "En": "Dayuan Station",
-   "Ja": "大園駅",
-   "Ko": "다위안 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "15:57",
-  "LastTrainTime": "19:57",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4519,7 +3979,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "10:57",
-  "LastTrainTime": "21:57",
+  "LastTrainTime": "19:57",
   "ServiceDay": {
    "ServiceTag": "假日",
    "Monday": false,
@@ -4531,9 +3991,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4567,9 +4027,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4603,9 +4063,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4639,9 +4099,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4675,9 +4135,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4711,9 +4171,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4747,45 +4207,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A16",
-  "StationName": {
-   "Zh_tw": "橫山站",
-   "En": "Hengshan Station",
-   "Ja": "橫山駅",
-   "Ko": "항산 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "16:00",
-  "LastTrainTime": "20:00",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4807,7 +4231,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "11:00",
-  "LastTrainTime": "22:00",
+  "LastTrainTime": "20:00",
   "ServiceDay": {
    "ServiceTag": "假日",
    "Monday": false,
@@ -4819,9 +4243,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4855,9 +4279,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4891,9 +4315,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4927,9 +4351,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4963,9 +4387,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -4999,9 +4423,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5035,45 +4459,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A17",
-  "StationName": {
-   "Zh_tw": "領航站",
-   "En": "Linghang Station",
-   "Ja": "領航駅",
-   "Ko": "링항 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "16:03",
-  "LastTrainTime": "20:03",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5095,7 +4483,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "11:03",
-  "LastTrainTime": "22:03",
+  "LastTrainTime": "20:03",
   "ServiceDay": {
    "ServiceTag": "假日",
    "Monday": false,
@@ -5107,9 +4495,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5143,9 +4531,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5179,9 +4567,45 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
+ },
+ {
+  "LineNo": "A",
+  "LineID": "A",
+  "StationID": "A18",
+  "StationName": {
+   "Zh_tw": "高鐵桃園站",
+   "En": "Taoyuan HSR Station",
+   "Ja": "高鉄桃園駅",
+   "Ko": "타오위안 고속철도 역"
+  },
+  "TripHeadSign": "往台北車站",
+  "DestinationStaionID": "A1",
+  "DestinationStationName": {
+   "Zh_tw": "台北車站",
+   "En": "Taipei Main Station",
+   "Ja": "台北駅",
+   "Ko": "타이베이 역"
+  },
+  "TrainType": 0,
+  "FirstTrainTime": "05:47",
+  "LastTrainTime": "23:17",
+  "ServiceDay": {
+   "ServiceTag": "平日",
+   "Monday": true,
+   "Tuesday": true,
+   "Wednesday": true,
+   "Thursday": true,
+   "Friday": true,
+   "Saturday": false,
+   "Sunday": false,
+   "NationalHolidays": false
+  },
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5203,7 +4627,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "07:26",
-  "LastTrainTime": "09:26",
+  "LastTrainTime": "20:26",
   "ServiceDay": {
    "ServiceTag": "平日",
    "Monday": true,
@@ -5215,45 +4639,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A18",
-  "StationName": {
-   "Zh_tw": "高鐵桃園站",
-   "En": "Taoyuan HSR Station",
-   "Ja": "高鉄桃園駅",
-   "Ko": "타오위안 고속철도 역"
-  },
-  "TripHeadSign": "往台北車站",
-  "DestinationStaionID": "A1",
-  "DestinationStationName": {
-   "Zh_tw": "台北車站",
-   "En": "Taipei Main Station",
-   "Ja": "台北駅",
-   "Ko": "타이베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "05:47",
-  "LastTrainTime": "23:17",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5287,9 +4675,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5323,9 +4711,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5359,9 +4747,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5383,7 +4771,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "06:39",
-  "LastTrainTime": "08:54",
+  "LastTrainTime": "19:54",
   "ServiceDay": {
    "ServiceTag": "平日",
    "Monday": true,
@@ -5395,45 +4783,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A18",
-  "StationName": {
-   "Zh_tw": "高鐵桃園站",
-   "En": "Taoyuan HSR Station",
-   "Ja": "高鉄桃園駅",
-   "Ko": "타오위안 고속철도 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "16:07",
-  "LastTrainTime": "20:07",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5455,7 +4807,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "11:07",
-  "LastTrainTime": "22:07",
+  "LastTrainTime": "20:07",
   "ServiceDay": {
    "ServiceTag": "假日",
    "Monday": false,
@@ -5467,9 +4819,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5503,9 +4855,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5539,9 +4891,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5575,9 +4927,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5611,9 +4963,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5647,9 +4999,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5683,45 +5035,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A19",
-  "StationName": {
-   "Zh_tw": "桃園體育園區站",
-   "En": "Taoyuan Sports Park Station",
-   "Ja": "桃園体育園区駅",
-   "Ko": "타오위안 체육 공원 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "16:10",
-  "LastTrainTime": "20:10",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5743,7 +5059,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "11:10",
-  "LastTrainTime": "22:10",
+  "LastTrainTime": "20:10",
   "ServiceDay": {
    "ServiceTag": "假日",
    "Monday": false,
@@ -5755,9 +5071,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5791,9 +5107,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5827,9 +5143,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5863,9 +5179,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5899,9 +5215,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5935,9 +5251,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -5971,45 +5287,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A20",
-  "StationName": {
-   "Zh_tw": "興南站",
-   "En": "Xingnan Station",
-   "Ja": "興南駅",
-   "Ko": "싱난 역"
-  },
-  "TripHeadSign": "往環北站",
-  "DestinationStaionID": "A21",
-  "DestinationStationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "16:15",
-  "LastTrainTime": "20:15",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -6031,7 +5311,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "11:15",
-  "LastTrainTime": "22:15",
+  "LastTrainTime": "20:15",
   "ServiceDay": {
    "ServiceTag": "假日",
    "Monday": false,
@@ -6043,9 +5323,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -6079,9 +5359,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -6115,45 +5395,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
- },
- {
-  "LineNo": "A",
-  "LineID": "A",
-  "StationID": "A21",
-  "StationName": {
-   "Zh_tw": "環北站",
-   "En": "Huanbei Station",
-   "Ja": "環北駅",
-   "Ko": "환베이 역"
-  },
-  "TripHeadSign": "往台北車站",
-  "DestinationStaionID": "A1",
-  "DestinationStationName": {
-   "Zh_tw": "台北車站",
-   "En": "Taipei Main Station",
-   "Ja": "台北駅",
-   "Ko": "타이베이 역"
-  },
-  "TrainType": 0,
-  "FirstTrainTime": "05:35",
-  "LastTrainTime": "23:05",
-  "ServiceDay": {
-   "ServiceTag": "平日",
-   "Monday": true,
-   "Tuesday": true,
-   "Wednesday": true,
-   "Thursday": true,
-   "Friday": true,
-   "Saturday": false,
-   "Sunday": false,
-   "NationalHolidays": false
-  },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -6175,7 +5419,7 @@
   },
   "TrainType": 0,
   "FirstTrainTime": "07:15",
-  "LastTrainTime": "09:15",
+  "LastTrainTime": "20:15",
   "ServiceDay": {
    "ServiceTag": "平日",
    "Monday": true,
@@ -6187,9 +5431,45 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
+ },
+ {
+  "LineNo": "A",
+  "LineID": "A",
+  "StationID": "A21",
+  "StationName": {
+   "Zh_tw": "環北站",
+   "En": "Huanbei Station",
+   "Ja": "環北駅",
+   "Ko": "환베이 역"
+  },
+  "TripHeadSign": "往台北車站",
+  "DestinationStaionID": "A1",
+  "DestinationStationName": {
+   "Zh_tw": "台北車站",
+   "En": "Taipei Main Station",
+   "Ja": "台北駅",
+   "Ko": "타이베이 역"
+  },
+  "TrainType": 0,
+  "FirstTrainTime": "05:35",
+  "LastTrainTime": "23:05",
+  "ServiceDay": {
+   "ServiceTag": "平日",
+   "Monday": true,
+   "Tuesday": true,
+   "Wednesday": true,
+   "Thursday": true,
+   "Friday": true,
+   "Saturday": false,
+   "Sunday": false,
+   "NationalHolidays": false
+  },
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -6223,9 +5503,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -6259,9 +5539,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -6295,9 +5575,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -6331,9 +5611,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -6367,9 +5647,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -6403,9 +5683,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -6439,9 +5719,9 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -6475,9 +5755,9 @@
    "Sunday": false,
    "NationalHolidays": false
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  },
  {
   "LineNo": "A",
@@ -6511,8 +5791,8 @@
    "Sunday": true,
    "NationalHolidays": true
   },
-  "SrcUpdateTime": "2026-10-01T03:38:23+08:00",
-  "UpdateTime": "2026-10-02T01:37:06+08:00",
-  "VersionID": 1185
+  "SrcUpdateTime": "2026-10-15T03:38:23+08:00",
+  "UpdateTime": "2026-10-15T23:52:49+08:00",
+  "VersionID": 1224
  }
 ]
